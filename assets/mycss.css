@@ -1,0 +1,27 @@
+.main-div{
+    text-align: center; 
+}
+
+.slider-div{
+    display: inline-block;
+    width:90%;
+}
+
+.slider-holder-div{
+
+}
+
+.data-table-holder{
+    display: inline-block;
+    margin-top: 60px;
+}
+.output-div{
+    display: inline-block
+}
+
+#updatemode-output-container{
+    font-size: large;
+    font-weight: bolder;
+    font-style: oblique;
+    color: tomato;
+}
