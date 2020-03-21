@@ -400,7 +400,7 @@ def get_graph_state(date_int, figure):
         marker=dict(
             size=df_confirmed_today['Cases'].apply(
                 lambda x: np.log2(x)*10 if x else 0),
-            color='yellow')))
+            color='red')))
 
     layout = dict(
         title_text='The Corona is Coming',

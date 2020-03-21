@@ -341,6 +341,9 @@ def get_dash_animation():
 
 app.layout = serve_dash_layout
 
+# We must expose this for Elastic Bean Stalk to Run
+application = app.server
+
 
 @app.callback(Output('state-graph', 'figure'),
               [Input('date_slider', 'value')],
