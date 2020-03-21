@@ -1,6 +1,8 @@
 import sys
 import warnings
-import plotly.graph_objects as go
+import numpy as np
+import pandas as pd
+import argparse
 
 try:
     import dash
@@ -8,15 +10,25 @@ try:
     import dash_html_components as html
     from dash.exceptions import PreventUpdate
     import dash_table
-    from dash.dependencies import Input, Output
+    from dash.dependencies import Input, Output, State
+    import plotly.graph_objects as go
+    import plotly.express as px
 except ImportError:
     sys.exit('Please install dash, e.g, pip install dash')
 
+# Cancel copy warnings of pandas
+warnings.filterwarnings(
+    "ignore", category=pd.core.common.SettingWithCopyWarning)
 
-import numpy as np
-import pandas as pd
-import argparse
+# Initialize APP
+app = dash.Dash(__name__,
+                meta_tags=[
+                    {"name": "viewport",
+                        "content": "width=device-width, initial-scale=1.0"}
+                ]
+                )
 
+# Parse Data
 states_abbreviations_mapper = {
     'AK': 'Alaska',
     'AL': 'Alabama',
@@ -78,12 +90,13 @@ states_abbreviations_mapper = {
 }
 
 
-warnings.filterwarnings(
-    "ignore", category=pd.core.common.SettingWithCopyWarning)
 BASE_URL = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/'
 TS_CONFIRMED_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv'
 TS_DEATH_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 TS_RECOVERED_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
+mapbox_access_token = "pk.eyJ1IjoiandpbGxpczA3MjAiLCJhIjoiY2s4MHhoYmF6MDFoODNpcnVyNGR2bWk1bSJ9.YNwklD1Aa6DihVblHr3GVg"
+#mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
+mapbox_style = 'dark'
 
 
 def get_time_series(url):
@@ -135,14 +148,50 @@ us_confirmed_cases_by_city['Date'] = pd.to_datetime(
 us_confirmed_cases_by_state['Date'] = pd.to_datetime(
     us_confirmed_cases_by_state['Date'], format='%m/%d/%y')
 
+us_death_cases_by_city['Date'] = pd.to_datetime(
+    us_death_cases_by_city['Date'], format='%m/%d/%y')
+
+us_death_cases_by_state['Date'] = pd.to_datetime(
+    us_death_cases_by_state['Date'], format='%m/%d/%y')
+
 to_date_cases_by_city = us_confirmed_cases_by_city.groupby(
     ['City', 'State'], as_index=False).sum()
 
 
 date_mapper = pd.DataFrame(
     us_confirmed_cases_by_city['Date'].unique(), columns=['Date'])
+date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
+
 min_date = min(date_mapper.index)
 max_date = max(date_mapper.index)
+
+# Cumulative:
+cumm_df = []
+for day, date_text in zip(date_mapper['Date'], date_mapper['Date_text']):
+    death_df = us_death_cases_by_state[us_death_cases_by_state['Date'] <= day].groupby(
+        ['State', 'Lat', 'Long']).sum().reset_index()
+    death_df['Text'] = death_df['State'] + \
+        " Deaths: "+death_df['Cases'].astype(str)
+    death_df['Date'] = date_text
+    death_df['Metric'] = 'Death'
+    ongoing_df = us_confirmed_cases_by_state[us_confirmed_cases_by_state['Date'] <= day].groupby(
+        ['State', 'Lat', 'Long']).sum().reset_index()
+    ongoing_df['Text'] = ongoing_df['State'] + \
+        " Cases: "+ongoing_df['Cases'].astype(str)
+    ongoing_df['Date'] = date_text
+    ongoing_df['Metric'] = 'Ongoing'
+
+    for death_row in death_df.iterrows():
+        state = death_row[1]['State']
+        deaths = death_row[1]['Cases']
+        #rint('before',ongoing_df.loc[ongoing_df['State'] == state,'Cases'].iloc[0])
+        ongoing_df.loc[ongoing_df['State'] == state, 'Cases'] -= deaths
+        #print('after',ongoing_df.loc[ongoing_df['State'] == state,'Cases'].iloc[0])
+
+    cumm_df += [ongoing_df, death_df]
+ongoing_death_by_state_df = pd.concat(cumm_df)
+# Dash Help Components
+# I Use these so I simply don't clutter the layout
 
 
 def get_date_slider():
@@ -151,8 +200,8 @@ def get_date_slider():
         min=min_date,
         max=max_date,
         step=1,
-        value=max_date,
-        marks={k: {'label': v, 'style': {'color': 'black', 'font-size': '2em'}}
+        value=0,
+        marks={k: {'label': v, 'style': {'color': 'grey', 'font-size': '2rem'}}
                for k, v in list(date_mapper['Date'].dt.strftime(
                    '%m/%d/%y').to_dict().items())[::5]}
     )
@@ -179,38 +228,134 @@ def get_dash_table():
     )
 
 
+def get_dummy_graph(id_):
+    return dcc.Graph(
+        id=id_,
+        figure={
+            'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5],
+                    'type': 'bar', 'name': u'Montréal'},
+            ],
+            'layout': {
+                'title': 'Dash Data Visualization'
+            }
+        }
+    )
+
+
 def serve_dash_layout():
     return html.Div(
-        className='twelve columns main-div',
+        id="root",
         children=[
-            html.Div([
-                html.Div(className='container ten columns', style={'display': ''},
-                         children=[
-                             dcc.Graph(id='state-graph')
-                ]),
-                html.Div(className='container four columns data-table-holder', style={'position': 'relative'}, children=[
-                    get_dash_table()
-                ])
-            ]),
             html.Div(
-                className='ten columns', style={'display': 'inline-block'},
+                id="header",
+                children=[
+                    #html.Img(id="logo", src=app.get_asset_url("dash-logo.png")),
+                    html.H4(children="COVID-19 Infection Dashboard"),
+                    html.P(
+                        id="description",
+                        children="Rates of Infections",
+                    ),
+                ],
+            ),
+            html.Div(
+                id="app-container",
                 children=[
                     html.Div(
+                        id="left-column",
                         children=[
-                            get_date_slider()
-                        ]),
-                ]),
-        ])
+
+                            html.Div(
+                                id="heatmap-container",
+                                children=[
+                                    html.P(
+                                        "Heatmap of age adjusted mortality rates \
+                            from poisonings in year {0}".format(
+                                            2000
+                                        ),
+                                        id="heatmap-title",
+                                    ),
+                                    dcc.Graph(id='state-graph'),
+                                ],
+                            ),
+                            html.Div(
+                                id="slider-container",
+                                children=[
+                                    html.P(
+                                        id="slider-text",
+                                        children="Drag the slider to change the Date:",
+                                    ),
+                                    get_date_slider()
+                                ],
+                            ),
+                        ],
+                    ),
+                    html.Div(
+                        id="graph-container",
+                        children=[
+                            html.P(id="chart-selector",
+                                   children="Select chart:"),
+                            dcc.Dropdown(
+                                options=[
+                                    {
+                                        "label": "Histogram of total number of deaths (single year)",
+                                        "value": "show_absolute_deaths_single_year",
+                                    },
+                                    {
+                                        "label": "Histogram of total number of deaths (1999-2016)",
+                                        "value": "absolute_deaths_all_time",
+                                    },
+                                    {
+                                        "label": "Age-adjusted death rate (single year)",
+                                        "value": "show_death_rate_single_year",
+                                    },
+                                    {
+                                        "label": "Trends in age-adjusted death rate (1999-2016)",
+                                        "value": "death_rate_all_time",
+                                    },
+                                ],
+                                value="show_death_rate_single_year",
+                                id="chart-dropdown",
+                            ),
+                           get_dummy_graph('dummy2'),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+def get_dash_animation():
+    px.set_mapbox_access_token(mapbox_access_token)
+    fig = px.scatter_mapbox(ongoing_death_by_state_df, lat="Lat", lon="Long", size="Cases", animation_frame='Date', animation_group='State',
+                            color='Metric', size_max=100, zoom=3.5, mapbox_style='dark', center=dict(lat=38.5266, lon=-96.7265), height=800)
+    fig['layout']['updatemenus'][0]['buttons'][0]['args'][1]['frame']['duration'] = 100
+    fig['layout']['updatemenus'][0]['buttons'][0]['args'][1]['transition']['duration'] = 0
+    fig['layout']['updatemenus'][0]['buttons'][0]['args'][1]['transition']['easing'] = "cubic-in-out"
+    fig['layout']['sliders'][0]['currentvalue']['xanchor'] = "center"
+    fig['layout']['sliders'][0]['currentvalue']['prefix'] = ""
+    return fig
+
+
 app.layout = serve_dash_layout
 
 
 @app.callback(Output('state-graph', 'figure'),
-              [Input('date_slider', 'value')])
-def get_graph_state(date_int):
+              [Input('date_slider', 'value')],
+              [State('state-graph', 'figure')])
+def get_graph_state(date_int, figure):
+    # Get initial zoom and shit if the figure is already drawn
+    if not figure:
+        lat = 38.72490
+        lon = -95.61446
+        zoom = 3.5
+    elif "layout" in figure:
+        lat = figure["layout"]["mapbox"]["center"]["lat"]
+        lon = figure["layout"]["mapbox"]["center"]["lon"]
+        zoom = figure["layout"]["mapbox"]["zoom"]
+
     official_date = date_mapper.iloc[date_int]['Date']
     print(date_int, official_date)
 
@@ -224,53 +369,58 @@ def get_graph_state(date_int):
         official_date.strftime('%m/%d/%y')) + df_confirmed_before['Cases'].astype(str)
     df_confirmed_today['text'] = df_confirmed_today['Province/State'] + '<br>Total New Cases On {}: '.format(
         official_date.strftime('%m/%d/%y')) + df_confirmed_today['Cases'].astype(str)
+    # Has to take in a figure state eventually
     fig = go.Figure()
-    fig.add_trace(go.Scattergeo(
-        locationmode='USA-states',
+    fig.add_trace(go.Scattermapbox(
         lon=df_confirmed_before['Long'],
         lat=df_confirmed_before['Lat'],
         text=df_confirmed_before['text'],
         customdata=df_confirmed_before['Province/State'],
         hoverinfo='text',
+        textposition='top right',
+        mode='markers',
         marker=dict(
-            size=df_confirmed_before['Cases'],
-            color='blue',
-            line_color='rgb(40,40,40)',
-            line_width=0.5,
-            sizemode='area')
-    ))
+            size=df_confirmed_before['Cases'].apply(
+                lambda x: np.log2(x)*10 if x else 0),
+            color='blue')))
 
-    fig.add_trace(go.Scattergeo(
-        locationmode='USA-states',
-        lon=df_confirmed_today['Long']+.11,
-        lat=df_confirmed_today['Lat']-.15,
+    fig.add_trace(go.Scattermapbox(
+        lon=df_confirmed_today['Long'] +
+        np.random.normal(0, 0.2, len(df_confirmed_today['Long'])),
+        lat=df_confirmed_today['Lat'] +
+        np.random.normal(0, 0.2, len(df_confirmed_today['Lat'])),
         text=df_confirmed_today['text'],
         customdata=df_confirmed_today['Province/State'],
         hoverinfo='text',
+        textposition='top right',
+        mode='markers',
         marker=dict(
-            size=df_confirmed_today['Cases'],
-            color='red',
-            line_color='rgb(40,40,40)',
-            line_width=0.5,
-            sizemode='area')
-    ))
+            size=df_confirmed_today['Cases'].apply(
+                lambda x: np.log2(x)*10 if x else 0),
+            color='yellow')))
 
-    fig.update_layout(
-        title_text='The Corona Is Coming',
-        autosize=False,
+    layout = dict(
+        title_text='The Corona is Coming',
+        autosize=True,
         showlegend=False,
-        width=1000,
-        height=600,
-        geo=dict(
-            scope='usa',
-        )
+        mapbox=dict(
+            accesstoken=mapbox_access_token,
+            style=mapbox_style,
+            zoom=zoom,
+            center=dict(lat=lat, lon=lon)
+        ),
+        hovermode="closest",
+        margin=dict(r=0, l=0, t=0, b=0),
+        dragmode="pan",
     )
+
+    fig.update_layout(layout)
     return fig
 
 
-@app.callback(
-    Output('interactive-table', 'data'),
-    [Input('state-graph', 'hoverData')])
+# @app.callback(
+#     Output('interactive-table', 'data'),
+#     [Input('state-graph', 'hoverData')])
 def display_table_data(selectedData):
     if not selectedData:
         raise PreventUpdate

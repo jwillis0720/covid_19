@@ -1,0 +1,3 @@
+[submodule "dash-opioid-epidemic-demo"]
+	path = dash-opioid-epidemic-demo
+	url = git@github.com:plotly/dash-opioid-epidemic-demo.git
