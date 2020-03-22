@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import argparse
-
+import pprint
 try:
     import dash
     import dash_core_components as dcc
@@ -128,6 +128,7 @@ death_cases = get_time_series(TS_DEATH_CASES)
 us_death_cases = death_cases[death_cases['Country/Region'] == 'US']
 world_death_cases = death_cases[death_cases['Country/Region'] != 'US']
 
+
 # US Specific death cases. Can parse out by city too
 us_death_cases_by_state, us_death_cases_by_city = parse_into_city(
     us_death_cases)
@@ -154,6 +155,22 @@ us_death_cases_by_city['Date'] = pd.to_datetime(
 us_death_cases_by_state['Date'] = pd.to_datetime(
     us_death_cases_by_state['Date'], format='%m/%d/%y')
 
+us_recovered_cases_by_state['Date'] = pd.to_datetime(
+    us_recovered_cases_by_state['Date'], format='%m/%d/%y')
+
+us_recovered_cases_by_state['Date'] = pd.to_datetime(
+    us_recovered_cases_by_state['Date'], format='%m/%d/%y')
+
+world_confirmed_cases['Date'] = pd.to_datetime(
+    world_confirmed_cases['Date'], format='%m/%d/%y')
+
+world_death_cases['Date'] = pd.to_datetime(
+    world_death_cases['Date'], format='%m/%d/%y')
+
+world_recovered_cases['Date'] = pd.to_datetime(
+    world_recovered_cases['Date'], format='%m/%d/%y')
+
+
 to_date_cases_by_city = us_confirmed_cases_by_city.groupby(
     ['City', 'State'], as_index=False).sum()
 
@@ -165,45 +182,34 @@ date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
 min_date = min(date_mapper.index)
 max_date = max(date_mapper.index)
 
-# Cumulative:
-cumm_df = []
-for day, date_text in zip(date_mapper['Date'], date_mapper['Date_text']):
-    death_df = us_death_cases_by_state[us_death_cases_by_state['Date'] <= day].groupby(
-        ['State', 'Lat', 'Long']).sum().reset_index()
-    death_df['Text'] = death_df['State'] + \
-        " Deaths: "+death_df['Cases'].astype(str)
-    death_df['Date'] = date_text
-    death_df['Metric'] = 'Death'
-    ongoing_df = us_confirmed_cases_by_state[us_confirmed_cases_by_state['Date'] <= day].groupby(
-        ['State', 'Lat', 'Long']).sum().reset_index()
-    ongoing_df['Text'] = ongoing_df['State'] + \
-        " Cases: "+ongoing_df['Cases'].astype(str)
-    ongoing_df['Date'] = date_text
-    ongoing_df['Metric'] = 'Ongoing'
 
-    for death_row in death_df.iterrows():
-        state = death_row[1]['State']
-        deaths = death_row[1]['Cases']
-        #rint('before',ongoing_df.loc[ongoing_df['State'] == state,'Cases'].iloc[0])
-        ongoing_df.loc[ongoing_df['State'] == state, 'Cases'] -= deaths
-        #print('after',ongoing_df.loc[ongoing_df['State'] == state,'Cases'].iloc[0])
-
-    cumm_df += [ongoing_df, death_df]
-ongoing_death_by_state_df = pd.concat(cumm_df)
-# Dash Help Components
+centroid_country_mapper = world_confirmed_cases.groupby(
+    'Country/Region').apply(lambda x: x.sort_values('Cases')[::-1].iloc[0][['Lat', 'Long']])
+centroid_country_mapper = {x[0]: {'Long': x[1]['Long'], 'Lat': x[1]['Lat']}
+                           for x in centroid_country_mapper.iterrows()}  # Dash Help Components
 # I Use these so I simply don't clutter the layout
 
 
 def get_date_slider():
+    how_many_labels = (len(date_mapper))//10
+    marks = {k: {'label': v, 'style': {'color': 'grey', 'font-size': '1.5fr'}}
+             for k, v in list(date_mapper['Date'].dt.strftime(
+                 '%m/%d/%y').to_dict().items())[::how_many_labels]}
+    last_key = list(marks.keys())[-1]
+    todays_key = date_mapper.index[-1]
+    if last_key == todays_key:
+        marks[last_key]['label'] == 'Today'
+    else:
+        marks[todays_key] = {'label': 'Today', 'style': {
+            'color': 'grey', 'font-size': '1.5fr'}}
+
     return dcc.Slider(
         id='date_slider',
         min=min_date,
         max=max_date,
         step=1,
         value=0,
-        marks={k: {'label': v, 'style': {'color': 'grey', 'font-size': '2rem'}}
-               for k, v in list(date_mapper['Date'].dt.strftime(
-                   '%m/%d/%y').to_dict().items())[::5]}
+        marks=marks
     )
 
 
@@ -270,8 +276,7 @@ def serve_dash_layout():
                                 id="heatmap-container",
                                 children=[
                                     html.P(
-                                        "Heatmap of age adjusted mortality rates \
-                            from poisonings in year {0}".format(
+                                        "Reported Infections Map".format(
                                             2000
                                         ),
                                         id="heatmap-title",
@@ -295,29 +300,29 @@ def serve_dash_layout():
                         id="graph-container",
                         children=[
                             html.P(id="chart-selector",
-                                   children="Select chart:"),
-                            dcc.Dropdown(
-                                options=[
-                                    {
-                                        "label": "Histogram of total number of deaths (single year)",
-                                        "value": "show_absolute_deaths_single_year",
-                                    },
-                                    {
-                                        "label": "Histogram of total number of deaths (1999-2016)",
-                                        "value": "absolute_deaths_all_time",
-                                    },
-                                    {
-                                        "label": "Age-adjusted death rate (single year)",
-                                        "value": "show_death_rate_single_year",
-                                    },
-                                    {
-                                        "label": "Trends in age-adjusted death rate (1999-2016)",
-                                        "value": "death_rate_all_time",
-                                    },
-                                ],
-                                value="show_death_rate_single_year",
-                                id="chart-dropdown",
-                            ),
+                                   children="Hover Charts"),
+                            # dcc.Dropdown(
+                            #     options=[
+                            #         {
+                            #             "label": "Histogram of total number of deaths (single year)",
+                            #             "value": "show_absolute_deaths_single_year",
+                            #         },
+                            #         {
+                            #             "label": "Histogram of total number of deaths (1999-2016)",
+                            #             "value": "absolute_deaths_all_time",
+                            #         },
+                            #         {
+                            #             "label": "Age-adjusted death rate (single year)",
+                            #             "value": "show_death_rate_single_year",
+                            #         },
+                            #         {
+                            #             "label": "Trends in age-adjusted death rate (1999-2016)",
+                            #             "value": "death_rate_all_time",
+                            #         },
+                            #     ],
+                            #     value="show_death_rate_single_year",
+                            #     id="chart-dropdown",
+                            # ),
                            get_dummy_graph('dummy2'),
                         ],
                     ),
@@ -351,56 +356,159 @@ application = app.server
 def get_graph_state(date_int, figure):
     # Get initial zoom and shit if the figure is already drawn
     if not figure:
-        lat = 38.72490
-        lon = -95.61446
-        zoom = 3.5
+        lat = 15.74
+        lon = -1.4
+        zoom = 1.6
     elif "layout" in figure:
-        lat = figure["layout"]["mapbox"]["center"]["lat"]
-        lon = figure["layout"]["mapbox"]["center"]["lon"]
+        lat = figure["layout"]["mapbox"]['center']["lat"]
+        lon = figure["layout"]["mapbox"]['center']["lon"]
         zoom = figure["layout"]["mapbox"]["zoom"]
 
+    # if figure:
+    #     pprint(figure)
+    sizeref = 2. * world_confirmed_cases.groupby(
+        ['Date', 'Country/Region']).sum().max()['Cases'] / (20 ** 2)
     official_date = date_mapper.iloc[date_int]['Date']
     print(date_int, official_date)
+    df_confirmed = us_confirmed_cases_by_state[
+        us_confirmed_cases_by_state['Date'] == official_date].groupby('Province/State Country/Region Lat Long'.split(), as_index=False).sum()
+    df_confirmed.rename({'Cases': 'Ongoing'}, axis=1, inplace=1)
+    df_confirmed['text'] = df_confirmed['Province/State'] + '<br>Total Cases {}: '.format(
+        official_date.strftime('%m/%d/%y')) + df_confirmed['Ongoing'].astype(str)
 
-    df_confirmed_before = us_confirmed_cases_by_state[
-        us_confirmed_cases_by_state['Date'] < official_date]
-    df_confirmed_before = df_confirmed_before.groupby(
-        'Province/State Country/Region Lat Long'.split(), as_index=False).sum()
-    df_confirmed_today = us_confirmed_cases_by_state[us_confirmed_cases_by_state['Date'] == official_date]
+    df_death = us_death_cases_by_state[
+        us_death_cases_by_state['Date'] == official_date].groupby('Province/State Country/Region Lat Long'.split(), as_index=False).sum()
+    df_death.rename({'Cases': 'Deaths'}, axis=1, inplace=1)
+    df_death['text'] = df_death['Province/State'] + '<br>Total Deaths {}: '.format(
+        official_date.strftime('%m/%d/%y')) + df_death['Deaths'].astype(str)
 
-    df_confirmed_before['text'] = df_confirmed_before['Province/State'] + '<br>Total Cases Before {}: '.format(
-        official_date.strftime('%m/%d/%y')) + df_confirmed_before['Cases'].astype(str)
-    df_confirmed_today['text'] = df_confirmed_today['Province/State'] + '<br>Total New Cases On {}: '.format(
-        official_date.strftime('%m/%d/%y')) + df_confirmed_today['Cases'].astype(str)
+    df_recover = us_recovered_cases_by_state[
+        us_recovered_cases_by_state['Date'] == official_date].groupby('Province/State Country/Region Lat Long'.split(), as_index=False).sum()
+    df_recover.rename({'Cases': 'Recovered'}, axis=1, inplace=1)
+    df_recover['text'] = df_recover['Province/State'] + '<br>Total Recovered {}: '.format(
+        official_date.strftime('%m/%d/%y')) + df_recover['Recovered'].astype(str)
+
     # Has to take in a figure state eventually
     fig = go.Figure()
     fig.add_trace(go.Scattermapbox(
-        lon=df_confirmed_before['Long'],
-        lat=df_confirmed_before['Lat'],
-        text=df_confirmed_before['text'],
-        customdata=df_confirmed_before['Province/State'],
+        lon=df_confirmed['Long'] +
+        np.random.normal(0, .02, len(df_confirmed['Long'])),
+        lat=df_confirmed['Lat'] +
+        np.random.normal(0, .02, len(df_confirmed['Lat'])),
+        text=df_confirmed['text'],
+        customdata=df_confirmed['Province/State'],
         hoverinfo='text',
         textposition='top right',
         mode='markers',
         marker=dict(
-            size=df_confirmed_before['Cases'].apply(
-                lambda x: np.log2(x)*10 if x else 0),
-            color='blue')))
+            sizeref=sizeref,
+            sizemin=3,
+            size=df_confirmed['Ongoing'],
+            color='yellow')))
 
     fig.add_trace(go.Scattermapbox(
-        lon=df_confirmed_today['Long'] +
-        np.random.normal(0, 0.2, len(df_confirmed_today['Long'])),
-        lat=df_confirmed_today['Lat'] +
-        np.random.normal(0, 0.2, len(df_confirmed_today['Lat'])),
-        text=df_confirmed_today['text'],
-        customdata=df_confirmed_today['Province/State'],
+        lon=df_death['Long']+np.random.normal(0, .02, len(df_death['Long'])),
+        lat=df_death['Lat']+np.random.normal(0, .02, len(df_death['Long'])),
+        text=df_death['text'],
+        customdata=df_death['Province/State'],
         hoverinfo='text',
         textposition='top right',
         mode='markers',
         marker=dict(
-            size=df_confirmed_today['Cases'].apply(
-                lambda x: np.log2(x)*10 if x else 0),
+            sizeref=sizeref,
+            sizemin=2,
+            size=df_death['Deaths'],
             color='red')))
+
+    fig.add_trace(go.Scattermapbox(
+        lon=df_recover['Long'] +
+        np.random.normal(0, .05, len(df_recover['Long'])),
+        lat=df_recover['Lat']+np.random.normal(0, .05, len(df_recover['Lat'])),
+        text=df_recover['text'],
+        customdata=df_recover['Province/State'],
+        hoverinfo='text',
+        textposition='top right',
+        mode='markers',
+        marker=dict(
+            sizeref=sizeref,
+            sizemin=2,
+            size=df_recover['Recovered'],
+            color='green')))
+
+    world_confirmed = world_confirmed_cases[
+        world_confirmed_cases['Date'] == official_date].groupby('Country/Region'.split(), as_index=False).sum()
+    world_confirmed.rename({'Cases': 'Ongoing'}, axis=1, inplace=1)
+    world_confirmed['text'] = world_confirmed['Country/Region'] + '<br>Total Cases {}: '.format(
+        official_date.strftime('%m/%d/%y')) + world_confirmed['Ongoing'].map('{:,}'.format)
+    world_confirmed['Lat'] = world_confirmed['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Lat'])
+    world_confirmed['Long'] = world_confirmed['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Long'])
+
+    world_dead = world_death_cases[
+        world_death_cases['Date'] == official_date].groupby('Country/Region'.split(), as_index=False).sum()
+    world_dead.rename({'Cases': 'Dead'}, axis=1, inplace=1)
+    world_dead['text'] = world_dead['Country/Region'] + '<br>Total Dead {}: '.format(
+        official_date.strftime('%m/%d/%y')) + world_dead['Dead'].map('{:,}'.format)
+    world_dead['Lat'] = world_dead['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Lat'])
+    world_dead['Long'] = world_dead['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Long'])
+
+    world_recovered = world_recovered_cases[
+        world_recovered_cases['Date'] == official_date].groupby('Country/Region'.split(), as_index=False).sum()
+    world_recovered.rename({'Cases': 'Recovered'}, axis=1, inplace=1)
+    world_recovered['text'] = world_recovered['Country/Region'] + '<br>Total Recovered {}: '.format(
+        official_date.strftime('%m/%d/%y')) + world_recovered['Recovered'].map('{:,}'.format)
+    world_recovered['Lat'] = world_recovered['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Lat'])
+    world_recovered['Long'] = world_recovered['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Long'])
+
+    fig.add_trace(go.Scattermapbox(
+        lon=world_confirmed['Long'],
+        lat=world_confirmed['Lat'],
+        text=world_confirmed['text'],
+        customdata=world_confirmed['Country/Region'],
+        hoverinfo='text',
+        textposition='top right',
+        mode='markers',
+        marker=dict(
+            sizeref=sizeref,
+            sizemin=3,
+            size=world_confirmed['Ongoing'],
+            color='yellow')))
+
+    fig.add_trace(go.Scattermapbox(
+        lon=world_dead['Long'] +
+        np.random.normal(0, .05, len(world_dead['Long'])),
+        lat=world_dead['Lat']+np.random.normal(0, .05, len(world_dead['Lat'])),
+        text=world_dead['text'],
+        customdata=world_dead['Country/Region'],
+        hoverinfo='text',
+        textposition='top right',
+        mode='markers',
+        marker=dict(
+            sizeref=sizeref,
+            sizemin=3,
+            size=world_dead['Dead'],
+            color='red')))
+
+    fig.add_trace(go.Scattermapbox(
+        lon=world_recovered['Long'] +
+        np.random.normal(0, .05, len(world_recovered['Long'])),
+        lat=world_recovered['Lat'] +
+        np.random.normal(0, .05, len(world_recovered['Lat'])),
+        text=world_recovered['text'],
+        customdata=world_recovered['Country/Region'],
+        hoverinfo='text',
+        textposition='top right',
+        mode='markers',
+        marker=dict(
+            sizeref=sizeref,
+            sizemin=3,
+            size=world_recovered['Recovered'],
+            color='green')))
 
     layout = dict(
         title_text='The Corona is Coming',
