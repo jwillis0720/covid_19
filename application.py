@@ -231,7 +231,7 @@ def get_date_slider():
         min=min_date,
         max=max_date,
         step=1,
-        value=0,
+        value=max_date,
         marks=marks
     )
 
@@ -257,11 +257,6 @@ def get_dash_table():
     )
 
 
-def get_initial_per_date():
-
-    return fig
-
-
 def serve_dash_layout():
     return html.Div(
         id="root",
@@ -283,16 +278,6 @@ def serve_dash_layout():
                     html.Div(
                         id="left-column",
                         children=[
-
-                            html.Div(
-                                id="heatmap-container",
-                                children=[
-                                    html.P(
-                                        id="heatmap-title",
-                                    ),
-                                    dcc.Graph(id='state-graph'),
-                                ],
-                            ),
                             html.Div(
                                 id="slider-container",
                                 children=[
@@ -303,6 +288,17 @@ def serve_dash_layout():
                                     get_date_slider()
                                 ],
                             ),
+
+                            html.Div(
+                                id="heatmap-container",
+                                children=[
+                                    html.P(
+                                        id="heatmap-title",
+                                    ),
+                                    dcc.Graph(id='state-graph'),
+                                ],
+                            ),
+
                         ],
                     ),
                     html.Div(
@@ -554,21 +550,21 @@ def update_new_case_graph(hoverData):
 
     fig.update_layout(
         title=dict(text='New Cases Per Day: {}'.format(
-            country), font=dict(color='white', size=16)),
+            country), font=dict(color='white', size=24)),
         xaxis_tickfont_size=14,
         yaxis=dict(
-            title='New Cases',
-            titlefont_size=16,
-            tickfont_size=14,
+            title=dict(text='New Cases', standoff=2),
+            titlefont_size=18,
+            tickfont_size=18,
             showgrid=False,
-            color='white'
+            color='white',
         ),
         xaxis=dict(
             title='Date',
             color='white'
         ),
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgb(52,51,50)',
         barmode='group',
         bargap=0.15,  # gap between bars of adjacent location coordinates.
         bargroupgap=0.1)  # gap between bars of the same location coordinate.

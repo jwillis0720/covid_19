@@ -317,6 +317,7 @@ p {
     font-family: "Fjalla One", sans-serif ;
     font-size: 2.5rem;
     color: white;
+    margin-top: 2rem
 }
 
 #map-description {
@@ -649,6 +650,7 @@ hr {
 #slider-container {
     background-color: #252e3f;
     padding: 5rem;
+    margin-bottom: 2rem;
 }
 
 div .rc-slider-handle{
@@ -660,7 +662,7 @@ div .rc-slider-handle{
 }
 .rc-slider-mark-text{
     color: white;
-    font-size: 1.8rem;
+    font-size: 2.1rem;
 }
 
 .rc-slider-mark-text-active{
@@ -687,9 +689,11 @@ div .rc-slider-handle{
 /* Heatmap
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 #heatmap-container {
-    margin:  0rem 0rem 2rem 0rem;
+    margin:  0rem 0rem 0rem 0rem;
     background-color: #252e3f;
     text-align: center;
+    display: flex;
+    flex: 6 60%
 }
 
 
@@ -701,14 +705,16 @@ div .rc-slider-handle{
 }
 
 #state-graph{
-    margin:0;
-    flex-grow: 1;
+    margin:2rem;
+    display: flex;
+    flex: 3 30%;
+    position: relative;
 
 }
 
 @media (min-width: 1251px) {
     #heatmap-container {
-        flex-grow: 1;
+        flex: 6 60%;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -789,7 +795,7 @@ div .rc-slider-handle{
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        justify-content: flex-start;
+        justify-content: center;
     }
 
     #selected-data {
@@ -874,8 +880,6 @@ div .rc-slider-handle{
         flex-direction: row;
         justify-content: flex-start;
         align-items: stretch;
-        height: 100rem;
-        margin-bottom: 5rem;
     }
 }
 
