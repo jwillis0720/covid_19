@@ -187,7 +187,31 @@ centroid_country_mapper = world_confirmed_cases.groupby(
     'Country/Region').apply(lambda x: x.sort_values('Cases')[::-1].iloc[0][['Lat', 'Long']])
 centroid_country_mapper = {x[0]: {'Long': x[1]['Long'], 'Lat': x[1]['Lat']}
                            for x in centroid_country_mapper.iterrows()}  # Dash Help Components
-# I Use these so I simply don't clutter the layout
+
+new_cases_by_country = []
+
+countries = world_confirmed_cases['Country/Region'].unique()
+dates = date_mapper['Date']
+
+for country in countries:
+    sub_country = world_confirmed_cases[world_confirmed_cases['Country/Region'] == country]
+    new_cases_by_country.append(
+        {'Country': country, 'Date': dates[0],
+         'New Cases': sub_country.loc[sub_country['Date'] == dates[0], 'Cases'].iloc[0]})
+    for date_index in range(1, len(dates)):
+        current_date = dates[date_index]
+        day_before = dates[date_index-1]
+        # print(current_date,day_before)
+        total_today = sub_country.loc[sub_country['Date']
+                                      == current_date, 'Cases'].iloc[0]
+        total_yesterday = sub_country.loc[sub_country['Date']
+                                          == day_before, 'Cases'].iloc[0]
+        new_cases = total_today - total_yesterday
+        new_cases_by_country.append(
+            {'Country': country, 'Date': current_date, 'New Cases': new_cases})
+
+
+new_cases_by_country = pd.DataFrame(new_cases_by_country)
 
 
 def get_date_slider():
@@ -233,20 +257,9 @@ def get_dash_table():
     )
 
 
-def get_dummy_graph(id_):
-    return dcc.Graph(
-        id=id_,
-        figure={
-            'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5],
-                    'type': 'bar', 'name': u'Montréal'},
-            ],
-            'layout': {
-                'title': 'Dash Data Visualization'
-            }
-        }
-    )
+def get_initial_per_date():
+
+    return fig
 
 
 def serve_dash_layout():
@@ -295,9 +308,8 @@ def serve_dash_layout():
                     html.Div(
                         id="graph-container",
                         children=[
-                            html.P(id="chart-selector",
-                                   children="Hover Charts"),
-                           get_dummy_graph('dummy2'),
+                           html.P(id='graph-container-tile'),
+                           dcc.Graph(id='per_date'),
                         ],
                     ),
                 ],
@@ -516,6 +528,52 @@ def display_table_data(selectedData):
     state = selectedData['points'][0]['customdata']
     df = to_date_cases_by_city[to_date_cases_by_city['State'] == state]
     return df.sort_values('Cases')[::-1].to_dict('records')
+
+
+@app.callback(Output('per_date', 'figure'),
+              [Input('state-graph', 'hoverData')])
+def update_new_case_graph(hoverData):
+    if not hoverData:
+        sub_df = new_cases_by_country.groupby('Date').sum().reset_index()
+        country = 'World'
+
+    else:
+        country = hoverData['points'][0]['customdata']
+        sub_df = new_cases_by_country[new_cases_by_country['Country'] == country]
+
+    dates = date_mapper['Date_text'].unique()
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=dates,
+                         y=sub_df['New Cases'],
+                         name=country,
+                         marker=dict(
+                             color='white',
+                             line=dict(
+                                 color='white')
+                         )))
+
+    fig.update_layout(
+        title=dict(text='New Cases Per Day: {}'.format(
+            country), font=dict(color='white', size=16)),
+        xaxis_tickfont_size=14,
+        yaxis=dict(
+            title='New Cases',
+            titlefont_size=16,
+            tickfont_size=14,
+            showgrid=False,
+            color='white'
+        ),
+        xaxis=dict(
+            title='Date',
+            color='white'
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        barmode='group',
+        bargap=0.15,  # gap between bars of adjacent location coordinates.
+        bargroupgap=0.1)  # gap between bars of the same location coordinate.
+
+    return fig
 
 
 if __name__ == '__main__':
