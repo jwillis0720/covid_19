@@ -246,7 +246,7 @@ body {
 
 @media (min-width: 551px) {
     #root {
-        padding: 5rem;
+        padding: 2rem;
     }
 }
 
@@ -648,7 +648,7 @@ hr {
 
 #slider-container {
     background-color: #252e3f;
-    padding: 4.5rem;
+    padding: 5rem;
 }
 
 div .rc-slider-handle{
@@ -658,8 +658,9 @@ div .rc-slider-handle{
     bottom: 50%;
     background-color: black;
 }
-rc-slider-mark-text{
+.rc-slider-mark-text{
     color: white;
+    font-size: 1.8rem;
 }
 
 .rc-slider-mark-text-active{
