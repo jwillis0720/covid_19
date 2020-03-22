@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans');
-@import url('https://fonts.googleapis.com/css?family=Playfair+Display');
-
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap')
 /* Table of contents
 ––––––––––––––––––––––––––––––––––––––––––––––––––
 - Plotly.js
@@ -284,12 +283,14 @@ h3 {
 }
 
 h4 {
-    font-family: "Playfair Display", sans-serif;
+    font-family: "Fjalla One", sans-serif;
     font-size: 4rem;
     line-height: 1.35;
     letter-spacing: -.08rem;
     margin-bottom: 1.2rem;
     margin-top: 1.2rem;
+    font-weight: bold;
+    color: #2cfec1;
 }
 
 h5 {
@@ -313,12 +314,14 @@ p {
 }
 
 #heatmap-title {
-    font-family: "Playfair Display", sans-serif;
-    font-size: 2rem;
+    font-family: "Fjalla One", sans-serif ;
+    font-size: 2.5rem;
+    color: white;
 }
 
-#description {
-    font-size: 1.5rem;
+#map-description {
+    font-family: "Fjalla One", sans-serif;
+    font-size: 1rem;
     border-left: #2cfec1 solid 1rem;
     padding-left: 1rem;
     max-width: 100rem;
@@ -333,6 +336,7 @@ p {
 #slider-text, #chart-selector {
     margin-bottom: 2rem !important;
     font-size: 2rem;
+    color: white;
 }
 
 
@@ -341,7 +345,7 @@ p {
         font-size: 50%;
     }
 
-    #description {
+    #map-description {
         font-size: 1rem;
     }
 }
@@ -644,33 +648,50 @@ hr {
 
 #slider-container {
     background-color: #252e3f;
-    padding: 4rem;
-    height: 10rem;
+    padding: 4.5rem;
 }
 
+div .rc-slider-handle{
+    height: 17px;
+    width: 17px;
+    position: relative;
+    bottom: 50%;
+    background-color: black;
+}
+rc-slider-mark-text{
+    color: white;
+}
+
+.rc-slider-mark-text-active{
+    color: white
+}
+
+
 .rc-slider-dot-active, .rc-slider-handle {
-    border-color: #2cfec1 !important;
+    border-color: #33fe2c   !important;
+
+
 }
 
 .rc-slider-track {
-    background-color: #2cfec1 !important
+    background-color: #33fe2c !important
 }
 
 .rc-slider-rail {
-    background-color: #ac4b1e !important
+    background-color: gold !important;
+    height: 0.25rem
 }
+
 
 /* Heatmap
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 #heatmap-container {
     margin:  0rem 0rem 2rem 0rem;
     background-color: #252e3f;
+    text-align: center;
 }
 
-#heatmap-title {
-    margin: 0;
-    padding: 1rem;
-}
+
 
 #county-choropleth {
     margin: 0;

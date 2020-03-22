@@ -95,7 +95,7 @@ TS_CONFIRMED_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_1
 TS_DEATH_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 TS_RECOVERED_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 mapbox_access_token = "pk.eyJ1IjoiandpbGxpczA3MjAiLCJhIjoiY2s4MHhoYmF6MDFoODNpcnVyNGR2bWk1bSJ9.YNwklD1Aa6DihVblHr3GVg"
-#mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
+# mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
 mapbox_style = 'dark'
 
 
@@ -192,7 +192,7 @@ centroid_country_mapper = {x[0]: {'Long': x[1]['Long'], 'Lat': x[1]['Lat']}
 
 def get_date_slider():
     how_many_labels = (len(date_mapper))//10
-    marks = {k: {'label': v, 'style': {'color': 'grey', 'font-size': '1.5fr'}}
+    marks = {k: {'label': v}
              for k, v in list(date_mapper['Date'].dt.strftime(
                  '%m/%d/%y').to_dict().items())[::how_many_labels]}
     last_key = list(marks.keys())[-1]
@@ -200,8 +200,7 @@ def get_date_slider():
     if last_key == todays_key:
         marks[last_key]['label'] == 'Today'
     else:
-        marks[todays_key] = {'label': 'Today', 'style': {
-            'color': 'grey', 'font-size': '1.5fr'}}
+        marks[todays_key] = {'label': 'Today'}
 
     return dcc.Slider(
         id='date_slider',
@@ -257,11 +256,11 @@ def serve_dash_layout():
             html.Div(
                 id="header",
                 children=[
-                    #html.Img(id="logo", src=app.get_asset_url("dash-logo.png")),
+                    # html.Img(id="logo", src=app.get_asset_url("dash-logo.png")),
                     html.H4(children="COVID-19 Infection Dashboard"),
                     html.P(
-                        id="description",
-                        children="Rates of Infections",
+                        id="map-description",
+                        children=["COVID-19 Infection Information"]
                     ),
                 ],
             ),
@@ -276,9 +275,6 @@ def serve_dash_layout():
                                 id="heatmap-container",
                                 children=[
                                     html.P(
-                                        "Reported Infections Map".format(
-                                            2000
-                                        ),
                                         id="heatmap-title",
                                     ),
                                     dcc.Graph(id='state-graph'),
@@ -289,7 +285,7 @@ def serve_dash_layout():
                                 children=[
                                     html.P(
                                         id="slider-text",
-                                        children="Drag the slider to change the Date:",
+                                        children="Drag the Slider to Change the Reported Date:",
                                     ),
                                     get_date_slider()
                                 ],
@@ -301,28 +297,6 @@ def serve_dash_layout():
                         children=[
                             html.P(id="chart-selector",
                                    children="Hover Charts"),
-                            # dcc.Dropdown(
-                            #     options=[
-                            #         {
-                            #             "label": "Histogram of total number of deaths (single year)",
-                            #             "value": "show_absolute_deaths_single_year",
-                            #         },
-                            #         {
-                            #             "label": "Histogram of total number of deaths (1999-2016)",
-                            #             "value": "absolute_deaths_all_time",
-                            #         },
-                            #         {
-                            #             "label": "Age-adjusted death rate (single year)",
-                            #             "value": "show_death_rate_single_year",
-                            #         },
-                            #         {
-                            #             "label": "Trends in age-adjusted death rate (1999-2016)",
-                            #             "value": "death_rate_all_time",
-                            #         },
-                            #     ],
-                            #     value="show_death_rate_single_year",
-                            #     id="chart-dropdown",
-                            # ),
                            get_dummy_graph('dummy2'),
                         ],
                     ),
@@ -528,23 +502,20 @@ def get_graph_state(date_int, figure):
     fig.update_layout(layout)
     return fig
 
+@app.callback(Output('heatmap-title', 'children'),
+              [Input('date_slider', 'value')])
+def update_description(date_int):
+    "Reported Infections Map"
+    official_date = date_mapper.iloc[date_int]['Date']
+    return "{}".format(official_date.strftime('%B %d, %Y'))
 
-# @app.callback(
-#     Output('interactive-table', 'data'),
-#     [Input('state-graph', 'hoverData')])
+
 def display_table_data(selectedData):
     if not selectedData:
         raise PreventUpdate
     state = selectedData['points'][0]['customdata']
     df = to_date_cases_by_city[to_date_cases_by_city['State'] == state]
     return df.sort_values('Cases')[::-1].to_dict('records')
-
-# @app.callback(Output('updatemode-output-container', 'children'),
-#               [Input('date_slider', 'value')])
-
-
-# def display_value(value):
-#     return 'Linear Value: {}'.format(date_mapper.iloc[int(value)].dt.strftime('%m/%d/%y').iloc[0])
 
 
 if __name__ == '__main__':
