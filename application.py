@@ -527,7 +527,7 @@ def display_table_data(selectedData):
 
 
 @app.callback(Output('per_date', 'figure'),
-              [Input('state-graph', 'hoverData')])
+              [Input('state-graph', 'clickData')])
 def update_new_case_graph(hoverData):
     if not hoverData:
         sub_df = new_cases_by_country.groupby('Date').sum().reset_index()
@@ -542,6 +542,12 @@ def update_new_case_graph(hoverData):
     fig.add_trace(go.Bar(x=dates,
                          y=sub_df['New Cases'],
                          name=country,
+                         showlegend=False,
+                         text=sub_df['New Cases'],
+                         textposition='auto',
+                         texttemplate='%{y:,f}',
+                         hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
+
                          marker=dict(
                              color='white',
                              line=dict(
@@ -563,6 +569,7 @@ def update_new_case_graph(hoverData):
             title='Date',
             color='white'
         ),
+        showlegend=False,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgb(52,51,50)',
         barmode='group',
