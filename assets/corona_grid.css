@@ -11,7 +11,7 @@ html{
 }
 
 body {
-    font-size: 1.5rem; /* currently ems cause chrome bug misinterpreting rems on body element */
+    font-size: 1.1rem; /* currently ems cause chrome bug misinterpreting rems on body element */
     line-height: 1.6;
     font-weight: 400;
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -75,7 +75,7 @@ h4 {
     grid-template-columns: auto;
     grid-template-rows: 15% auto;
     row-gap: 1rem;
-    min-height: 45rem;
+    min-height: 30rem;
     /* outline-color: blue;
     outline-style: groove; */
     grid-auto-rows: minmax(100px,200px);
