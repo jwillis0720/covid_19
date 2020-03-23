@@ -90,128 +90,39 @@ states_abbreviations_mapper = {
 }
 
 
-BASE_URL = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/'
-TS_CONFIRMED_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv'
-TS_DEATH_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
-TS_RECOVERED_CASES = 'csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
-mapbox_access_token = "pk.eyJ1IjoiandpbGxpczA3MjAiLCJhIjoiY2s4MHhoYmF6MDFoODNpcnVyNGR2bWk1bSJ9.YNwklD1Aa6DihVblHr3GVg"
 # mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
 mapbox_style = 'dark'
+mapbox_access_token = open('.mapbox_token').readlines()[0]
+
+# Import from S3:
+merged_df = pd.read_csv(
+    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/Merged_df.csv.gz', index_col=0)
+per_day_stats_by_state = pd.read_csv(
+    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/per_day_stats_by_state.csv.gz', index_col=0)
+per_day_stats_by_country = pd.read_csv(
+    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/per_day_stats_by_country.csv.gz', index_col=0)
+per_day_stats_by_county = pd.read_csv(
+    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/per_day_stats_by_county.csv.gz', index_col=0)
 
 
-def get_time_series(url):
-    time_series_df = pd.read_csv(BASE_URL+url)
-    return time_series_df.set_index(
-        ['Province/State', 'Country/Region', 'Lat', 'Long']).transpose().unstack(
-            fill_value="").reset_index().rename({'level_4': 'Date', 0: 'Cases'}, axis=1)
-
-
-def parse_into_city(df):
-    df['City'] = df['Province/State'].apply(
-        lambda x: x.split(', ')[0] if len(x.split(', ')) == 2 else "")
-    df['State'] = df['Province/State'].apply(
-        lambda x: states_abbreviations_mapper[x.split(', ')[1].replace('.', '').strip()] if len(x.split(', ')) == 2 else x)
-    return df[df['City'] == ''], df[df['City'] != '']
-
-
-# Confirmed Cases
-confirmed_cases = get_time_series(TS_CONFIRMED_CASES)
-us_confirmed_cases = confirmed_cases[confirmed_cases['Country/Region'] == 'US']
-world_confirmed_cases = confirmed_cases[confirmed_cases['Country/Region'] != 'US']
-
-# US Specific confirmed cases. Can parse out by city too
-us_confirmed_cases_by_state, us_confirmed_cases_by_city = parse_into_city(
-    us_confirmed_cases)
-
-# Death Cases
-death_cases = get_time_series(TS_DEATH_CASES)
-us_death_cases = death_cases[death_cases['Country/Region'] == 'US']
-world_death_cases = death_cases[death_cases['Country/Region'] != 'US']
-
-
-# US Specific death cases. Can parse out by city too
-us_death_cases_by_state, us_death_cases_by_city = parse_into_city(
-    us_death_cases)
-
-# Recovered Cases
-recovered_cases = get_time_series(TS_RECOVERED_CASES)
-us_recovered_cases = recovered_cases[recovered_cases['Country/Region'] == 'US']
-world_recovered_cases = recovered_cases[recovered_cases['Country/Region'] != 'US']
-
-# US Specific death cases. Can parse out by city too
-us_recovered_cases_by_state, us_recovered_cases_by_city = parse_into_city(
-    us_recovered_cases)
-
-# Coerce dates
-us_confirmed_cases_by_city['Date'] = pd.to_datetime(
-    us_confirmed_cases_by_city['Date'], format='%m/%d/%y')
-
-us_confirmed_cases_by_state['Date'] = pd.to_datetime(
-    us_confirmed_cases_by_state['Date'], format='%m/%d/%y')
-
-us_death_cases_by_city['Date'] = pd.to_datetime(
-    us_death_cases_by_city['Date'], format='%m/%d/%y')
-
-us_death_cases_by_state['Date'] = pd.to_datetime(
-    us_death_cases_by_state['Date'], format='%m/%d/%y')
-
-us_recovered_cases_by_state['Date'] = pd.to_datetime(
-    us_recovered_cases_by_state['Date'], format='%m/%d/%y')
-
-us_recovered_cases_by_state['Date'] = pd.to_datetime(
-    us_recovered_cases_by_state['Date'], format='%m/%d/%y')
-
-world_confirmed_cases['Date'] = pd.to_datetime(
-    world_confirmed_cases['Date'], format='%m/%d/%y')
-
-world_death_cases['Date'] = pd.to_datetime(
-    world_death_cases['Date'], format='%m/%d/%y')
-
-world_recovered_cases['Date'] = pd.to_datetime(
-    world_recovered_cases['Date'], format='%m/%d/%y')
-
-
-to_date_cases_by_city = us_confirmed_cases_by_city.groupby(
-    ['City', 'State'], as_index=False).sum()
-
+merged_df['Date'] = pd.to_datetime(merged_df['Date'])
+per_day_stats_by_state['Date'] = pd.to_datetime(
+    per_day_stats_by_state['Date']).fillna('')
+per_day_stats_by_country['Date'] = pd.to_datetime(
+    per_day_stats_by_country['Date']).fillna('')
+per_day_stats_by_county['Date'] = pd.to_datetime(
+    per_day_stats_by_county['Date']).fillna('')
 
 date_mapper = pd.DataFrame(
-    us_confirmed_cases_by_city['Date'].unique(), columns=['Date'])
+    merged_df['Date'].unique(), columns=['Date'])
 date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
-
 min_date = min(date_mapper.index)
 max_date = max(date_mapper.index)
 
-
-centroid_country_mapper = world_confirmed_cases.groupby(
+centroid_country_mapper = merged_df.groupby(
     'Country/Region').apply(lambda x: x.sort_values('Cases')[::-1].iloc[0][['Lat', 'Long']])
 centroid_country_mapper = {x[0]: {'Long': x[1]['Long'], 'Lat': x[1]['Lat']}
-                           for x in centroid_country_mapper.iterrows()}  # Dash Help Components
-
-new_cases_by_country = []
-
-countries = world_confirmed_cases['Country/Region'].unique()
-dates = date_mapper['Date']
-
-for country in countries:
-    sub_country = world_confirmed_cases[world_confirmed_cases['Country/Region'] == country]
-    new_cases_by_country.append(
-        {'Country': country, 'Date': dates[0],
-         'New Cases': sub_country.loc[sub_country['Date'] == dates[0], 'Cases'].iloc[0]})
-    for date_index in range(1, len(dates)):
-        current_date = dates[date_index]
-        day_before = dates[date_index-1]
-        # print(current_date,day_before)
-        total_today = sub_country.loc[sub_country['Date']
-                                      == current_date, 'Cases'].iloc[0]
-        total_yesterday = sub_country.loc[sub_country['Date']
-                                          == day_before, 'Cases'].iloc[0]
-        new_cases = total_today - total_yesterday
-        new_cases_by_country.append(
-            {'Country': country, 'Date': current_date, 'New Cases': new_cases})
-
-
-new_cases_by_country = pd.DataFrame(new_cases_by_country)
+                           for x in centroid_country_mapper.iterrows()}
 
 
 def get_date_slider():
@@ -346,150 +257,72 @@ def get_graph_state(date_int, figure):
         lon = figure["layout"]["mapbox"]['center']["lon"]
         zoom = figure["layout"]["mapbox"]["zoom"]
 
-    # if figure:
-    #     pprint(figure)
-    sizeref = 2. * world_confirmed_cases.groupby(
-        ['Date', 'Country/Region']).sum().max()['Cases'] / (20 ** 2)
     official_date = date_mapper.iloc[date_int]['Date']
     print(date_int, official_date)
-    df_confirmed = us_confirmed_cases_by_state[
-        us_confirmed_cases_by_state['Date'] == official_date].groupby('Province/State Country/Region Lat Long'.split(), as_index=False).sum()
-    df_confirmed.rename({'Cases': 'Ongoing'}, axis=1, inplace=1)
-    df_confirmed['text'] = df_confirmed['Province/State'] + '<br>Total Cases {}: '.format(
-        official_date.strftime('%m/%d/%y')) + df_confirmed['Ongoing'].astype(str)
 
-    df_death = us_death_cases_by_state[
-        us_death_cases_by_state['Date'] == official_date].groupby('Province/State Country/Region Lat Long'.split(), as_index=False).sum()
-    df_death.rename({'Cases': 'Deaths'}, axis=1, inplace=1)
-    df_death['text'] = df_death['Province/State'] + '<br>Total Deaths {}: '.format(
-        official_date.strftime('%m/%d/%y')) + df_death['Deaths'].astype(str)
-
-    df_recover = us_recovered_cases_by_state[
-        us_recovered_cases_by_state['Date'] == official_date].groupby('Province/State Country/Region Lat Long'.split(), as_index=False).sum()
-    df_recover.rename({'Cases': 'Recovered'}, axis=1, inplace=1)
-    df_recover['text'] = df_recover['Province/State'] + '<br>Total Recovered {}: '.format(
-        official_date.strftime('%m/%d/%y')) + df_recover['Recovered'].astype(str)
+    sub_df = merged_df[merged_df['Date'] == official_date].groupby(
+        'Country/Region').sum().reset_index()
+    sub_df['Lat'] = sub_df['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Lat'])
+    sub_df['Long'] = sub_df['Country/Region'].apply(
+        lambda x: centroid_country_mapper[x]['Long'])
+    sub_df['Text_Cases'] = sub_df['Country/Region'] + '<br>Total Cases at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Cases'].astype(str)
+    sub_df['Text_Death'] = sub_df['Country/Region'] + '<br>Total Deaths at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Deaths'].astype(str)
+    sub_df['Text_Recover'] = sub_df['Country/Region'] + '<br>Total Cases at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Recovery'].astype(str)
+    sizeref = 2. * merged_df.groupby(
+        ['Date', 'Country/Region']).sum().max()['Cases'] / (20 ** 2)
 
     # Has to take in a figure state eventually
     fig = go.Figure()
     fig.add_trace(go.Scattermapbox(
-        lon=df_confirmed['Long'] +
-        np.random.normal(0, .02, len(df_confirmed['Long'])),
-        lat=df_confirmed['Lat'] +
-        np.random.normal(0, .02, len(df_confirmed['Lat'])),
-        text=df_confirmed['text'],
-        customdata=df_confirmed['Province/State'],
-        hoverinfo='text',
+        lon=sub_df['Long'] +
+        np.random.normal(0, .02, len(sub_df['Long'])),
+        lat=sub_df['Lat'] +
+        np.random.normal(0, .02, len(sub_df['Lat'])),
+        customdata=sub_df['Country/Region'],
         textposition='top right',
+        text=sub_df['Text_Cases'],
+        hoverinfo='text',
         mode='markers',
         marker=dict(
             sizeref=sizeref,
             sizemin=3,
-            size=df_confirmed['Ongoing'],
+            size=sub_df['Cases'],
             color='yellow')))
 
     fig.add_trace(go.Scattermapbox(
-        lon=df_death['Long']+np.random.normal(0, .02, len(df_death['Long'])),
-        lat=df_death['Lat']+np.random.normal(0, .02, len(df_death['Long'])),
-        text=df_death['text'],
-        customdata=df_death['Province/State'],
-        hoverinfo='text',
+        lon=sub_df['Long'] +
+        np.random.normal(0, .02, len(sub_df['Long'])),
+        lat=sub_df['Lat'] +
+        np.random.normal(0, .02, len(sub_df['Lat'])),
+        customdata=sub_df['Country/Region'],
         textposition='top right',
+        text=sub_df['Text_Death'],
+        hoverinfo='text',
         mode='markers',
         marker=dict(
             sizeref=sizeref,
-            sizemin=2,
-            size=df_death['Deaths'],
+            sizemin=3,
+            size=sub_df['Deaths'],
             color='red')))
 
     fig.add_trace(go.Scattermapbox(
-        lon=df_recover['Long'] +
-        np.random.normal(0, .05, len(df_recover['Long'])),
-        lat=df_recover['Lat']+np.random.normal(0, .05, len(df_recover['Lat'])),
-        text=df_recover['text'],
-        customdata=df_recover['Province/State'],
-        hoverinfo='text',
+        lon=sub_df['Long'] +
+        np.random.normal(0, .02, len(sub_df['Long'])),
+        lat=sub_df['Lat'] +
+        np.random.normal(0, .02, len(sub_df['Lat'])),
+        customdata=sub_df['Country/Region'],
         textposition='top right',
-        mode='markers',
-        marker=dict(
-            sizeref=sizeref,
-            sizemin=2,
-            size=df_recover['Recovered'],
-            color='green')))
-
-    world_confirmed = world_confirmed_cases[
-        world_confirmed_cases['Date'] == official_date].groupby('Country/Region'.split(), as_index=False).sum()
-    world_confirmed.rename({'Cases': 'Ongoing'}, axis=1, inplace=1)
-    world_confirmed['text'] = world_confirmed['Country/Region'] + '<br>Total Cases {}: '.format(
-        official_date.strftime('%m/%d/%y')) + world_confirmed['Ongoing'].map('{:,}'.format)
-    world_confirmed['Lat'] = world_confirmed['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Lat'])
-    world_confirmed['Long'] = world_confirmed['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Long'])
-
-    world_dead = world_death_cases[
-        world_death_cases['Date'] == official_date].groupby('Country/Region'.split(), as_index=False).sum()
-    world_dead.rename({'Cases': 'Dead'}, axis=1, inplace=1)
-    world_dead['text'] = world_dead['Country/Region'] + '<br>Total Dead {}: '.format(
-        official_date.strftime('%m/%d/%y')) + world_dead['Dead'].map('{:,}'.format)
-    world_dead['Lat'] = world_dead['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Lat'])
-    world_dead['Long'] = world_dead['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Long'])
-
-    world_recovered = world_recovered_cases[
-        world_recovered_cases['Date'] == official_date].groupby('Country/Region'.split(), as_index=False).sum()
-    world_recovered.rename({'Cases': 'Recovered'}, axis=1, inplace=1)
-    world_recovered['text'] = world_recovered['Country/Region'] + '<br>Total Recovered {}: '.format(
-        official_date.strftime('%m/%d/%y')) + world_recovered['Recovered'].map('{:,}'.format)
-    world_recovered['Lat'] = world_recovered['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Lat'])
-    world_recovered['Long'] = world_recovered['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Long'])
-
-    fig.add_trace(go.Scattermapbox(
-        lon=world_confirmed['Long'],
-        lat=world_confirmed['Lat'],
-        text=world_confirmed['text'],
-        customdata=world_confirmed['Country/Region'],
+        text=sub_df['Text_Recover'],
         hoverinfo='text',
-        textposition='top right',
         mode='markers',
         marker=dict(
             sizeref=sizeref,
             sizemin=3,
-            size=world_confirmed['Ongoing'],
-            color='yellow')))
-
-    fig.add_trace(go.Scattermapbox(
-        lon=world_dead['Long'] +
-        np.random.normal(0, .05, len(world_dead['Long'])),
-        lat=world_dead['Lat']+np.random.normal(0, .05, len(world_dead['Lat'])),
-        text=world_dead['text'],
-        customdata=world_dead['Country/Region'],
-        hoverinfo='text',
-        textposition='top right',
-        mode='markers',
-        marker=dict(
-            sizeref=sizeref,
-            sizemin=3,
-            size=world_dead['Dead'],
-            color='red')))
-
-    fig.add_trace(go.Scattermapbox(
-        lon=world_recovered['Long'] +
-        np.random.normal(0, .05, len(world_recovered['Long'])),
-        lat=world_recovered['Lat'] +
-        np.random.normal(0, .05, len(world_recovered['Lat'])),
-        text=world_recovered['text'],
-        customdata=world_recovered['Country/Region'],
-        hoverinfo='text',
-        textposition='top right',
-        mode='markers',
-        marker=dict(
-            sizeref=sizeref,
-            sizemin=3,
-            size=world_recovered['Recovered'],
+            size=sub_df['Recovery'],
             color='green')))
 
     layout = dict(
@@ -530,12 +363,12 @@ def display_table_data(selectedData):
               [Input('state-graph', 'clickData')])
 def update_new_case_graph(hoverData):
     if not hoverData:
-        sub_df = new_cases_by_country.groupby('Date').sum().reset_index()
+        sub_df = per_day_stats_by_country.groupby('Date').sum().reset_index()
         country = 'World'
 
     else:
         country = hoverData['points'][0]['customdata']
-        sub_df = new_cases_by_country[new_cases_by_country['Country'] == country]
+        sub_df = per_day_stats_by_country[per_day_stats_by_country['Country/Region'] == country]
 
     dates = date_mapper['Date_text'].unique()
     fig = go.Figure()
