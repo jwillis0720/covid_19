@@ -315,7 +315,7 @@ p {
 
 #heatmap-title {
     font-family: "Fjalla One", sans-serif ;
-    font-size: 4rem;
+    font-size: 2rem;
     color: white;
     margin-top: 2rem;
     padding-top: 1rem;
@@ -735,7 +735,7 @@ div .rc-slider-handle{
     position: relative;
     padding-top: 5rem;
     padding-right: 2rem;
-    font-size: 200%;
+    /* font-size: 200%; */
 
 }
 
