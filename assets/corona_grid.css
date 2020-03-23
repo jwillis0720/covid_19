@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
+
+html{
+    font-size: 100%;
+    background-color: #1f2630;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0;
+    font-family:  "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+body {
+    font-size: 1.5rem; /* currently ems cause chrome bug misinterpreting rems on body element */
+    line-height: 1.6;
+    font-weight: 400;
+    font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #7fafdf;
+}
+
+
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: 300;
+}
+
+h4 {
+    font-family: "Fjalla One", sans-serif;
+    font-size: 2rem;
+    /* line-height: 1.35; */
+    letter-spacing: -.08rem;
+    margin-bottom: 1.2rem;
+    margin-top: 1.2rem;
+    font-weight: bold;
+    color: #2cfec1;
+}
+
+#header{
+    margin-bottom: 25rem;
+}
+
+#description{
+    font-family: "Fjalla One", sans-serif;
+    font-size: 1.5rem;
+    border-left: #2cfec1 solid 0.5rem;
+    padding-left: 1rem;
+    max-width: 100rem;
+    margin: 1rem 0 2rem 2rem;
+    color: white;
+}
+
+#app-container {
+    display: grid;
+    grid-template-columns: 55% auto;
+    grid-template-rows: 10% auto 20%;
+    grid-column-gap: 2rem;
+    grid-row-gap: 2rem;
+    margin: 1rem;
+    padding: 1rem;
+    grid-template-areas: 
+       "header header"
+       "left-container graph-container"
+       "table-container table-container";
+}
+
+#header{
+    grid-area: header;
+}
+
+#left-container{
+    grid-area: left-container;
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: 15% auto;
+    row-gap: 1rem;
+    min-height: 45rem;
+    /* outline-color: blue;
+    outline-style: groove; */
+    grid-auto-rows: minmax(100px,200px);
+    grid-template-areas:
+       "slider-container"
+       "map-container";
+}
+
+#map-container{
+    grid-area: map-container;
+    row-gap: 1%;
+    background-color: #1B222A;
+    display: grid;
+    
+    grid-template-columns: auto;
+    grid-template-rows: 10% auto;
+    grid-auto-rows: minmax(40rem,auto);
+    /* margin-bottom: 6rem; */
+    grid-template-areas:
+        "map-title-container"
+        "map";
+
+}
+
+#map-title-container{
+    grid-area: map-title-container;
+    display: grid;
+    grid-template-columns: 30% auto 40%;
+    grid-template-rows: auto;
+    grid-template-areas: 
+        "radio-buttons map-title checkbox";
+
+}
+
+#map{
+    grid-area: map;
+    max-height: 100%;
+}
+#map-title{
+    grid-area: map-title;
+    justify-self: center;
+    align-self: center;
+    font-size: 2.0rem;
+    color:#2cfec1;
+    margin-block-end: 0;
+}
+#radio-items{
+grid-area: radio-buttons;
+justify-self: start;
+align-self: end;
+padding-inline-start:3rem;
+}
+
+.hovertext text {
+    font-size: 3rem !important;
+}
+
+#check-items{
+    grid-area: checkbox;
+    justify-self: end;
+    align-self: end;
+    padding-inline-end: 2rem;
+}
+.radio-list{
+    padding-right: 0.5rem
+}
+
+#slider-container{
+    grid-area: slider-container;
+    row-gap: 1rem;
+    background-color:    #1B222A;
+    display: grid;
+    grid-template-rows: 40% auto;
+    grid-template-areas: auto;
+}
+
+#graph-container{
+    background-color: #1B222A;;
+    grid-area: graph-container;
+}
+
+#slider-text{
+    grid-row:1;
+    justify-self: start;
+    padding-inline-start: 1rem;
+    align-self: center;
+    justify-self: stretch;
+    font-family: "Fjalla One";
+    font-size: 1.5rem;
+    color: white;
+}
+
+#date_slider{
+    grid-row: 2;
+    padding-inline-start: 3rem;
+    padding-inline-end: 3rem;
+    align-self: start;
+}
+
+#table-container{
+    grid-area: table-container
+}
+
+#state-graph{
+    grid-area: map;
+    align-self: stretch;
+    /* padding-block-end: 5rem; */
+    margin: 1rem;
+}
+
+div .rc-slider-handle{
+    height: 17px;
+    width: 17px;
+    position: relative;
+    bottom: 50%;
+}
+
+
+div .rc-slider-handle{
+    height: 17px;
+    width: 17px;
+    position: relative;
+    bottom: 50%;
+    background-color: rgb(148, 32, 32);
+}
+.rc-slider-mark-text{
+    color: white;
+    font-size: 1.2rem;
+}
+
+
+.rc-slider-mark-text{
+    color: grey;
+    font-weight: bolder;
+}
+
+.rc-slider-mark-text-active{
+    color: white
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+   /* vertical-align: ; */
+   height:20px;
+   width: 20px;
+   margin-right: 0.5rem;
+    
+
+}
+
+
+.rc-slider-dot-active, .rc-slider-handle {
+    border-color: #33fe2c   !important;
+
+
+}
+
+.rc-slider-track {
+    background-color: #33fe2c !important
+}
+
+.rc-slider-rail {
+    background-color: gold !important;
+    height: 0.1rem
+}
+
+@media (max-width: 540px) {
+    #app-container {
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: 10% 40% 30% auto;
+        grid-column-gap: 2rem;
+        grid-row-gap: 2rem;
+        margin: 1rem;
+        padding: 1rem;
+        grid-template-areas: 
+           "header"
+           "left-container" 
+           "graph-container"
+           "table-container";
+    }
+
+    #left-container{
+        min-height: 0rem
+    }
+
+    html{
+        font-size: 50%;
+    }
+
+
+} 

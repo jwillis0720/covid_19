@@ -127,6 +127,22 @@ centroid_country_mapper = {x[0]: {'Long': x[1]['Long'], 'Lat': x[1]['Lat']}
                            for x in centroid_country_mapper.iterrows()}
 
 
+def get_dummy_graph(id_):
+    return dcc.Graph(
+        id=id_,
+        figure={
+            'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5],
+                    'type': 'bar', 'name': u'Montréal'},
+            ],
+            'layout': {
+                'title': 'Dash Data Visualization'
+            }
+        }
+    )
+
+
 def get_date_slider():
     how_many_labels = (len(date_mapper))//10
     marks = {k: {'label': v}
@@ -172,7 +188,7 @@ def get_dash_table():
 
 def serve_dash_layout():
     return html.Div(
-        id="root",
+        id="app-container",
         children=[
             html.Div(
                 id="header",
@@ -180,77 +196,73 @@ def serve_dash_layout():
                     # html.Img(id="logo", src=app.get_asset_url("dash-logo.png")),
                     html.H4(children="COVID-19 Infection Dashboard"),
                     html.P(
-                        id="map-description",
+                        id="description",
                         children=["COVID-19 Infection Information"]
                     ),
                 ],
             ),
             html.Div(
-                id="app-container",
+                id='table-container',
+                children=[]
+            ),
+
+            html.Div(
+                id="left-container",
                 children=[
                     html.Div(
-                        id="left-column",
+                        id="slider-container",
                         children=[
-                            html.Div(
-                                id="slider-container",
-                                children=[
-                                    html.P(
-                                        id="slider-text",
-                                        children="Drag the Slider to Change the Reported Date:",
-                                    ),
-                                    get_date_slider()
-                                ],
+                            html.P(
+                                id="slider-text",
+                                children="Drag the Slider to Change the Reported Date:",
                             ),
-
-                            html.Div(
-                                id="heatmap-container",
-                                children=[
-                                    html.Div(id='heatmap-header', children=[
-
-                                        dcc.RadioItems(
-                                            id='radio-items',
-                                            labelClassName='radio-list',
-                                            options=[
-                                                {'label': 'Country',
-                                                    'value': 'Country/Region'},
-                                                {'label': 'State/Province',
-                                                 'value': 'Province/State'},
-                                                # {'label': 'County',
-                                                #  'value': 'County'}
-                                            ],
-                                            value='Country/Region'),
-                                        html.P(
-                                            id="heatmap-title",
-                                        ),
-                                        dcc.Checklist(
-                                            id='check-items',
-                                            labelClassName='radio-list',
-                                            options=[
-                                                {'label': 'Cases',
-                                                    'value': 'cases'},
-                                                {'label': u'Deaths',
-                                                    'value': 'deaths'},
-                                                {'label': 'Recoveries',
-                                                    'value': 'recovery'},
-                                                {'label': 'Active Cases',
-                                                    'value': 'active'}
-                                            ],
-                                            value=['cases', 'deaths']
-                                        ),
-                                    ]),
-                                    dcc.Graph(id='state-graph')
-                                ],
-                            ),
-
+                            get_date_slider()
                         ],
                     ),
+
                     html.Div(
-                        id="graph-container",
+                        id='map-container',
                         children=[
-                           html.P(id='graph-container-tile'),
-                           dcc.Graph(id='per_date'),
-                        ],
-                    ),
+                            html.Div(
+                                id='map-title-container',
+                                children=[
+                                    dcc.RadioItems(
+                                        id='radio-items',
+                                        labelClassName='radio-list',
+                                        options=[
+                                            {'label': 'Country',
+                                             'value': 'Country/Region'},
+                                            {'label': 'State/Province',
+                                             'value': 'Province/State'},
+                                        ],
+                                        value='Country/Region'),
+                                    html.P(
+                                        id="map-title",
+                                    ),
+                                    dcc.Checklist(
+                                        id='check-items',
+                                        labelClassName='radio-list',
+                                        options=[
+                                            {'label': 'Cases',
+                                             'value': 'cases'},
+                                            {'label': u'Deaths',
+                                             'value': 'deaths'},
+                                            {'label': 'Recoveries',
+                                             'value': 'recovery'},
+                                            {'label': 'Active',
+                                             'value': 'active'}
+                                        ],
+                                        value=['cases', 'deaths']
+                                    )]),
+                            # get_dummy_graph(grap)
+                            dcc.Graph(id='state-graph')
+                        ])
+                ]),
+            html.Div(
+                id="graph-container",
+                children=[
+                    html.P(id='graph-container-tile'),
+                    dcc.Graph(id='per_date'),
                 ],
             ),
         ],
@@ -299,10 +311,10 @@ def get_graph_state(date_int, group, metrics, figure):
     else:
         normalizer = 'Deaths'
 
-    #print(group, metrics)
+    # print(group, metrics)
 
     official_date = date_mapper.iloc[date_int]['Date']
-    #print(date_int, official_date)
+    # print(date_int, official_date)
 
     if group == 'Country/Region':
         sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df[group] != "")].groupby(
@@ -321,7 +333,7 @@ def get_graph_state(date_int, group, metrics, figure):
         county_df = merged_df[(merged_df['Date'] == official_date) & (merged_df['County'] != '')].groupby(
             group).sum().reset_index()
         sub_df = sub_df.merge(county_df, on=[
-                              'Province/State'], suffixes=('', '_county'), how='outer').fillna(0)
+            'Province/State'], suffixes=('', '_county'), how='outer').fillna(0)
         sub_df['Cases'] = sub_df['Cases'] + sub_df['Cases_county']
         sub_df['Deaths'] = sub_df['Deaths'] + sub_df['Deaths_county']
         sub_df['Recovery'] = sub_df['Deaths'] + sub_df['Recovery_county']
@@ -357,6 +369,7 @@ def get_graph_state(date_int, group, metrics, figure):
             text=sub_df['Text_Cases'],
             hoverinfo='text',
             mode='markers',
+            name='cases',
             marker=dict(
                 sizeref=sizeref,
                 sizemin=3,
@@ -373,6 +386,7 @@ def get_graph_state(date_int, group, metrics, figure):
             textposition='top right',
             text=sub_df['Text_Death'],
             hoverinfo='text',
+            name='deaths',
             mode='markers',
             marker=dict(
                 sizeref=sizeref,
@@ -390,6 +404,7 @@ def get_graph_state(date_int, group, metrics, figure):
             textposition='top right',
             text=sub_df['Text_Recover'],
             hoverinfo='text',
+            name='recoveries',
             mode='markers',
             marker=dict(
                 sizeref=sizeref,
@@ -406,6 +421,7 @@ def get_graph_state(date_int, group, metrics, figure):
             textposition='top right',
             text=sub_df['Text_Active'],
             hoverinfo='text',
+            name='active',
             mode='markers',
             marker=dict(
                 sizeref=sizeref,
@@ -421,7 +437,7 @@ def get_graph_state(date_int, group, metrics, figure):
     layout = dict(
         title_text='The Corona is Coming',
         autosize=True,
-        showlegend=False,
+        showlegend=True,
         mapbox=dict(
             accesstoken=mapbox_access_token,
             style=mapbox_style,
@@ -431,13 +447,26 @@ def get_graph_state(date_int, group, metrics, figure):
         hovermode="closest",
         margin=dict(r=0, l=0, t=0, b=0),
         dragmode="pan",
+        legend=dict(
+            x=0.92,
+            y=1,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=14,
+                color="white"
+            ),
+            bgcolor='rgba(0,0,0,0)',
+            # bordercolor="",
+            # borderwidth=2
+        )
     )
 
     fig.update_layout(layout)
     return fig
 
 
-@app.callback(Output('heatmap-title', 'children'),
+@app.callback(Output('map-title', 'children'),
               [Input('date_slider', 'value')])
 def update_description(date_int):
     "Reported Infections Map"
