@@ -106,6 +106,8 @@ per_day_stats_by_county = pd.read_csv(
 
 
 merged_df['Date'] = pd.to_datetime(merged_df['Date'])
+merged_df['Active'] = merged_df['Cases'] - \
+    merged_df['Deaths'] - merged_df['Recovery']
 per_day_stats_by_state['Date'] = pd.to_datetime(
     per_day_stats_by_state['Date']).fillna('')
 per_day_stats_by_country['Date'] = pd.to_datetime(
@@ -288,10 +290,19 @@ def get_graph_state(date_int, group, metrics, figure):
         lon = figure["layout"]["mapbox"]['center']["lon"]
         zoom = figure["layout"]["mapbox"]["zoom"]
 
-    print(group, metrics)
+    if 'cases' in metrics:
+        normalizer = 'Cases'
+    elif 'active' in metrics:
+        normalizer = 'Active'
+    elif 'recovery' in metrics:
+        normalizer = 'Recovery'
+    else:
+        normalizer = 'Deaths'
+
+    #print(group, metrics)
 
     official_date = date_mapper.iloc[date_int]['Date']
-    print(date_int, official_date)
+    #print(date_int, official_date)
 
     if group == 'Country/Region':
         sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df[group] != "")].groupby(
@@ -300,27 +311,28 @@ def get_graph_state(date_int, group, metrics, figure):
             lambda x: centroid_country_mapper[x]['Lat'])
         sub_df['Long'] = sub_df['Country/Region'].apply(
             lambda x: centroid_country_mapper[x]['Long'])
+
         sizeref = 2. * merged_df.groupby(
-            ['Date', group]).sum().max()['Cases'] / (20 ** 2)
+            ['Date', group]).sum().max()[normalizer] / (20 ** 2)
 
     elif group == 'Province/State':
         sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df[group] != "") & (merged_df['County'] == '')].groupby(
             group).sum().reset_index()
-        # county_df = merged_df[(merged_df['Date'] == official_date) & (merged_df['County'] != '')].groupby(
-        #     group).sum().reset_index()
-        # sub_df = sub_df.merge(county_df, on=[
-        #                       'Province/State'], suffixes=('', '_county'), how='outer').fillna(0)
-        # sub_df['Cases'] = sub_df['Cases'] + sub_df['Cases_county']
-        # sub_df['Deaths'] = sub_df['Deaths'] + sub_df['Deaths_county']
-        # sub_df['Recovery'] = sub_df['Deaths'] + sub_df['Recovery_county']
+        county_df = merged_df[(merged_df['Date'] == official_date) & (merged_df['County'] != '')].groupby(
+            group).sum().reset_index()
+        sub_df = sub_df.merge(county_df, on=[
+                              'Province/State'], suffixes=('', '_county'), how='outer').fillna(0)
+        sub_df['Cases'] = sub_df['Cases'] + sub_df['Cases_county']
+        sub_df['Deaths'] = sub_df['Deaths'] + sub_df['Deaths_county']
+        sub_df['Recovery'] = sub_df['Deaths'] + sub_df['Recovery_county']
         sizeref = 2. * merged_df.groupby(
-            ['Date', group]).sum().max()['Cases'] / (50 ** 2)
+            ['Date', group]).sum().max()[normalizer] / (20 ** 2)
 
     else:
         sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df['County'] != '')].groupby(
             group).sum().reset_index()
         sizeref = 2. * merged_df.groupby(
-            ['Date', group]).sum().max()['Cases'] / (50 ** 2)
+            ['Date', group]).sum().max()[normalizer] / (50 ** 2)
 
     sub_df['Active'] = sub_df['Cases'] - sub_df['Deaths'] - sub_df['Recovery']
     sub_df['Text_Cases'] = sub_df[group] + '<br>Total Cases at {} : '.format(
@@ -424,20 +436,13 @@ def get_graph_state(date_int, group, metrics, figure):
     fig.update_layout(layout)
     return fig
 
+
 @app.callback(Output('heatmap-title', 'children'),
               [Input('date_slider', 'value')])
 def update_description(date_int):
     "Reported Infections Map"
     official_date = date_mapper.iloc[date_int]['Date']
     return "{}".format(official_date.strftime('%B %d, %Y'))
-
-
-def display_table_data(selectedData):
-    if not selectedData:
-        raise PreventUpdate
-    state = selectedData['points'][0]['customdata']
-    df = to_date_cases_by_city[to_date_cases_by_city['State'] == state]
-    return df.sort_values('Cases')[::-1].to_dict('records')
 
 
 @app.callback(Output('per_date', 'figure'),
