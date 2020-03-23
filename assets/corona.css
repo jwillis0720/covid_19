@@ -315,9 +315,10 @@ p {
 
 #heatmap-title {
     font-family: "Fjalla One", sans-serif ;
-    font-size: 2.5rem;
+    font-size: 4rem;
     color: white;
-    margin-top: 2rem
+    margin-top: 2rem;
+    padding-top: 1rem;
 }
 
 #map-description {
@@ -511,7 +512,12 @@ fieldset {
 
 input[type="checkbox"],
 input[type="radio"] {
-    display: inline;
+   /* vertical-align: ; */
+   height:20px;
+   width: 20px;
+   margin-right: 0.5rem;
+    
+
 }
 
 label > .label-body {
@@ -696,7 +702,42 @@ div .rc-slider-handle{
     flex: 6 60%
 }
 
+#heatmap-header{
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    justify-content: space-around;
+}
 
+#radio-items{
+    display: flex;
+    align-items: stretch;
+    justify-content:flex-start;
+    align-content: center;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+#check-items{
+    display: flex;
+    align-items: stretch;
+    justify-content:stretch;
+    align-content: center;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+#text{
+    padding-left: 1rem;
+}
+
+.radio-list{
+    position: relative;
+    padding-top: 5rem;
+    padding-right: 2rem;
+    font-size: 200%;
+
+}
 
 #county-choropleth {
     margin: 0;
@@ -705,7 +746,7 @@ div .rc-slider-handle{
 }
 
 #state-graph{
-    margin:2rem;
+    margin:0;
     display: flex;
     flex: 3 30%;
     position: relative;

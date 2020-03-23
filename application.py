@@ -96,7 +96,7 @@ mapbox_access_token = open('.mapbox_token').readlines()[0]
 
 # Import from S3:
 merged_df = pd.read_csv(
-    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/Merged_df.csv.gz', index_col=0)
+    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/Merged_df.csv.gz', index_col=0).fillna('')
 per_day_stats_by_state = pd.read_csv(
     'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/per_day_stats_by_state.csv.gz', index_col=0)
 per_day_stats_by_country = pd.read_csv(
@@ -203,10 +203,40 @@ def serve_dash_layout():
                             html.Div(
                                 id="heatmap-container",
                                 children=[
-                                    html.P(
-                                        id="heatmap-title",
-                                    ),
-                                    dcc.Graph(id='state-graph'),
+                                    html.Div(id='heatmap-header', children=[
+
+                                        dcc.RadioItems(
+                                            id='radio-items',
+                                            labelClassName='radio-list',
+                                            options=[
+                                                {'label': 'Country',
+                                                    'value': 'Country/Region'},
+                                                {'label': 'State/Province',
+                                                 'value': 'Province/State'},
+                                                # {'label': 'County',
+                                                #  'value': 'County'}
+                                            ],
+                                            value='Country/Region'),
+                                        html.P(
+                                            id="heatmap-title",
+                                        ),
+                                        dcc.Checklist(
+                                            id='check-items',
+                                            labelClassName='radio-list',
+                                            options=[
+                                                {'label': 'Cases',
+                                                    'value': 'cases'},
+                                                {'label': u'Deaths',
+                                                    'value': 'deaths'},
+                                                {'label': 'Recoveries',
+                                                    'value': 'recovery'},
+                                                {'label': 'Active Cases',
+                                                    'value': 'active'}
+                                            ],
+                                            value=['cases', 'deaths']
+                                        ),
+                                    ]),
+                                    dcc.Graph(id='state-graph')
                                 ],
                             ),
 
@@ -244,10 +274,11 @@ application = app.server
 
 
 @app.callback(Output('state-graph', 'figure'),
-              [Input('date_slider', 'value')],
+              [Input('date_slider', 'value'),
+               Input('radio-items', 'value'),
+               Input('check-items', 'value')],
               [State('state-graph', 'figure')])
-def get_graph_state(date_int, figure):
-    # Get initial zoom and shit if the figure is already drawn
+def get_graph_state(date_int, group, metrics, figure):
     if not figure:
         lat = 15.74
         lon = -1.4
@@ -257,74 +288,124 @@ def get_graph_state(date_int, figure):
         lon = figure["layout"]["mapbox"]['center']["lon"]
         zoom = figure["layout"]["mapbox"]["zoom"]
 
+    print(group, metrics)
+
     official_date = date_mapper.iloc[date_int]['Date']
     print(date_int, official_date)
 
-    sub_df = merged_df[merged_df['Date'] == official_date].groupby(
-        'Country/Region').sum().reset_index()
-    sub_df['Lat'] = sub_df['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Lat'])
-    sub_df['Long'] = sub_df['Country/Region'].apply(
-        lambda x: centroid_country_mapper[x]['Long'])
-    sub_df['Text_Cases'] = sub_df['Country/Region'] + '<br>Total Cases at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['Cases'].astype(str)
-    sub_df['Text_Death'] = sub_df['Country/Region'] + '<br>Total Deaths at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['Deaths'].astype(str)
-    sub_df['Text_Recover'] = sub_df['Country/Region'] + '<br>Total Cases at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['Recovery'].astype(str)
-    sizeref = 2. * merged_df.groupby(
-        ['Date', 'Country/Region']).sum().max()['Cases'] / (20 ** 2)
+    if group == 'Country/Region':
+        sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df[group] != "")].groupby(
+            group).sum().reset_index()
+        sub_df['Lat'] = sub_df['Country/Region'].apply(
+            lambda x: centroid_country_mapper[x]['Lat'])
+        sub_df['Long'] = sub_df['Country/Region'].apply(
+            lambda x: centroid_country_mapper[x]['Long'])
+        sizeref = 2. * merged_df.groupby(
+            ['Date', group]).sum().max()['Cases'] / (20 ** 2)
 
-    # Has to take in a figure state eventually
+    elif group == 'Province/State':
+        sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df[group] != "") & (merged_df['County'] == '')].groupby(
+            group).sum().reset_index()
+        # county_df = merged_df[(merged_df['Date'] == official_date) & (merged_df['County'] != '')].groupby(
+        #     group).sum().reset_index()
+        # sub_df = sub_df.merge(county_df, on=[
+        #                       'Province/State'], suffixes=('', '_county'), how='outer').fillna(0)
+        # sub_df['Cases'] = sub_df['Cases'] + sub_df['Cases_county']
+        # sub_df['Deaths'] = sub_df['Deaths'] + sub_df['Deaths_county']
+        # sub_df['Recovery'] = sub_df['Deaths'] + sub_df['Recovery_county']
+        sizeref = 2. * merged_df.groupby(
+            ['Date', group]).sum().max()['Cases'] / (50 ** 2)
+
+    else:
+        sub_df = merged_df[(merged_df['Date'] == official_date) & (merged_df['County'] != '')].groupby(
+            group).sum().reset_index()
+        sizeref = 2. * merged_df.groupby(
+            ['Date', group]).sum().max()['Cases'] / (50 ** 2)
+
+    sub_df['Active'] = sub_df['Cases'] - sub_df['Deaths'] - sub_df['Recovery']
+    sub_df['Text_Cases'] = sub_df[group] + '<br>Total Cases at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Cases'].apply(lambda x: "{:,}".format(int(x)))
+    sub_df['Text_Death'] = sub_df[group] + '<br>Total Deaths at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Deaths'].apply(lambda x: "{:,}".format(int(x)))
+    sub_df['Text_Recover'] = sub_df[group] + '<br>Total Recoveries at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Recovery'].apply(lambda x: "{:,}".format(int(x)))
+
+    sub_df['Text_Active'] = sub_df[group] + '<br>Total Active at {} : '.format(
+        official_date.strftime('%m/%d/%y')) + sub_df['Active'].apply(lambda x: "{:,}".format(int(x)))
+
     fig = go.Figure()
-    fig.add_trace(go.Scattermapbox(
-        lon=sub_df['Long'] +
-        np.random.normal(0, .02, len(sub_df['Long'])),
-        lat=sub_df['Lat'] +
-        np.random.normal(0, .02, len(sub_df['Lat'])),
-        customdata=sub_df['Country/Region'],
-        textposition='top right',
-        text=sub_df['Text_Cases'],
-        hoverinfo='text',
-        mode='markers',
-        marker=dict(
-            sizeref=sizeref,
-            sizemin=3,
-            size=sub_df['Cases'],
-            color='yellow')))
+    if 'cases' in metrics:
+        fig.add_trace(go.Scattermapbox(
+            lon=sub_df['Long'] +
+            np.random.normal(0, .02, len(sub_df['Long'])),
+            lat=sub_df['Lat'] +
+            np.random.normal(0, .02, len(sub_df['Lat'])),
+            customdata=sub_df[group],
+            textposition='top right',
+            text=sub_df['Text_Cases'],
+            hoverinfo='text',
+            mode='markers',
+            marker=dict(
+                sizeref=sizeref,
+                sizemin=3,
+                size=sub_df['Cases'],
+                color='yellow')))
 
-    fig.add_trace(go.Scattermapbox(
-        lon=sub_df['Long'] +
-        np.random.normal(0, .02, len(sub_df['Long'])),
-        lat=sub_df['Lat'] +
-        np.random.normal(0, .02, len(sub_df['Lat'])),
-        customdata=sub_df['Country/Region'],
-        textposition='top right',
-        text=sub_df['Text_Death'],
-        hoverinfo='text',
-        mode='markers',
-        marker=dict(
-            sizeref=sizeref,
-            sizemin=3,
-            size=sub_df['Deaths'],
-            color='red')))
+    if 'deaths' in metrics:
+        fig.add_trace(go.Scattermapbox(
+            lon=sub_df['Long'] +
+            np.random.normal(0, .02, len(sub_df['Long'])),
+            lat=sub_df['Lat'] +
+            np.random.normal(0, .02, len(sub_df['Lat'])),
+            customdata=sub_df[group],
+            textposition='top right',
+            text=sub_df['Text_Death'],
+            hoverinfo='text',
+            mode='markers',
+            marker=dict(
+                sizeref=sizeref,
+                sizemin=3,
+                size=sub_df['Deaths'],
+                color='red')))
 
-    fig.add_trace(go.Scattermapbox(
-        lon=sub_df['Long'] +
-        np.random.normal(0, .02, len(sub_df['Long'])),
-        lat=sub_df['Lat'] +
-        np.random.normal(0, .02, len(sub_df['Lat'])),
-        customdata=sub_df['Country/Region'],
-        textposition='top right',
-        text=sub_df['Text_Recover'],
-        hoverinfo='text',
-        mode='markers',
-        marker=dict(
-            sizeref=sizeref,
-            sizemin=3,
-            size=sub_df['Recovery'],
-            color='green')))
+    if 'recovery' in metrics:
+        fig.add_trace(go.Scattermapbox(
+            lon=sub_df['Long'] +
+            np.random.normal(0, .02, len(sub_df['Long'])),
+            lat=sub_df['Lat'] +
+            np.random.normal(0, .02, len(sub_df['Lat'])),
+            customdata=sub_df[group],
+            textposition='top right',
+            text=sub_df['Text_Recover'],
+            hoverinfo='text',
+            mode='markers',
+            marker=dict(
+                sizeref=sizeref,
+                sizemin=3,
+                size=sub_df['Recovery'],
+                color='green')))
+    if 'active' in metrics:
+        fig.add_trace(go.Scattermapbox(
+            lon=sub_df['Long'] +
+            np.random.normal(0, .02, len(sub_df['Long'])),
+            lat=sub_df['Lat'] +
+            np.random.normal(0, .02, len(sub_df['Lat'])),
+            customdata=sub_df[group],
+            textposition='top right',
+            text=sub_df['Text_Active'],
+            hoverinfo='text',
+            mode='markers',
+            marker=dict(
+                sizeref=sizeref,
+                sizemin=3,
+                size=sub_df['Active'],
+                color='orange')))
 
+    if not metrics:
+        fig.add_trace(go.Scattermapbox(
+            lon=[],
+            lat=[]
+        ))
     layout = dict(
         title_text='The Corona is Coming',
         autosize=True,
@@ -360,15 +441,19 @@ def display_table_data(selectedData):
 
 
 @app.callback(Output('per_date', 'figure'),
-              [Input('state-graph', 'clickData')])
-def update_new_case_graph(hoverData):
-    if not hoverData:
-        sub_df = per_day_stats_by_country.groupby('Date').sum().reset_index()
-        country = 'World'
+              [Input('state-graph', 'clickData'),
+               Input('radio-items', 'value')])
+def update_new_case_graph(hoverData, group):
 
-    else:
+    if group == 'Country/Region' and hoverData:
         country = hoverData['points'][0]['customdata']
         sub_df = per_day_stats_by_country[per_day_stats_by_country['Country/Region'] == country]
+    elif group == 'Province/State' and hoverData:
+        country = hoverData['points'][0]['customdata']
+        sub_df = per_day_stats_by_state[per_day_stats_by_state['Province/State'] == country]
+    else:
+        sub_df = per_day_stats_by_country.groupby('Date').sum().reset_index()
+        country = 'World'
 
     dates = date_mapper['Date_text'].unique()
     fig = go.Figure()
