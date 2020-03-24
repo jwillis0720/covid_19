@@ -188,85 +188,103 @@ def get_dash_table():
 
 def serve_dash_layout():
     return html.Div(
-        id="app-container",
+        id='root_container',
         children=[
             html.Div(
                 id="header",
                 children=[
-                    # html.Img(id="logo", src=app.get_asset_url("dash-logo.png")),
-                    html.H4(children="COVID-19 Infection Dashboard"),
+                    html.H4(
+                        children="COVID-19 Infection Dashboard"),
                     html.P(
                         id="description",
-                        children=["COVID-19 Infection Information"]
-                    ),
-                ],
-            ),
-            html.Div(
-                id='table-container',
-                children=[]
-            ),
-
-            html.Div(
-                id="left-container",
-                children=[
-                    html.Div(
-                        id="slider-container",
                         children=[
-                            html.P(
-                                id="slider-text",
-                                children="Drag the Slider to Change the Reported Date:",
-                            ),
-                            get_date_slider()
-                        ],
+                            "COVID-19 Infection App by ",
+                            html.A(
+                                "Jordan R. Willis PhD", href="https://jordanrwillis.com", target="_blank"),
+                            html.Br(),
+                            "Data generated  nightly from John Hopkins ",
+                            html.A(
+                                "CSSE repository", href='https://github.com/CSSEGISandData/COVID-19'),
+                            html.Br(),
+                            "Inspiration from ",
+                            html.A(
+                                "CSSE", href="https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6"),
+                            ", ",
+                            html.A(
+                                "Bing", href='www.bing.com/covid'),
+                            ", ",
+                           html.A(
+                                "Dash Opioid Epidemic", href='https://dash-gallery.plotly.host/dash-opioid-epidemic/'),
+                            "."]
                     ),
-
-                    html.Div(
-                        id='map-container',
-                        children=[
-                            html.Div(
-                                id='map-title-container',
-                                children=[
-                                    dcc.RadioItems(
-                                        id='radio-items',
-                                        labelClassName='radio-list',
-                                        options=[
-                                            {'label': 'Country',
-                                             'value': 'Country/Region'},
-                                            {'label': 'State/Province',
-                                             'value': 'Province/State'},
-                                        ],
-                                        value='Country/Region'),
-                                    html.P(
-                                        id="map-title",
-                                    ),
-                                    dcc.Checklist(
-                                        id='check-items',
-                                        labelClassName='radio-list',
-                                        options=[
-                                            {'label': 'Cases',
-                                             'value': 'cases'},
-                                            {'label': u'Deaths',
-                                             'value': 'deaths'},
-                                            {'label': 'Recoveries',
-                                             'value': 'recovery'},
-                                            {'label': 'Active',
-                                             'value': 'active'}
-                                        ],
-                                        value=['cases', 'deaths']
-                                    )]),
-                            # get_dummy_graph(grap)
-                            dcc.Graph(id='state-graph')
-                        ])
                 ]),
             html.Div(
-                id="graph-container",
+                id="app-container",
                 children=[
-                    html.P(id='graph-container-tile'),
-                    dcc.Graph(id='per_date'),
-                ],
-            ),
-        ],
-    )
+                    html.Div(
+                        id="left-container",
+                        children=[
+                            html.Div(
+                                id="slider-container",
+                                children=[
+                                    html.P(
+                                        id="slider-text",
+                                        children="Drag the Slider to Change the Reported Date:",
+                                    ),
+                                    get_date_slider()
+                                ]),
+                            html.Div(
+                                id='map-container',
+                                children=[
+                                    html.Div(
+                                        id='map-title-container',
+                                        children=[
+                                            dcc.RadioItems(
+                                                id='radio-items',
+                                                labelClassName='radio-list',
+                                                options=[
+                                                    {'label': 'Country',
+                                                     'value': 'Country/Region'},
+                                                    {'label': 'State/Province',
+                                                     'value': 'Province/State'},
+                                                ],
+                                                value='Country/Region'),
+                                            html.P(
+                                                id="map-title",
+                                            ),
+                                            dcc.Checklist(
+                                                id='check-items',
+                                                labelClassName='radio-list',
+                                                options=[
+                                                    {'label': 'Cases',
+                                                     'value': 'cases'},
+                                                    {'label': u'Deaths',
+                                                     'value': 'deaths'},
+                                                    {'label': 'Recoveries',
+                                                     'value': 'recovery'},
+                                                    {'label': 'Active',
+                                                     'value': 'active'}
+                                                ],
+                                                value=[
+                                                    'cases', 'deaths']
+                                            )]),
+                                    # get_dummy_graph(grap)
+                                    dcc.Graph(id='state-graph')
+                                ])
+                        ]),
+                    html.Div(
+                        id="graph-container",
+                        children=[
+                            html.H5(id='graph-container-tile',
+                                    children=['Click Place on Map to Get More Information']),
+                            dcc.Graph(id='per_date'),
+                            dcc.Graph(id='per_date2'),
+                        ]),
+                    html.Div(
+                        id='table-container',
+                        children=[])
+                ]),
+        ])
 
 
 def get_dash_animation():
