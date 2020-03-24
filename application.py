@@ -28,7 +28,7 @@ app = dash.Dash(__name__,
                         "content": "width=device-width, initial-scale=1.0"}
                 ]
                 )
-app.title = "Corvid-10 Dashboard"
+app.title = "Corvid-19 Dashboard"
 
 # Parse Data
 states_abbreviations_mapper = {
