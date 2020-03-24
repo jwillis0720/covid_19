@@ -34,7 +34,7 @@ app = dash.Dash(__name__,
                     {"name": "keywords",
                         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
                     {'property': 'og:image',
-                        "content": " https://www.dropbox.com/s/tj6ln9cjaclnumt/IMG_0947.png"}
+                        "content": "https://imgur.com/wfEFOk0"}
 
                 ]
 
