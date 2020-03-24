@@ -25,7 +25,14 @@ warnings.filterwarnings(
 app = dash.Dash(__name__,
                 meta_tags=[
                     {"name": "viewport",
-                        "content": "width=device-width, initial-scale=1.0"}
+                        "content": "width=device-width, initial-scale=1.0"},
+                    {"name": "author",
+                        "content": "Jordan R. Willis PhD"},
+
+                    {"name": "description",
+                        "content": "A COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
+                    {"name": "keywords",
+                        "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
                 ]
                 )
 app.title = "Corvid-19 Dashboard"
@@ -185,6 +192,7 @@ def serve_dash_layout():
             html.Div(
                 id="header",
                 children=[
+                    html.Img(src='assets/IMG_0947.png', hidden=True),
                     html.H4(
                         children="COVID-19 Infection Dashboard"),
                     html.P(
@@ -194,7 +202,7 @@ def serve_dash_layout():
                             html.A(
                                 "Jordan R. Willis PhD", href="https://jordanrwillis.com", target="_blank"),
                             html.Br(),
-                            "Data generated  nightly from John Hopkins ",
+                            "Data generated  nightly from Johns Hopkins ",
                             html.A(
                                 "CSSE repository", href='https://github.com/CSSEGISandData/COVID-19'),
                             html.Br(),
