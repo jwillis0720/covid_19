@@ -34,12 +34,18 @@ app = dash.Dash(__name__,
                     {"name": "keywords",
                         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
                     {'property': 'og:image',
-                        "content": "https://i.imgur.com/IOSVSbI.png"}
+                        "content": "https://i.imgur.com/IOSVSbI.png"},
+                    {'property': 'og:title',
+                        "content": "Coronavirus 2019 - A tracking application"
+                     },
+                    {'property': 'og:description',
+                        "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. It is updated with various scraping APIS. Timescale Resolution."
+                     }
 
                 ]
 
                 )
-app.title = "Corvid-19 Dashboard"
+app.title = "Covid-19 Dashboard"
 
 # Parse Data
 states_abbreviations_mapper = {
