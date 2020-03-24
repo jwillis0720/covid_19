@@ -30,7 +30,7 @@ app = dash.Dash(__name__,
                         "content": "Jordan R. Willis PhD"},
 
                     {"name": "description",
-                        "content": "A COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
+                        "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
                     {"name": "keywords",
                         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
                     {'property': 'og:image',
