@@ -1,0 +1,345 @@
+@media (max-width: 540px){
+
+    @import url('https://fonts.googleapis.com/css?family=Open+Sans');
+    @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
+
+    html{
+        font-size:  100%;
+        background-color: #1f2630;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0;
+        font-family:  "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    body {
+        font-size: 1.0rem; /* currently ems cause chrome bug misinterpreting rems on body element */
+        line-height: 1.0;
+        font-weight: 300;
+        font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: white;
+    }
+
+
+
+    h1, h2, h3, h4, h5, h6 {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-weight: 300;
+    }
+
+    h4 {
+        font-family: "Fjalla One", sans-serif;
+        font-size: 2rem;
+        letter-spacing: -.08rem;
+        margin-bottom: 1.2rem;
+        margin-top: 1.2rem;
+        font-weight: bold;
+        color: #2cfec1;
+    }
+
+    .hovertext text {
+        font-size: 1rem !important;
+    }
+
+    div .rc-slider-handle{
+        position: relative;
+        bottom: 50%;
+    }
+
+
+    div .rc-slider-handle{
+        position: relative;
+        bottom: 50%;
+        background-color: rgb(148, 32, 32);
+    }
+    .rc-slider-mark-text{
+        color: white;
+        font-size: 0;
+    }
+
+
+    .rc-slider-mark-text{
+        color: grey;
+        font-weight: bolder;
+    }
+
+    .rc-slider-mark-text-active{
+        color: white
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+    /* vertical-align: ; */
+    height:10px;
+    width: 10px;
+    margin-right: 0.5rem;
+        
+
+    }
+
+    #root_container{
+        display:grid;
+        grid-template-rows: 7% auto;
+        grid-template-areas: auto;
+        row-gap: 1rem;
+    }
+
+    #header{
+        margin-left: 0.5rem;
+        font-size: 75%;
+        display: grid;
+        align-self: start;
+        margin-top: 3rem;
+    }
+
+    #description{
+        align-self: start;
+        font-family: sans-serif;
+        line-height: 1.2rem;
+        font-weight: normal;
+        border-left: #2cfec1 solid 0.2rem;
+        padding-left: 1rem;
+        color: white;
+        letter-spacing: 0rem;
+        margin-left: 1rem;
+        margin-top: 1rem
+   }
+
+   #header, h4{
+       margin-bottom: 0;
+       align-self: end;
+
+   }
+
+   #description, a{
+    display: inline-block;
+   }
+
+
+
+    #map-title-container{
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: 1fr 0.5fr 1fr;
+        grid-template-rows: auto;
+        font-size: 50%;
+        align-items: center;
+    }
+    
+    #radio-items{
+        justify-self: start;
+        align-self: end;
+        margin-block-end: 0.5rem;
+    }
+
+    #map-title{
+        justify-self: center;
+        align-self: end;
+        font-size: 200%;
+        color:#2cfec1;
+        margin-block-end: 0.5rem;
+    }
+
+    #check-items{
+        justify-self: end;
+        align-self: end;
+        margin-block-end: 0.5rem;
+    }
+
+
+/* 
+
+    .rc-slider-dot-active, .rc-slider-handle {
+        border-color: #33fe2c   !important;
+
+
+    }
+
+    .rc-slider-track {
+        background-color: #33fe2c !important
+    }
+
+    .rc-slider-rail {
+        background-color: gold !important;
+        height: 0.1rem
+    }
+
+    .radio-list{
+        padding-right: 0.5rem
+    }
+
+    #root_container{
+        display:grid;
+        grid-template-rows: 20% auto;
+        grid-template-areas: auto;
+        min-height: 50vh;
+    }
+    #header{
+        margin-left: 2rem;
+        grid-row-start: 1;
+        grid-row-end: 2;
+
+    }
+
+    #description{
+        font-family: sans-serif;
+        font-size: 1.5rem;
+        font-weight: normal;
+        border-left: #2cfec1 solid 0.5rem;
+        padding-left: 1rem;
+        max-width: 100rem;
+        margin: 1rem 0 1rem 2rem;
+        color: white;
+        letter-spacing: 0rem;
+    }
+    #description a {
+        color:#2cfec1 
+    }
+
+
+    #app-container {
+        grid-row-start: 2;
+        display: grid;
+        grid-template-columns: 55% auto;
+        grid-template-rows: 90% 10%;
+        grid-column-gap: 2rem;
+        grid-row-gap: 2rem;
+        margin: 1rem;
+        min-height: 60rem;
+        padding: 1rem;
+        grid-template-areas: 
+        "left-container graph-container"
+        "table-container table-container";
+    }
+
+
+
+
+    #left-container{
+        grid-area: left-container;
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: 15% auto;
+        row-gap: 1rem;
+        grid-template-areas:
+        "slider-container"
+        "map-container";
+    }
+
+    #slider-container{
+        grid-area: slider-container;
+        row-gap: 1rem;
+        background-color:    #1B222A;
+        display: grid;
+        grid-template-rows: 40% auto;
+        grid-template-areas: auto;
+    }
+
+    #slider-text{
+        grid-row:1;
+        justify-self: start;
+        padding-inline-start: 1rem;
+        align-self: center;
+        justify-self: stretch;
+        font-family: "Fjalla One";
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    #date_slider{
+        grid-row: 2;
+        padding-inline-start: 3rem;
+        padding-inline-end: 3rem;
+        align-self: start;
+    }
+
+
+    #map-container{
+        grid-area: map-container;
+        row-gap: 1%;
+        background-color: #1B222A;
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: 10% auto;
+        grid-auto-rows: minmax(40rem,auto);
+        grid-template-areas:
+            "map-title-container"
+            "map";
+    }
+
+    #map-title-container{
+        grid-area: map-title-container;
+        display: grid;
+        grid-template-columns: 30% auto 40%;
+        grid-template-rows: auto;
+        grid-template-areas: 
+            "radio-buttons map-title checkbox";
+
+    }
+
+    #map-title{
+        grid-area: map-title;
+        justify-self: center;
+        align-self: center;
+        font-size: 2.0rem;
+        color:#2cfec1;
+        margin-block-end: 0;
+    }
+
+    #radio-items{
+        grid-area: radio-buttons;
+        justify-self: start;
+        align-self: end;
+        padding-inline-start:3rem;
+    }
+
+    #check-items{
+        grid-area: checkbox;
+        justify-self: end;
+        align-self: end;
+        padding-inline-end: 2rem;
+    }
+
+
+    #state-graph{
+        grid-area: map;
+        align-self: stretch;
+
+        margin: 1rem;
+    }
+
+
+    #graph-container{
+        background-color: #1B222A;;
+        grid-area: graph-container;
+        display: grid;
+        grid-template-rows: 5% 45% auto 45%;
+        grid-template-columns: auto;
+    }
+
+    #graph-container-tile{
+        grid-row-start: 1;
+        grid-row-end: 2;
+        align-self: start;
+        justify-self: center;
+        font-size: 120%;
+    }
+
+    #per_date{
+        grid-row-start: 2;
+        grid-row-end: 3;
+
+    }
+    #per_date_line{
+        grid-row-start: 4;
+    }
+
+
+    #table-container{
+        grid-area: table-container
+    }
+ */
+
+
+    } 

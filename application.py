@@ -204,7 +204,7 @@ def serve_dash_layout():
                 children=[
                     html.H4(
                         children="COVID-19 Infection Dashboard"),
-                    html.P(
+                    html.Div(
                         id="description",
                         children=[
                             "COVID-19 Infection App by ",

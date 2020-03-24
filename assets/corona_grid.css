@@ -1,3 +1,5 @@
+@media (min-width: 500px){
+
 @import url('https://fonts.googleapis.com/css?family=Open+Sans');
 @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
 
@@ -16,6 +18,7 @@ body {
     font-weight: 400;
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: white;
+    zoom:100%;
 }
 
 
@@ -38,7 +41,7 @@ h4 {
 }
 
 .hovertext text {
-    font-size: 3rem !important;
+    font-size: 2rem !important;
 }
 
 div .rc-slider-handle{
@@ -276,30 +279,6 @@ input[type="radio"] {
 
 
 
-
-@media (max-width: 540px) {
-    #app-container {
-        display: grid;
-        grid-template-columns: auto;
-        grid-template-rows: 10% 40% 30% auto;
-        grid-column-gap: 2rem;
-        grid-row-gap: 2rem;
-        margin: 1rem;
-        padding: 1rem;
-        grid-template-areas: 
-           "header"
-           "left-container" 
-           "graph-container"
-           "table-container";
-    }
-
-    #left-container{
-        min-height: 0rem
-    }
-
-    html{
-        font-size: 50%;
-    }
 
 
 } 
