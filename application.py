@@ -33,7 +33,11 @@ app = dash.Dash(__name__,
                         "content": "A COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
                     {"name": "keywords",
                         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
+                    {'property': 'og:image',
+                        "content": " https://www.dropbox.com/s/tj6ln9cjaclnumt/IMG_0947.png"}
+
                 ]
+
                 )
 app.title = "Corvid-19 Dashboard"
 
@@ -192,7 +196,6 @@ def serve_dash_layout():
             html.Div(
                 id="header",
                 children=[
-                    html.Img(src='assets/IMG_0947.png', hidden=True),
                     html.H4(
                         children="COVID-19 Infection Dashboard"),
                     html.P(
