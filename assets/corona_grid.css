@@ -206,7 +206,7 @@ input[type="radio"] {
 #map-title-container{
     grid-area: map-title-container;
     display: grid;
-    grid-template-columns: 50% 10% auto;
+    grid-template-columns: 40% 20% auto;
     grid-template-rows: auto;
     grid-template-areas: 
         "radio-buttons map-title checkbox";
