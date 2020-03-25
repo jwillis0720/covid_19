@@ -106,9 +106,8 @@ input[type="radio"] {
 
 #root_container{
     display:grid;
-    grid-template-rows: 20% auto;
+    grid-template-rows: 15% auto;
     grid-template-areas: auto;
-    min-height: 50vh;
 }
 #header{
     margin-left: 2rem;
