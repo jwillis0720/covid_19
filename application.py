@@ -209,6 +209,7 @@ def plot_sunburst():
             colorscale='RdBu_r',
             cmid=new_merge_no_us.groupby('name').sum()['confirmed'].mean()/new_merge_no_us['confirmed'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Cases: %{value}',
+        insidetextorientation='radial',
         name='',
         maxdepth=3
     ), 1, 1)
@@ -229,7 +230,7 @@ def plot_sunburst():
         branchvalues='total',
         marker=dict(
             colors=df_higherarchy['color'],
-            colorscale='RdBu_r',
+            colorscale='reds',
             cmid=new_merge_no_us.groupby('name').sum()['deaths'].mean()/new_merge_no_us['deaths'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Deaths: %{value}',
         name='',
@@ -237,6 +238,7 @@ def plot_sunburst():
     ), 1, 2)
 
     fig.update_layout(
+        uniformtext=dict(minsize=16, mode='hide'),
         paper_bgcolor='rgb(0,0,0,0)',
         # title=dict(text='Total Confirmed Cases<br>Click to Expand',
         #            font=dict(color='white', size=24)),
