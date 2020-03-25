@@ -237,13 +237,13 @@ def plot_sunburst():
         name='',
         maxdepth=3
     ), 1, 2)
-
+    margine = 15
     fig.update_layout(
         uniformtext=dict(minsize=16, mode='hide'),
         paper_bgcolor='rgb(0,0,0,0)',
         # title=dict(text='Total Confirmed Cases<br>Click to Expand',
         #            font=dict(color='white', size=24)),
-        margin=dict(l=40, r=40, t=40, b=40)
+        margin=dict(l=margine, r=margine, t=margine, b=margine)
     )
 
     return fig
@@ -626,27 +626,32 @@ def update_description(date_int):
                Input('radio-items', 'value')])
 def update_new_case_graph(hoverData, group):
 
+    sub_df_time = pd.DataFrame()
     if group == 'country' and hoverData:
         country = hoverData['points'][0]['customdata']
         sub_df = per_day_stats_by_country[per_day_stats_by_country['country'] == country]
+        sub_df_time = jhu_df_time[jhu_df_time['country']
+                                  == country].groupby('Date').sum().reset_index()
     elif group == 'province' and hoverData:
         country = hoverData['points'][0]['customdata']
         sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
         if sub_df.empty:
             country = "{} - No Data Available".format(country)
+        sub_df_time = ""
     else:
         sub_df = per_day_stats_by_country.groupby('Date').sum().reset_index()
+        sub_df_time = jhu_df_time.groupby('Date').sum().reset_index()
         country = 'World'
 
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
     dates = date_mapper['Date_text'].unique()
-    fig = go.Figure()
     fig.add_trace(go.Bar(x=dates,
                          y=sub_df['New Cases'],
                          name=country,
                          showlegend=False,
                          text=sub_df['New Cases'],
                          textposition='auto',
-                         texttemplate='%{y:,f}',
                          hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
 
                          marker=dict(
@@ -654,6 +659,22 @@ def update_new_case_graph(hoverData, group):
                              line=dict(
                                  color='white')
                          )))
+    if not sub_df_time.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=dates,
+                y=sub_df_time['confirmed'],
+                name=country,
+                showlegend=False,
+                mode='lines+markers',
+                hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
+                marker=dict(
+                    color='yellow',
+                    size=0.1,
+                    line=dict(
+                        width=10,
+                        color='white')
+                )), secondary_y=True)
 
     fig.update_layout(
         title=dict(text='New Cases Per Day: {}'.format(
@@ -665,6 +686,7 @@ def update_new_case_graph(hoverData, group):
             tickfont_size=18,
             showgrid=False,
             color='white',
+            side='left',
         ),
         xaxis=dict(
             title='Date',
@@ -675,7 +697,20 @@ def update_new_case_graph(hoverData, group):
         plot_bgcolor='rgb(52,51,50)',
         barmode='group',
         bargap=0.15,  # gap between bars of adjacent location coordinates.
-        bargroupgap=0.1)  # gap between bars of the same location coordinate.
+        bargroupgap=0.1)
+
+    if not sub_df_time.empty:
+        fig.update_layout(
+            yaxis2=dict(
+                title=dict(text='Total Cases', standoff=2),
+                titlefont_size=18,
+                tickfont_size=18,
+                showgrid=False,
+                color='yellow',
+                side='right',
+            ),
+
+        )
 
     return fig
 

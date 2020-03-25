@@ -251,13 +251,13 @@ input[type="radio"] {
     background-color: #1B222A;;
     grid-area: graph-container;
     display: grid;
-    grid-template-rows: 60% 5% auto;
+    grid-template-rows: 2% 50% auto;
     grid-template-columns: auto;
 }
 
 #graph-container-tile{
-    grid-row-start: 2;
-    grid-row-end: 3;
+    grid-row-start: 1;
+    grid-row-end: 2;
     align-self: start;
     justify-self: center;
     font-size: 120%;
@@ -268,8 +268,8 @@ input[type="radio"] {
 
 }
 #per_date_line{
-    grid-row-start: 1;
-    grid-row-end: 2;
+    grid-row-start: 2;
+    grid-row-end: 3;
 }
 
 
@@ -277,6 +277,10 @@ input[type="radio"] {
     grid-area: table-container
 }
 
+
+/* .infolayer [class^='y'][class$='title'] {
+    transform: rotate(90deg);
+  } */
 
 
 
