@@ -139,7 +139,8 @@ min_date = date_mapper.index[0]
 max_date = date_mapper.index[-1]
 
 
-merge = pd.concat([jhu_df, csbs_df])
+latest_date = csbs_df.sort_values('Date')['Date'].iloc[0]
+merge = pd.concat([jhu_df, csbs_df[csbs_df['Date'] == latest_date]])
 merge = merge.fillna('')
 problem_countries = merge[merge['country_code'] == '']['country'].tolist()
 merge.loc[merge['country'] == 'Namibia', 'country_code'] = ''

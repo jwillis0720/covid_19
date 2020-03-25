@@ -14,7 +14,7 @@ warnings.filterwarnings(
 
 
 covid19_csbs = COVID19Py.COVID19(data_source="csbs").getAll(timelines=True)
-covid19_jhu = COVID19Py.COVID19(data_source="jhu").getAll()
+covid19_jhu = COVID19Py.COVID19(data_source="jhu").getAll(timelines=True)
 
 
 def upload_file(file_name, bucket, object_name=None):
