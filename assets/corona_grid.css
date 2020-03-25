@@ -41,7 +41,7 @@ h4 {
 }
 
 .hovertext text {
-    font-size: 2rem !important;
+    font-size: 1vw !important;
 }
 
 div .rc-slider-handle{
@@ -61,7 +61,7 @@ div .rc-slider-handle{
 }
 .rc-slider-mark-text{
     color: white;
-    font-size: 1.0vw;
+    font-size: 0.75vw;
 }
 
 
@@ -174,18 +174,18 @@ input[type="radio"] {
 #slider-text{
     grid-row:1;
     justify-self: start;
-    padding-inline-start: 1rem;
+    padding-inline-start: 2vw;
     align-self: center;
     justify-self: stretch;
     font-family: "Fjalla One";
-    font-size: 1.0vw;
+    font-size: 1vw;
     color: white;
 }
 
 #date_slider{
     grid-row: 2;
-    padding-inline-start: 3rem;
-    padding-inline-end: 3rem;
+    padding-inline-start: 2.2vw;
+    padding-inline-end: 2.2vw;
     align-self: start;
 }
 
