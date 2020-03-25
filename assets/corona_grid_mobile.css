@@ -13,7 +13,7 @@
     }
 
     body {
-        font-size: 1.0rem; /* currently ems cause chrome bug misinterpreting rems on body element */
+        font-size: 3.0vw; /* currently ems cause chrome bug misinterpreting rems on body element */
         line-height: 1.0;
         font-weight: 300;
         font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -30,7 +30,7 @@
 
     h4 {
         font-family: "Fjalla One", sans-serif;
-        font-size: 2rem;
+        font-size: 3vw;
         letter-spacing: -.08rem;
         margin-bottom: 1.2rem;
         margin-top: 1.2rem;

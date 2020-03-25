@@ -199,7 +199,7 @@ def plot_sunburst():
     df_higherarchy = df_higherarchy.replace('total', 'Total<br>Cases')
 
     fig = make_subplots(
-        1, 2, specs=[[{"type": "domain"}, {"type": "domain"}]],)
+        1, 2, specs=[[{"type": "domain"}, {"type": "domain"}]], subplot_titles=("Cases", 'Deaths'))
     fig.add_trace(go.Sunburst(
         labels=df_higherarchy['id'],
         parents=df_higherarchy['parent'],
@@ -207,12 +207,14 @@ def plot_sunburst():
         branchvalues='total',
         marker=dict(
             colors=df_higherarchy['color'],
-            colorscale='RdBu_r',
-            cmid=new_merge_no_us.groupby('name').sum()['confirmed'].mean()/new_merge_no_us['confirmed'].sum()),
+            colorscale='aggrnyl',
+            cmid=0.1),
+        # cmid=new_merge_no_us.groupby('name').sum()['confirmed'].mean()/new_merge_no_us['confirmed'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Cases: %{value}',
         insidetextorientation='radial',
-        name='',
-        maxdepth=3
+        name='Confirmed',
+        maxdepth=2,
+        textfont=dict(size=25, color='black')
     ), 1, 1)
 
     levels = ['continent', 'subregion', 'name', 'province']
@@ -232,20 +234,24 @@ def plot_sunburst():
         marker=dict(
             colors=df_higherarchy['color'],
             colorscale='reds',
+            cmin=0.6,
             cmid=new_merge_no_us.groupby('name').sum()['deaths'].mean()/new_merge_no_us['deaths'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Deaths: %{value}',
-        name='',
-        maxdepth=3
+        name='Deaths',
+        maxdepth=2,
+        textfont=dict(size=25, color='white'),
+        insidetextorientation='horizontal'
     ), 1, 2)
     margine = 15
     fig.update_layout(
-        uniformtext=dict(minsize=16, mode='hide'),
+        uniformtext=dict(mode='hide', minsize=20),
         paper_bgcolor='rgb(0,0,0,0)',
-        # title=dict(text='Total Confirmed Cases<br>Click to Expand',
-        #            font=dict(color='white', size=24)),
-        margin=dict(l=margine, r=margine, t=margine, b=margine)
+        # title=dict(text='Click to Expand',
+        #            font=dict(color='white', size=16)),
+        margin=dict(l=0, r=0, t=0, b=0)
     )
-
+    pprint.pprint(fig.data)
+    pprint.pprint(fig.layout)
     return fig
 
 

@@ -31,7 +31,7 @@ h1, h2, h3, h4, h5, h6 {
 
 h4 {
     font-family: "Fjalla One", sans-serif;
-    font-size: 2rem;
+    font-size: 2vh;
     /* line-height: 1.35; */
     letter-spacing: -.08rem;
     margin-bottom: 1.2rem;
@@ -61,7 +61,7 @@ div .rc-slider-handle{
 }
 .rc-slider-mark-text{
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.0vw;
 }
 
 
@@ -136,11 +136,11 @@ input[type="radio"] {
     grid-row-start: 2;
     display: grid;
     grid-template-columns: 55% auto;
-    grid-template-rows: 90% 10%;
+    grid-template-rows: 95% 10%;
     grid-column-gap: 2rem;
-    grid-row-gap: 2rem;
+    grid-row-gap: 5vh;
     margin: 1rem;
-    min-height: 60rem;
+    min-height: 60vh;
     padding: 1rem;
     /* min-height: 30vmax; */
     grid-template-areas: 
@@ -156,7 +156,7 @@ input[type="radio"] {
     display: grid;
     grid-template-columns: auto;
     grid-template-rows: 15% auto;
-    row-gap: 1rem;
+    row-gap: 1.5vh;
     grid-template-areas:
        "slider-container"
        "map-container";
@@ -178,7 +178,7 @@ input[type="radio"] {
     align-self: center;
     justify-self: stretch;
     font-family: "Fjalla One";
-    font-size: 1.5rem;
+    font-size: 1.0vw;
     color: white;
 }
 
@@ -206,7 +206,7 @@ input[type="radio"] {
 #map-title-container{
     grid-area: map-title-container;
     display: grid;
-    grid-template-columns: 30% auto 30%;
+    grid-template-columns: 50% 10% auto;
     grid-template-rows: auto;
     grid-template-areas: 
         "radio-buttons map-title checkbox";
@@ -217,7 +217,7 @@ input[type="radio"] {
     grid-area: map-title;
     justify-self: center;
     align-self: center;
-    font-size: 2.0rem;
+    font-size: 1.2vw;
     color:#2cfec1;
     margin-block-end: 0;
 }
@@ -226,6 +226,7 @@ input[type="radio"] {
     grid-area: radio-buttons;
     justify-self: start;
     align-self: end;
+    font-size:0.65vw;
     padding-inline-start:3rem;
 }
 
@@ -233,6 +234,7 @@ input[type="radio"] {
     grid-area: checkbox;
     justify-self: end;
     align-self: end;
+    font-size:0.65vw;
     padding-inline-end: 2rem;
 }
 
@@ -259,8 +261,7 @@ input[type="radio"] {
     grid-row-end: 2;
     align-self: start;
     justify-self: center;
-    font-size: 120%;
-}
+  }
 
 #per_date{
     grid-row-start: 3;
