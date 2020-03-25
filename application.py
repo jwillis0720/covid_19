@@ -14,6 +14,7 @@ try:
     from dash.dependencies import Input, Output, State
     import plotly.graph_objects as go
     import plotly.express as px
+    from plotly.subplots import make_subplots
 except ImportError:
     sys.exit('Please install dash, e.g, pip install dash')
 
@@ -128,12 +129,121 @@ per_day_stats_by_state = pd.read_csv(
 jhu_df_time['Date'] = pd.to_datetime(jhu_df_time['Date'])
 jhu_df['Date'] = pd.to_datetime(jhu_df['Date'])
 csbs_df['Date'] = pd.to_datetime(csbs_df['Date'])
+jhu_df['state'] = ""
+
 
 date_mapper = pd.DataFrame(
     jhu_df_time['Date'].unique(), columns=['Date'])
 date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
 min_date = date_mapper.index[0]
 max_date = date_mapper.index[-1]
+
+
+merge = pd.concat([jhu_df, csbs_df])
+merge = merge.fillna('')
+problem_countries = merge[merge['country_code'] == '']['country'].tolist()
+merge.loc[merge['country'] == 'Namibia', 'country_code'] = ''
+centroid_mapper = pd.read_csv('country_centroids_az8.csv')
+problem_states = merge[~merge['country_code'].isin(centroid_mapper['iso_a2'])]
+new_merge = merge.merge(
+    centroid_mapper, left_on='country_code', right_on='iso_a2')
+new_merge['case_rate'] = new_merge['confirmed']/new_merge['pop_est'] * 100
+new_merge['death_rate'] = new_merge['deaths']/new_merge['pop_est'] * 100
+new_merge['confirmed_no_death'] = new_merge['confirmed'] - new_merge['deaths']
+
+
+# If something is has the same name for continent and subregion, lets just add the word _subregion
+new_merge.loc[new_merge['continent'] == new_merge['subregion'],
+              'subregion'] = new_merge['subregion'] + ' Subregion'
+
+# Lets remove the US Data since we are doubel counting htis by merging CSBSS
+new_merge_no_us = new_merge[~((new_merge['country'] == 'US') & (
+    new_merge['province'] == ''))]
+
+
+def build_hierarchical_dataframe(df, levels, value_column, color_columns=None):
+    """
+    Build a hierarchy of levels for Sunburst or Treemap charts.
+
+    Levels are given starting from the bottom to the top of the hierarchy,
+    ie the last level corresponds to the root.
+    """
+    df_all_trees = pd.DataFrame(columns=['id', 'parent', 'value', 'color'])
+    for i, level in enumerate(levels):
+        df_tree = pd.DataFrame(columns=['id', 'parent', 'value', 'color'])
+        dfg = df.groupby(levels[i:]).sum()
+        dfg = dfg.reset_index()
+        df_tree['id'] = dfg[level].copy()
+        if i < len(levels) - 1:
+            df_tree['parent'] = dfg[levels[i+1]].copy()
+        else:
+            df_tree['parent'] = 'total'
+        df_tree['value'] = dfg[value_column]
+        df_all_trees = df_all_trees.append(df_tree, ignore_index=True)
+    total = pd.Series(dict(id='total', parent='',
+                              value=df[value_column].sum(),
+                              color=""))
+    df_all_trees = df_all_trees.append(total, ignore_index=True)
+    return df_all_trees
+
+
+def plot_sunburst():
+    levels = ['continent', 'subregion', 'name', 'province']
+    levels = levels[::-1]
+    value_column = 'confirmed'
+    df_higherarchy = build_hierarchical_dataframe(
+        new_merge_no_us, levels, value_column)
+    df_higherarchy['color'] = df_higherarchy['value'] / \
+        df_higherarchy['value'].sum()
+    df_higherarchy = df_higherarchy.replace('total', 'Total<br>Cases')
+
+    fig = make_subplots(
+        1, 2, specs=[[{"type": "domain"}, {"type": "domain"}]],)
+    fig.add_trace(go.Sunburst(
+        labels=df_higherarchy['id'],
+        parents=df_higherarchy['parent'],
+        values=df_higherarchy['value'],
+        branchvalues='total',
+        marker=dict(
+            colors=df_higherarchy['color'],
+            colorscale='RdBu_r',
+            cmid=new_merge_no_us.groupby('name').sum()['confirmed'].mean()/new_merge_no_us['confirmed'].sum()),
+        hovertemplate='<b>%{label} </b> <br> Confirmed Cases: %{value}',
+        name='',
+        maxdepth=3
+    ), 1, 1)
+
+    levels = ['continent', 'subregion', 'name', 'province']
+    levels = levels[::-1]
+    value_column = 'deaths'
+    df_higherarchy = build_hierarchical_dataframe(
+        new_merge_no_us, levels, value_column)
+    df_higherarchy['color'] = df_higherarchy['value'] / \
+        df_higherarchy['value'].sum()
+    df_higherarchy = df_higherarchy.replace('total', 'Total<br>Deaths')
+
+    fig.add_trace(go.Sunburst(
+        labels=df_higherarchy['id'],
+        parents=df_higherarchy['parent'],
+        values=df_higherarchy['value'],
+        branchvalues='total',
+        marker=dict(
+            colors=df_higherarchy['color'],
+            colorscale='RdBu_r',
+            cmid=new_merge_no_us.groupby('name').sum()['deaths'].mean()/new_merge_no_us['deaths'].sum()),
+        hovertemplate='<b>%{label} </b> <br> Confirmed Deaths: %{value}',
+        name='',
+        maxdepth=3
+    ), 1, 2)
+
+    fig.update_layout(
+        paper_bgcolor='rgb(0,0,0,0)',
+        # title=dict(text='Total Confirmed Cases<br>Click to Expand',
+        #            font=dict(color='white', size=24)),
+        margin=dict(l=40, r=40, t=40, b=40)
+    )
+
+    return fig
 
 
 def get_dummy_graph(id_):
@@ -283,9 +393,11 @@ def serve_dash_layout():
                         id="graph-container",
                         children=[
                             html.H5(id='graph-container-tile',
-                                    children=['Click Place on Map to Get More Information']),
+                                    children=['Click Place on Map or Chart to Get More Information']),
+
+                            dcc.Graph(id='per_date_line',
+                                      figure=plot_sunburst()),
                             dcc.Graph(id='per_date'),
-                            dcc.Graph(id='per_date_line'),
                         ]),
                     html.Div(
                         id='table-container',
@@ -565,9 +677,9 @@ def update_new_case_graph(hoverData, group):
     return fig
 
 
-@app.callback(Output('per_date_line', 'figure'),
-              [Input('state-graph', 'clickData'),
-               Input('radio-items', 'value')])
+# @app.callback(Output('per_date_line', 'figure'),
+#               [Input('state-graph', 'clickData'),
+#                Input('radio-items', 'value')])
 def update_new_other_case_hover(hoverData, group):
 
     if group == 'country' and hoverData:
