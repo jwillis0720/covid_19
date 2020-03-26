@@ -415,18 +415,6 @@ def serve_dash_layout():
         ])
 
 
-def get_dash_animation():
-    px.set_mapbox_access_token(mapbox_access_token)
-    fig = px.scatter_mapbox(ongoing_death_by_state_df, lat="Lat", lon="Long", size="Cases", animation_frame='Date', animation_group='State',
-                            color='Metric', size_max=100, zoom=3.5, mapbox_style='dark', center=dict(lat=38.5266, lon=-96.7265), height=800)
-    fig['layout']['updatemenus'][0]['buttons'][0]['args'][1]['frame']['duration'] = 100
-    fig['layout']['updatemenus'][0]['buttons'][0]['args'][1]['transition']['duration'] = 0
-    fig['layout']['updatemenus'][0]['buttons'][0]['args'][1]['transition']['easing'] = "cubic-in-out"
-    fig['layout']['sliders'][0]['currentvalue']['xanchor'] = "center"
-    fig['layout']['sliders'][0]['currentvalue']['prefix'] = ""
-    return fig
-
-
 app.layout = serve_dash_layout
 
 # We must expose this for Elastic Bean Stalk to Run
@@ -463,9 +451,9 @@ def get_graph_state(date_int, group, metrics, figure):
     if group == 'country':
         country_mapper = jhu_df_time[
             jhu_df_time['Date'] == official_date].groupby(
-            'country', as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[['country', 'id', 'lat', 'lon']])
+            'country', as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[['country', 'lat', 'lon']])
         sub_df = jhu_df_time[
-            jhu_df_time['Date'] == official_date].groupby('country', as_index=False).sum()[['country', 'confirmed', 'deaths', 'recovered']].merge(
+            jhu_df_time['Date'] == official_date].groupby('country', as_index=False).sum()[['country', 'confirmed', 'deaths']].merge(
                 country_mapper, on=['country'])
         sizeref = 2. * jhu_df_time.groupby(
             ['Date', group]).sum().max()[normalizer] / (20 ** 2)
@@ -476,37 +464,36 @@ def get_graph_state(date_int, group, metrics, figure):
         sub_df = jhu_df_time[jhu_df_time[group] != '']
         province_mapper = sub_df[
             sub_df['Date'] == official_date].groupby(
-                group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group, 'id', 'lat', 'lon']])
+                group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group, 'lat', 'lon']])
         sub_df = sub_df[
-            sub_df['Date'] == official_date].groupby(group, as_index=False).sum()[['province', 'confirmed', 'deaths', 'recovered']].merge(province_mapper, on=['province'])
+            sub_df['Date'] == official_date].groupby(group, as_index=False).sum()[['province', 'confirmed', 'deaths']].merge(province_mapper, on=['province'])
 
         # Now do it for the CSBS
         province_mapper = csbs_df.groupby(
-            group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group, 'id', 'lat', 'lon']])
-        sub_df_csbs = csbs_df.groupby(group, as_index=False).sum()[
-            ['province', 'confirmed', 'deaths', 'recovered']].merge(province_mapper, on=['province'])
+            group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group,  'lat', 'lon']])
+        sub_df_csbs = csbs_df[csbs_df[group] != '']
+        sub_df_csbs = sub_df_csbs[sub_df_csbs['Date'] == official_date]
+
+        sub_df_csbs = sub_df_csbs.groupby(group, as_index=False).sum()[
+            ['province', 'confirmed', 'deaths']].merge(province_mapper, on=['province'])
         sub_df = pd.concat([sub_df, sub_df_csbs])
 
         sizeref = 2. * jhu_df_time.groupby(
             ['Date', group]).sum().max()[normalizer] / (20 ** 2)
 
     elif group == 'county':
-        sub_df = csbs_df.groupby(
-            ['county', 'state', 'lat', 'lon'], as_index=False).sum()
+        sub_df = csbs_df[csbs_df['Date'] == official_date]
+        sub_df = csbs_df.sort_values('confirmed').groupby(
+            ['county', 'province', 'lat', 'lon'], as_index=False).head(1)
         sub_df.rename({'cases': 'confirmed'}, axis=1, inplace=1)
         sizeref = 2. * sub_df.max()[normalizer] / (20 ** 2)
 
-    sub_df['Active'] = sub_df['confirmed'] - \
-        sub_df['deaths'] - sub_df['recovered']
     sub_df['Text_Cases'] = sub_df[group] + '<br>Total Cases at {} : '.format(
         official_date.strftime('%m/%d/%y')) + sub_df['confirmed'].apply(lambda x: "{:,}".format(int(x)))
     sub_df['Text_Death'] = sub_df[group] + '<br>Total Deaths at {} : '.format(
         official_date.strftime('%m/%d/%y')) + sub_df['deaths'].apply(lambda x: "{:,}".format(int(x)))
-    sub_df['Text_Recover'] = sub_df[group] + '<br>Total Recoveries at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['recovered'].apply(lambda x: "{:,}".format(int(x)))
 
-    sub_df['Text_Active'] = sub_df[group] + '<br>Total Active at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['Active'].apply(lambda x: "{:,}".format(int(x)))
+    sub_df.loc[sub_df['confirmed'] < 0, 'confirmed'] = 0
 
     fig = go.Figure()
     if 'cases' in metrics:
@@ -544,41 +531,6 @@ def get_graph_state(date_int, group, metrics, figure):
                 sizemin=10,
                 size=sub_df['deaths'],
                 color='red')))
-
-    if 'recovery' in metrics:
-        fig.add_trace(go.Scattermapbox(
-            lon=sub_df['Long'] +
-            np.random.normal(0, .02, len(sub_df['Long'])),
-            lat=sub_df['Lat'] +
-            np.random.normal(0, .02, len(sub_df['Lat'])),
-            customdata=sub_df[group],
-            textposition='top right',
-            text=sub_df['Text_Recover'],
-            hoverinfo='text',
-            name='recoveries',
-            mode='markers',
-            marker=dict(
-                sizeref=sizeref,
-                sizemin=10,
-                size=sub_df['recovered'],
-                color='green')))
-    if 'active' in metrics:
-        fig.add_trace(go.Scattermapbox(
-            lon=sub_df['Long'] +
-            np.random.normal(0, .02, len(sub_df['Long'])),
-            lat=sub_df['Lat'] +
-            np.random.normal(0, .02, len(sub_df['Lat'])),
-            customdata=sub_df[group],
-            textposition='top right',
-            text=sub_df['Text_Active'],
-            hoverinfo='text',
-            name='active',
-            mode='markers',
-            marker=dict(
-                sizeref=sizeref,
-                sizemin=10,
-                size=sub_df['Active'],
-                color='orange')))
 
     if not metrics:
         fig.add_trace(go.Scattermapbox(
