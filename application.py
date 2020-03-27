@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 import argparse
 import pprint
+
+# Local Import
+import data
+
 from datetime import date, timedelta
 try:
     import dash
@@ -114,52 +118,7 @@ states_abbreviations_mapper = {
 mapbox_style = 'dark'
 mapbox_access_token = open('.mapbox_token').readlines()[0]
 
-# Import from S3:
-jhu_df = pd.read_csv(
-    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df.csv.gz', index_col=0)
-jhu_df_time = pd.read_csv(
-    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df_time.csv.gz', index_col=0)
-csbs_df = pd.read_csv(
-    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/csbs_df.csv.gz', index_col=0)
-per_day_stats_by_country = pd.read_csv(
-    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/country_df_per_day.csv.gz', index_col=0)
-per_day_stats_by_state = pd.read_csv(
-    'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/provence_df_per_day.csv.gz', index_col=0)
-
-jhu_df_time['Date'] = pd.to_datetime(jhu_df_time['Date'])
-jhu_df['Date'] = pd.to_datetime(jhu_df['Date'])
-csbs_df['Date'] = pd.to_datetime(csbs_df['Date'])
-jhu_df['state'] = ""
-
-
-date_mapper = pd.DataFrame(
-    jhu_df_time['Date'].unique(), columns=['Date'])
-date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
-min_date = date_mapper.index[0]
-max_date = date_mapper.index[-1]
-
-
-latest_date = csbs_df.sort_values('Date')['Date'].iloc[0]
-merge = pd.concat([jhu_df, csbs_df[csbs_df['Date'] == latest_date]])
-merge = merge.fillna('')
-problem_countries = merge[merge['country_code'] == '']['country'].tolist()
-merge.loc[merge['country'] == 'Namibia', 'country_code'] = ''
-centroid_mapper = pd.read_csv('country_centroids_az8.csv')
-problem_states = merge[~merge['country_code'].isin(centroid_mapper['iso_a2'])]
-new_merge = merge.merge(
-    centroid_mapper, left_on='country_code', right_on='iso_a2')
-new_merge['case_rate'] = new_merge['confirmed']/new_merge['pop_est'] * 100
-new_merge['death_rate'] = new_merge['deaths']/new_merge['pop_est'] * 100
-new_merge['confirmed_no_death'] = new_merge['confirmed'] - new_merge['deaths']
-
-
-# If something is has the same name for continent and subregion, lets just add the word _subregion
-new_merge.loc[new_merge['continent'] == new_merge['subregion'],
-              'subregion'] = new_merge['subregion'] + ' Subregion'
-
-# Lets remove the US Data since we are doubel counting htis by merging CSBSS
-new_merge_no_us = new_merge[~((new_merge['country'] == 'US') & (
-    new_merge['province'] == ''))]
+MERGE_NO_US, MERGED_CSBS_JHU, JHU_TIME, JHU_RECENT, DATE_MAPPER, CSBS, CENTROID_MAPPER = data.get_data()
 
 
 def build_hierarchical_dataframe(df, levels, value_column, color_columns=None):
@@ -193,7 +152,7 @@ def plot_sunburst():
     levels = levels[::-1]
     value_column = 'confirmed'
     df_higherarchy = build_hierarchical_dataframe(
-        new_merge_no_us, levels, value_column)
+        MERGE_NO_US, levels, value_column)
     df_higherarchy['color'] = df_higherarchy['value'] / \
         df_higherarchy['value'].sum()
     df_higherarchy = df_higherarchy.replace('total', 'Total<br>Cases')
@@ -209,7 +168,7 @@ def plot_sunburst():
             colors=df_higherarchy['color'],
             colorscale='aggrnyl',
             cmid=0.1),
-        # cmid=new_merge_no_us.groupby('name').sum()['confirmed'].mean()/new_merge_no_us['confirmed'].sum()),
+        # cmid=MERGE_NO_US.groupby('name').sum()['confirmed'].mean()/MERGE_NO_US['confirmed'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Cases: %{value}',
         insidetextorientation='radial',
         name='Confirmed',
@@ -221,7 +180,7 @@ def plot_sunburst():
     levels = levels[::-1]
     value_column = 'deaths'
     df_higherarchy = build_hierarchical_dataframe(
-        new_merge_no_us, levels, value_column)
+        MERGE_NO_US, levels, value_column)
     df_higherarchy['color'] = df_higherarchy['value'] / \
         df_higherarchy['value'].sum()
     df_higherarchy = df_higherarchy.replace('total', 'Total<br>Deaths')
@@ -235,7 +194,7 @@ def plot_sunburst():
             colors=df_higherarchy['color'],
             colorscale='reds',
             cmin=0.6,
-            cmid=new_merge_no_us.groupby('name').sum()['deaths'].mean()/new_merge_no_us['deaths'].sum()),
+            cmid=MERGE_NO_US.groupby('name').sum()['deaths'].mean()/MERGE_NO_US['deaths'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Deaths: %{value}',
         name='Deaths',
         maxdepth=2,
@@ -255,40 +214,24 @@ def plot_sunburst():
     return fig
 
 
-def get_dummy_graph(id_):
-    return dcc.Graph(
-        id=id_,
-        figure={
-            'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5],
-                    'type': 'bar', 'name': u'Montréal'},
-            ],
-            'layout': {
-                'title': 'Dash Data Visualization'
-            }
-        }
-    )
-
-
 def get_date_slider():
-    how_many_labels = (len(date_mapper))//10
+    how_many_labels = (len(DATE_MAPPER))//10
     marks = {k: {'label': v}
-             for k, v in list(date_mapper['Date'].dt.strftime(
+             for k, v in list(DATE_MAPPER['Date'].dt.strftime(
                  '%m/%d/%y').to_dict().items())[::how_many_labels]}
     last_key = list(marks.keys())[-1]
-    todays_key = date_mapper.index[-1]
+    todays_key = DATE_MAPPER.index[-1]
     # if last_key == todays_key:
     #     marks[last_key]['label'] == 'Today'
     # else:
     #     marks[todays_key] = {'label': 'Today'}
-
+    DATE_MAPPER
     return dcc.Slider(
         id='date_slider',
-        min=min_date,
-        max=max_date,
+        min=DATE_MAPPER.index[0],
+        max=DATE_MAPPER.index[-1],
         step=1,
-        value=max_date,
+        value=DATE_MAPPER.index[-1],
         marks=marks
     )
 
@@ -378,7 +321,7 @@ def serve_dash_layout():
                                                     {'label': 'County',
                                                      'value': 'county'}
                                                 ],
-                                                value='country'),
+                                                value='province'),
                                             html.P(
                                                 id="map-title",
                                             ),
@@ -406,7 +349,7 @@ def serve_dash_layout():
 
                             dcc.Graph(id='per_date_line',
                                       figure=plot_sunburst()),
-                            dcc.Graph(id='per_date'),
+                            dcc.Loading(dcc.Graph(id='per_date')),
                         ]),
                     html.Div(
                         id='table-container',
@@ -445,23 +388,23 @@ def get_graph_state(date_int, group, metrics, figure):
     else:
         normalizer = 'deaths'
 
-    official_date = date_mapper.iloc[date_int]['Date']
+    official_date = DATE_MAPPER.iloc[date_int]['Date']
     # print(date_int, official_date)
 
     if group == 'country':
-        country_mapper = jhu_df_time[
-            jhu_df_time['Date'] == official_date].groupby(
+        country_mapper = JHU_TIME[
+            JHU_TIME['Date'] == official_date].groupby(
             'country', as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[['country', 'lat', 'lon']])
-        sub_df = jhu_df_time[
-            jhu_df_time['Date'] == official_date].groupby('country', as_index=False).sum()[['country', 'confirmed', 'deaths']].merge(
+        sub_df = JHU_TIME[
+            JHU_TIME['Date'] == official_date].groupby('country', as_index=False).sum()[['country', 'confirmed', 'deaths']].merge(
                 country_mapper, on=['country'])
-        sizeref = 2. * jhu_df_time.groupby(
+        sizeref = 2. * JHU_TIME.groupby(
             ['Date', group]).sum().max()[normalizer] / (20 ** 2)
 
         print(sub_df.columns)
 
     elif group == 'province':
-        sub_df = jhu_df_time[jhu_df_time[group] != '']
+        sub_df = JHU_TIME[JHU_TIME[group] != '']
         province_mapper = sub_df[
             sub_df['Date'] == official_date].groupby(
                 group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group, 'lat', 'lon']])
@@ -469,21 +412,21 @@ def get_graph_state(date_int, group, metrics, figure):
             sub_df['Date'] == official_date].groupby(group, as_index=False).sum()[['province', 'confirmed', 'deaths']].merge(province_mapper, on=['province'])
 
         # Now do it for the CSBS
-        province_mapper = csbs_df.groupby(
+        province_mapper = CSBS.groupby(
             group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group,  'lat', 'lon']])
-        sub_df_csbs = csbs_df[csbs_df[group] != '']
+        sub_df_csbs = CSBS[CSBS[group] != '']
         sub_df_csbs = sub_df_csbs[sub_df_csbs['Date'] == official_date]
 
         sub_df_csbs = sub_df_csbs.groupby(group, as_index=False).sum()[
             ['province', 'confirmed', 'deaths']].merge(province_mapper, on=['province'])
         sub_df = pd.concat([sub_df, sub_df_csbs])
 
-        sizeref = 2. * jhu_df_time.groupby(
+        sizeref = 2. * JHU_TIME.groupby(
             ['Date', group]).sum().max()[normalizer] / (20 ** 2)
 
     elif group == 'county':
-        sub_df = csbs_df[csbs_df['Date'] == official_date]
-        sub_df = csbs_df.sort_values('confirmed').groupby(
+        sub_df = CSBS[CSBS['Date'] == official_date]
+        sub_df = sub_df.sort_values('confirmed').groupby(
             ['county', 'province', 'lat', 'lon'], as_index=False).head(1)
         sub_df.rename({'cases': 'confirmed'}, axis=1, inplace=1)
         sizeref = 2. * sub_df.max()[normalizer] / (20 ** 2)
@@ -551,12 +494,12 @@ def get_graph_state(date_int, group, metrics, figure):
         margin=dict(r=0, l=0, t=0, b=0),
         dragmode="pan",
         legend=dict(
-            x=0.92,
-            y=1,
+            x=0.05,
+            y=0.1,
             traceorder="normal",
             font=dict(
                 family="sans-serif",
-                size=14,
+                size=24,
                 color="white"
             ),
             bgcolor='rgba(0,0,0,0)',
@@ -573,7 +516,7 @@ def get_graph_state(date_int, group, metrics, figure):
               [Input('date_slider', 'value')])
 def update_description(date_int):
     "Reported Infections Map"
-    official_date = date_mapper.iloc[date_int]['Date']
+    official_date = DATE_MAPPER.iloc[date_int]['Date']
     if official_date.date() == date.today() - timedelta(days=1):
         return "Yesterday"
     return "{}".format(official_date.strftime('%B %d, %Y'))
@@ -584,31 +527,46 @@ def update_description(date_int):
                Input('radio-items', 'value')])
 def update_new_case_graph(hoverData, group):
 
-    sub_df_time = pd.DataFrame()
     if group == 'country' and hoverData:
-        country = hoverData['points'][0]['customdata']
-        sub_df = per_day_stats_by_country[per_day_stats_by_country['country'] == country]
-        sub_df_time = jhu_df_time[jhu_df_time['country']
-                                  == country].groupby('Date').sum().reset_index()
+        selection = hoverData['points'][0]['customdata']
+        print(selection)
+        sub_df = JHU_TIME[JHU_TIME['country'] == selection]
+        # Just incase a country with provinces is selected
+        sub_df = sub_df.groupby('Date').sum()
     elif group == 'province' and hoverData:
-        country = hoverData['points'][0]['customdata']
-        sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
-        if sub_df.empty:
-            country = "{} - No Data Available".format(country)
-        sub_df_time = ""
+        selection = hoverData['points'][0]['customdata']
+        print(selection)
+        if selection in list(JHU_TIME['province']):
+            sub_df = JHU_TIME[JHU_TIME['province'] == selection]
+        else:
+            sub_df = CSBS[CSBS['province'] == selection]
+
+        print(sub_df)
+        sub_df = sub_df.groupby(['province', 'Date']).sum().reset_index()
+        #sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
+
+    elif group == 'county' and hoverData:
+        selection = hoverData['points'][0]['customdata']
+        print(selection)
+        sub_df = CSBS[CSBS['county'] == selection]
+
+    #     if sub_df.empty:
+    #         country = "{} - No Data Available".format(country)
+    #     sub_df_time = ""
     else:
-        sub_df = per_day_stats_by_country.groupby('Date').sum().reset_index()
-        sub_df_time = jhu_df_time.groupby('Date').sum().reset_index()
-        country = 'World'
+        sub_df = JHU_TIME.groupby('Date').sum().reset_index()
+        #sub_df_time = JHU_TIME.groupby('Date').sum().reset_index()
+        selection = 'World'
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    dates = date_mapper['Date_text'].unique()
+    dates = DATE_MAPPER['Date_text'].unique()
     fig.add_trace(go.Bar(x=dates,
-                         y=sub_df['New Cases'],
-                         name=country,
+                         y=sub_df['confirmed'].diff().fillna(
+                             0),
+                         name=selection,
                          showlegend=False,
-                         text=sub_df['New Cases'],
+                         text=sub_df['confirmed'].diff().fillna(0),
                          textposition='auto',
                          hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
 
@@ -617,26 +575,25 @@ def update_new_case_graph(hoverData, group):
                              line=dict(
                                  color='white')
                          )))
-    if not sub_df_time.empty:
-        fig.add_trace(
-            go.Scatter(
-                x=dates,
-                y=sub_df_time['confirmed'],
-                name=country,
-                showlegend=False,
-                mode='lines+markers',
-                hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
-                marker=dict(
-                    color='yellow',
-                    size=0.1,
-                    line=dict(
-                        width=10,
-                        color='white')
-                )), secondary_y=True)
+    fig.add_trace(
+        go.Scatter(
+            x=dates,
+            y=sub_df['confirmed'],
+            name=selection,
+            showlegend=False,
+            mode='lines+markers',
+            hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
+            marker=dict(
+                color='yellow',
+                size=0.1,
+                line=dict(
+                    width=10,
+                    color='yellow')
+            )), secondary_y=True)
 
     fig.update_layout(
         title=dict(text='New Cases Per Day: {}'.format(
-            country), font=dict(color='white', size=24)),
+            selection), font=dict(color='white', size=24)),
         xaxis_tickfont_size=14,
         yaxis=dict(
             title=dict(text='New Cases', standoff=2),
@@ -657,76 +614,17 @@ def update_new_case_graph(hoverData, group):
         bargap=0.15,  # gap between bars of adjacent location coordinates.
         bargroupgap=0.1)
 
-    if not sub_df_time.empty:
-        fig.update_layout(
-            yaxis2=dict(
-                title=dict(text='Total Cases', standoff=2),
-                titlefont_size=18,
-                tickfont_size=18,
-                showgrid=False,
-                color='yellow',
-                side='right',
-            ),
-
-        )
-
-    return fig
-
-
-# @app.callback(Output('per_date_line', 'figure'),
-#               [Input('state-graph', 'clickData'),
-#                Input('radio-items', 'value')])
-def update_new_other_case_hover(hoverData, group):
-
-    if group == 'country' and hoverData:
-        country = hoverData['points'][0]['customdata']
-        sub_df = per_day_stats_by_country[per_day_stats_by_country['country'] == country]
-    elif group == 'province' and hoverData:
-        country = hoverData['points'][0]['customdata']
-        sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
-        if sub_df.empty:
-            country = "{} - No Data Available".format(country)
-    else:
-        sub_df = per_day_stats_by_country.groupby('Date').sum().reset_index()
-        country = 'World'
-
-    dates = date_mapper['Date_text'].unique()
-    # return px.line(sub_df, x='Date', y='New Cases')
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=dates,
-                             y=sub_df['New Cases'],
-                             name=country,
-                             showlegend=False,
-                             text=sub_df['New Cases'],
-                             texttemplate='%{y:,f}',
-                             hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
-
-                             marker=dict(
-                                 color='white',
-                                 line=dict(
-                                     color='white')
-                             )))
-
     fig.update_layout(
-        title=dict(text='New Cases Per Day: {}'.format(
-            country), font=dict(color='white', size=24)),
-        xaxis_tickfont_size=14,
-        yaxis=dict(
-            title=dict(text='New Cases', standoff=2),
+        yaxis2=dict(
+            title=dict(text='Total Cases', standoff=2),
             titlefont_size=18,
             tickfont_size=18,
             showgrid=False,
-            color='white',
+            color='yellow',
+            side='right',
         ),
-        xaxis=dict(
-            title='Date',
-            color='white',
-            showgrid=False,
-        ),
-        showlegend=False,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgb(52,51,50)')
+
+    )
 
     return fig
 

@@ -13,3 +13,19 @@ def write_pandas_to_gsheet(df, tabname):
 
     ws.set_dataframe(df, 'A1')
     print('Worksheet set at  : {}\n on tab {}'.format(google_sheets.url, tabname))
+
+
+def get_dummy_graph(id_):
+    return dcc.Graph(
+        id=id_,
+        figure={
+            'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5],
+                    'type': 'bar', 'name': u'Montréal'},
+            ],
+            'layout': {
+                'title': 'Dash Data Visualization'
+            }
+        }
+    )

@@ -1,3 +1,4 @@
+from datetime import date
 import warnings
 import pandas as pd
 import glob
@@ -155,6 +156,33 @@ def per_x_cases(grouper, df):
     return pd.DataFrame(new_cases_by_country)
 
 
+def backfill_new_counties(df):
+    date_range = pd.date_range(pd.to_datetime(
+        '2020-1-22'), df['Date'].max(), freq='1D')
+    unique_group = ['country', 'province', 'county']
+    gb = df.groupby(unique_group)
+    sub_dfs = []
+    for g in gb.groups:
+        sub_df = gb.get_group(g)
+        sub_df = (
+            sub_df.groupby('Date')
+            .head(1)
+            .set_index('Date')
+            .reindex(date_range)
+            .fillna(dict.fromkeys(['confirmed', 'deaths'], 0))
+            .bfill()
+            .ffill()
+            .reset_index()
+            .rename({'index': 'Date'}, axis=1))
+        sub_df['Date_text'] = sub_df['Date'].dt.strftime('%m/%d/%y')
+        sub_df['Timestamp'] = pd.to_datetime(sub_df['Date'], utc=True)
+        sub_dfs.append(sub_df)
+    all_concat = pd.concat(sub_dfs)
+    assert((all_concat.groupby(['province', 'country', 'county']).count() == len(
+        date_range)).all().all())
+    return all_concat
+
+
 # Get current streaming API
 covid19_csbs = COVID19Py.COVID19(data_source="csbs").getAll(timelines=True)
 covid19_jhu = COVID19Py.COVID19(data_source="jhu").getAll(timelines=True)
@@ -181,6 +209,7 @@ csbs_df_past['Date'] = csbs_df_past['Timestamp'].dt.date
 csbs_df_past['Date'] = pandas.to_datetime(csbs_df_past['Date'])
 csbs_df_past['Date_text'] = csbs_df_past['Timestamp'].dt.strftime('%m/%d/%y')
 
+csbs_current = csbs_current.drop('id', axis=1)
 # sort for columns
 csbs_df_past = csbs_df_past[csbs_current.columns]
 
@@ -194,30 +223,23 @@ csbs_current.to_csv(
     'Data/csbs_df_Archive_{}_{}_{}.csv.gz'.format(today.month, today.day, today.year))
 print('Data/csbs_df_Archive_{}_{}_{}.csv.gz'.format(today.month, today.day, today.year))
 
-# Lets add together the past and current
+# # Lets add together the past and current
 csbs_new = pd.concat([csbs_df_past, csbs_current])
 
-# lets ensure that csbs_new has just one date
+# Finally we can backfill
+csbs_new = backfill_new_counties(csbs_new)
+
+
+# # lets ensure that csbs_new has just one date
 csbs_new = csbs_new.sort_values('confirmed').groupby(
     ['Date', 'province', 'country_code', 'country', 'county', 'source']).head(1)
 csbs_new['Timestamp'] = pandas.to_datetime(csbs_new['Timestamp'], utc=True)
 csbs_new['Date_text'] = csbs_new['Timestamp'].dt.strftime('%m/%d/%y')
 
-# Make a Date Mapper
-date_mapper = pd.DataFrame(
-    pd.to_datetime(jhu_time['Date']).unique(), columns=['Date'])
-date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
-
-# provence_df_per_day = per_x_cases('province', jhu_df_time, date_mapper)
-# country_df_per_day = per_x_cases('country', jhu_df_time, date_mapper)
-# print('Generated Data')
-
-# We can combine both csbs and jhu for one awesome timescale
-combined_time_scales = pandas.concat([jhu_time, csbs_new])
-
-# Now get a per day basis
-province_df = per_x_cases('province', jhu_time)
-country_df = per_x_cases('country', jhu_time)
+jhu_time = jhu_time.drop('id', axis=1)
+jhu_current = jhu_current.drop('id', axis=1)
+csbs_new = csbs_new[jhu_time.columns]
+jhu_current = jhu_current[jhu_time.columns]
 
 assert(
     (jhu_time.groupby(['Date', 'country', 'province']).count() == 1).all().all())
@@ -225,10 +247,10 @@ assert((csbs_new.groupby(
     ['Date', 'country', 'province', 'county']).count() == 1).all().all())
 assert((jhu_current.groupby(
     ['Date', 'country', 'province', 'county']).count() == 1).all().all())
-assert((all_time_scales.groupby(
-    ['Date', 'country', 'province', 'county']).count() == 1).all().all())
-assert((jhu_current.columns == csbs_new.columns).all())
+assert(list(jhu_current.columns) == list(csbs_new.columns))
 
+assert((csbs_new.groupby(['country', 'province', 'county']).count() == len(
+    csbs_new['Date'].unique())).all().all())
 
 # Lets Write everything out
 jhu_current.to_csv('Data/jhu_df.csv.gz', compression='gzip')
@@ -238,22 +260,6 @@ jhu_time.to_csv('Data/jhu_df_time.csv.gz', compression='gzip')
 
 # Write out Current CSV
 csbs_new.to_csv('Data/csbs_df.csv.gz', compression='gzip')
-
-# Write oute combined time course
-combined_time_scales.to_csv(
-    'Data/combined_time_scales.csv.gz', compression='gzip')
-
-# Province
-province_jh.to_csv('Data/per_day_stats_by_state.csv.gz')
-
-# Province per case by day
-country_df.to_csv('Data/per_day_stats_by_country.csv.gz')
-
-
-# provence_df_per_day.to_csv(
-#     'Data/provence_df_per_day.csv.gz', compression='gzip')
-# country_df_per_day.to_csv('Data/country_df_per_day.csv.gz', compression='gzip')
-
 
 print('Syncing Data')
 ea = ExtraArgs = {'ACL': 'public-read'}

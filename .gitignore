@@ -1,4 +1,6 @@
 .ipynb_checkpoints/Sandbox-checkpoint.ipynb
+
+__pycache__*
 .vscode/settings.json
 
 # Elastic Beanstalk Files
