@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 import argparse
 import pprint
-
+import math
 # Local Import
 import data
+
 
 from datetime import date, timedelta
 try:
@@ -115,7 +116,9 @@ states_abbreviations_mapper = {
 
 
 # mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
-mapbox_style = 'dark'
+#mapbox_style = 'mapbox://styles/mapbox/satellite-streets-v11'
+#mapbox_style = 'white-bg'
+mapbox_style = 'mapbox://styles/jwillis0720/ck89nznm609pg1ipadkyrelvb'
 mapbox_access_token = open('.mapbox_token').readlines()[0]
 
 MERGE_NO_US, MERGED_CSBS_JHU, JHU_TIME, JHU_RECENT, DATE_MAPPER, CSBS, CENTROID_MAPPER = data.get_data()
@@ -172,7 +175,7 @@ def plot_sunburst():
         hovertemplate='<b>%{label} </b> <br> Confirmed Cases: %{value}',
         insidetextorientation='radial',
         name='Confirmed',
-        maxdepth=2,
+        maxdepth=3,
         textfont=dict(size=25, color='black')
     ), 1, 1)
 
@@ -197,7 +200,7 @@ def plot_sunburst():
             cmid=MERGE_NO_US.groupby('name').sum()['deaths'].mean()/MERGE_NO_US['deaths'].sum()),
         hovertemplate='<b>%{label} </b> <br> Confirmed Deaths: %{value}',
         name='Deaths',
-        maxdepth=2,
+        maxdepth=3,
         textfont=dict(size=25, color='white'),
         insidetextorientation='horizontal'
     ), 1, 2)
@@ -233,27 +236,6 @@ def get_date_slider():
         step=1,
         value=DATE_MAPPER.index[-1],
         marks=marks
-    )
-
-
-def get_dash_table():
-    return dash_table.DataTable(
-        id='interactive-table',
-        columns=[{'name': 'City', 'id': 'City'}, {
-            'name': 'Total Cases', 'id': 'Cases'}],
-        style_table={'overflowY': 'scroll',
-                     'width': '300px',
-                     'maxHeight': '500px'},
-        style_cell={
-            'textAlign': 'center',
-            'width': '125px',
-            'padding': '5px'
-        },
-        style_header={
-            'backgroundColor': 'white',
-            'fontWeight': 'bold'
-        },
-        style_as_list_view=True
     )
 
 
@@ -321,7 +303,7 @@ def serve_dash_layout():
                                                     {'label': 'County',
                                                      'value': 'county'}
                                                 ],
-                                                value='province'),
+                                                value='country'),
                                             html.P(
                                                 id="map-title",
                                             ),
@@ -335,7 +317,7 @@ def serve_dash_layout():
                                                      'value': 'deaths'}
                                                 ],
                                                 value=[
-                                                    'cases']
+                                                    'cases', 'deaths']
                                             )]),
                                     # get_dummy_graph(grap)
                                     dcc.Graph(id='state-graph')
@@ -374,6 +356,7 @@ def get_graph_state(date_int, group, metrics, figure):
         lat = 15.74
         lon = -1.4
         zoom = 1.6
+
     elif "layout" in figure:
         lat = figure["layout"]["mapbox"]['center']["lat"]
         lon = figure["layout"]["mapbox"]['center']["lon"]
@@ -425,6 +408,9 @@ def get_graph_state(date_int, group, metrics, figure):
             ['Date', group]).sum().max()[normalizer] / (20 ** 2)
 
     elif group == 'county':
+        lat = 42.312
+        lon = -85.512
+        zoom = 3.12
         sub_df = CSBS[CSBS['Date'] == official_date]
         sub_df = sub_df.sort_values('confirmed').groupby(
             ['county', 'province', 'lat', 'lon'], as_index=False).head(1)
@@ -439,41 +425,73 @@ def get_graph_state(date_int, group, metrics, figure):
     sub_df.loc[sub_df['confirmed'] < 0, 'confirmed'] = 0
 
     fig = go.Figure()
+
     if 'cases' in metrics:
-        fig.add_trace(go.Scattermapbox(
-            lon=sub_df['lon'].astype(float) +
-            np.random.normal(0, .02, len(sub_df['lon'])),
-            lat=sub_df['lat'].astype(float) +
-            np.random.normal(0, .02, len(sub_df['lat'])),
-            customdata=sub_df[group],
-            textposition='top right',
-            text=sub_df['Text_Cases'],
-            hoverinfo='text',
-            mode='markers',
-            name='cases',
-            marker=dict(
-                sizeref=sizeref,
-                sizemin=10,
-                size=sub_df['confirmed'],
-                color='yellow')))
+            # Binning
+        yellows = ["#ffffcc", "#ffff99", "#ffff4d",
+                   "#cccc00"]
+        bin_labels = [10, 20, 40, 80]
+        sub_df['size_bin'] = pd.qcut(
+            sub_df['confirmed'], len(bin_labels), labels=bin_labels)
+        sub_df['confirmed_colors'] = sub_df['size_bin'].apply(
+            lambda x: dict(zip(bin_labels, yellows))[x])
+        #sizeref = (2 * labels+1) / (75**2)
+        gb = sub_df.groupby('size_bin')
+
+        for g in gb.groups:
+            sub_sub_df = gb.get_group(g)
+            min_ = sub_sub_df['confirmed'].min()
+            max_ = sub_sub_df['confirmed'].max()
+            fig.add_trace(go.Scattermapbox(
+                lon=sub_sub_df['lon'].astype(float),
+                #np.random.normal(0, .02, len(sub_df['lon'])),
+                lat=sub_sub_df['lat'].astype(float),
+                #np.random.normal(0, .02, len(sub_df['lat'])),
+                customdata=sub_sub_df[group],
+                textposition='top right',
+                text=sub_sub_df['Text_Cases'],
+                hoverinfo='text',
+                mode='markers',
+                name='{0} - {1} Confirmed'.format(min_,
+                                                  max_),
+                marker=dict(
+                    opacity=.75,
+                    size=sub_sub_df['size_bin'].astype(int),
+                    color=sub_sub_df['confirmed_colors'])))
 
     if 'deaths' in metrics:
-        fig.add_trace(go.Scattermapbox(
-            lon=sub_df['lon'] +
-            np.random.normal(0, .02, len(sub_df['lon'])),
-            lat=sub_df['lat'] +
-            np.random.normal(0, .02, len(sub_df['lat'])),
-            customdata=sub_df[group],
-            textposition='top right',
-            text=sub_df['Text_Death'],
-            hoverinfo='text',
-            name='deaths',
-            mode='markers',
-            marker=dict(
-                sizeref=sizeref,
-                sizemin=10,
-                size=sub_df['deaths'],
-                color='red')))
+            # Binning
+        reds = ["#ffe6e6", "#ffb3b3", "#ff1a1a",
+                "#e60000"]
+        bin_labels = [10, 20, 40, 80]
+        sub_df['size_bin'] = pd.cut(sub_df['deaths'], bins=[
+                                    0, 2, 100, 1000, 1000000], include_lowest=True, labels=bin_labels)
+        sub_df['death_colors'] = sub_df['size_bin'].apply(
+            lambda x: dict(zip(bin_labels, reds))[x])
+        #sizeref = (2 * labels+1) / (75**2)
+        gb = sub_df.groupby('size_bin')
+
+        for g in gb.groups:
+            try:
+                sub_sub_df = gb.get_group(g)
+            except KeyError:
+                break
+            min_ = sub_sub_df['deaths'].min()
+            max_ = sub_sub_df['deaths'].max()
+
+            fig.add_trace(go.Scattermapbox(
+                lon=sub_sub_df['lon'],
+                lat=sub_sub_df['lat'],
+                customdata=sub_df[group],
+                textposition='top right',
+                text=sub_sub_df['Text_Death'],
+                hoverinfo='text',
+                name='{0} - {1} Deaths'.format(int(min_), int(max_)),
+                mode='markers',
+                marker=dict(
+                    opacity=.75,
+                    size=sub_sub_df['size_bin'].astype(int),
+                    color=sub_sub_df['death_colors'])))
 
     if not metrics:
         fig.add_trace(go.Scattermapbox(
@@ -487,6 +505,14 @@ def get_graph_state(date_int, group, metrics, figure):
         mapbox=dict(
             accesstoken=mapbox_access_token,
             style=mapbox_style,
+            # layers=[
+            #     {
+            #         "above": 'traces',
+            #         "sourcetype": "raster",
+            #         "source": [
+            #             "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
+            #         ]
+            #     }],
             zoom=zoom,
             center=dict(lat=lat, lon=lon)
         ),
@@ -495,6 +521,7 @@ def get_graph_state(date_int, group, metrics, figure):
         dragmode="pan",
         legend=dict(
             x=0.05,
+            # itemsizing='constant',
             y=0.1,
             traceorder="normal",
             font=dict(
@@ -543,7 +570,7 @@ def update_new_case_graph(hoverData, group):
 
         print(sub_df)
         sub_df = sub_df.groupby(['province', 'Date']).sum().reset_index()
-        #sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
+        # sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
 
     elif group == 'county' and hoverData:
         selection = hoverData['points'][0]['customdata']
@@ -555,7 +582,7 @@ def update_new_case_graph(hoverData, group):
     #     sub_df_time = ""
     else:
         sub_df = JHU_TIME.groupby('Date').sum().reset_index()
-        #sub_df_time = JHU_TIME.groupby('Date').sum().reset_index()
+        # sub_df_time = JHU_TIME.groupby('Date').sum().reset_index()
         selection = 'World'
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
