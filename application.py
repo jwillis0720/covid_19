@@ -53,71 +53,10 @@ app = dash.Dash(__name__,
                 )
 app.title = "Covid-19 Dashboard"
 
-# Parse Data
-states_abbreviations_mapper = {
-    'AK': 'Alaska',
-    'AL': 'Alabama',
-    'AR': 'Arkansas',
-    'AS': 'American Samoa',
-    'AZ': 'Arizona',
-    'CA': 'California',
-    'CO': 'Colorado',
-    'CT': 'Connecticut',
-    'DC': 'District of Columbia',
-    'DE': 'Delaware',
-    'FL': 'Florida',
-    'GA': 'Georgia',
-    'GU': 'Guam',
-    'HI': 'Hawaii',
-    'IA': 'Iowa',
-    'ID': 'Idaho',
-    'IL': 'Illinois',
-    'IN': 'Indiana',
-    'KS': 'Kansas',
-    'KY': 'Kentucky',
-    'LA': 'Louisiana',
-    'MA': 'Massachusetts',
-    'MD': 'Maryland',
-    'ME': 'Maine',
-    'MI': 'Michigan',
-    'MN': 'Minnesota',
-    'MO': 'Missouri',
-    'MP': 'Northern Mariana Islands',
-    'MS': 'Mississippi',
-    'MT': 'Montana',
-    'NA': 'National',
-    'NC': 'North Carolina',
-    'ND': 'North Dakota',
-    'NE': 'Nebraska',
-    'NH': 'New Hampshire',
-    'NJ': 'New Jersey',
-    'NM': 'New Mexico',
-    'NV': 'Nevada',
-    'NY': 'New York',
-    'OH': 'Ohio',
-    'OK': 'Oklahoma',
-    'OR': 'Oregon',
-    'PA': 'Pennsylvania',
-    'PR': 'Puerto Rico',
-    'RI': 'Rhode Island',
-    'SC': 'South Carolina',
-    'SD': 'South Dakota',
-    'TN': 'Tennessee',
-    'TX': 'Texas',
-    'UT': 'Utah',
-    'VA': 'Virginia',
-    'VI': 'Virgin Islands',
-    'VT': 'Vermont',
-    'WA': 'Washington',
-    'WI': 'Wisconsin',
-    'WV': 'West Virginia',
-    'WY': 'Wyoming'
-}
-
 
 # mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
-#mapbox_style = 'mapbox://styles/mapbox/satellite-streets-v11'
-#mapbox_style = 'white-bg'
+# mapbox_style = 'mapbox://styles/mapbox/satellite-streets-v11'
+# mapbox_style = 'white-bg'
 mapbox_style = 'mapbox://styles/jwillis0720/ck89nznm609pg1ipadkyrelvb'
 mapbox_access_token = open('.mapbox_token').readlines()[0]
 
@@ -292,7 +231,7 @@ def serve_dash_layout():
                                     html.Div(
                                         id='map-title-container',
                                         children=[
-                                            dcc.RadioItems(
+                                            dcc.Checklist(
                                                 id='radio-items',
                                                 labelClassName='radio-list',
                                                 options=[
@@ -303,7 +242,7 @@ def serve_dash_layout():
                                                     {'label': 'County',
                                                      'value': 'county'}
                                                 ],
-                                                value='country'),
+                                                value=['country', 'province']),
                                             html.P(
                                                 id="map-title",
                                             ),
@@ -311,16 +250,15 @@ def serve_dash_layout():
                                                 id='check-items',
                                                 labelClassName='radio-list',
                                                 options=[
-                                                    {'label': 'Cases',
-                                                     'value': 'cases'},
-                                                    {'label': u'Deaths',
+                                                    {'label': 'Confirmed',
+                                                     'value': 'confirmed'},
+                                                    {'label': 'Deaths',
                                                      'value': 'deaths'}
                                                 ],
                                                 value=[
-                                                    'cases', 'deaths']
+                                                    'confirmed', 'deaths']
                                             )]),
-                                    # get_dummy_graph(grap)
-                                    dcc.Graph(id='state-graph')
+                                    dcc.Graph(id='plot-map')
                                 ])
                         ]),
                     html.Div(
@@ -329,13 +267,14 @@ def serve_dash_layout():
                             html.H5(id='graph-container-tile',
                                     children=['Click Place on Map or Chart to Get More Information']),
 
-                            dcc.Graph(id='per_date_line',
-                                      figure=plot_sunburst()),
-                            dcc.Loading(dcc.Graph(id='per_date')),
+                            # dcc.Graph(id='per_date_line',
+                            #           figure=plot_sunburst()),
+                            dcc.Loading(
+                                className='loading-container', children=[dcc.Graph(id='per_date')], type='cube'),
                         ]),
-                    html.Div(
-                        id='table-container',
-                        children=[])
+                    # html.Div(
+                    #     id='table-container',
+                    #     children=[])
                 ]),
         ])
 
@@ -346,197 +285,196 @@ app.layout = serve_dash_layout
 application = app.server
 
 
-@app.callback(Output('state-graph', 'figure'),
+@app.callback(Output('plot-map', 'figure'),
               [Input('date_slider', 'value'),
                Input('radio-items', 'value'),
                Input('check-items', 'value')],
-              [State('state-graph', 'figure')])
-def get_graph_state(date_int, group, metrics, figure):
-    if not figure:
-        lat = 15.74
-        lon = -1.4
-        zoom = 1.6
-
-    elif "layout" in figure:
-        lat = figure["layout"]["mapbox"]['center']["lat"]
-        lon = figure["layout"]["mapbox"]['center']["lon"]
-        zoom = figure["layout"]["mapbox"]["zoom"]
-
-    if 'cases' in metrics:
-        normalizer = 'confirmed'
-    elif 'active' in metrics:
-        normalizer = 'Active'
-    elif 'recovery' in metrics:
-        normalizer = 'recovered'
-    else:
-        normalizer = 'deaths'
-
+              [State('plot-map', 'figure')])
+def plot_map(date_int, group, metrics, figure):
+        # Date INT comes from the slider and can only return integers:
     official_date = DATE_MAPPER.iloc[date_int]['Date']
-    # print(date_int, official_date)
 
-    if group == 'country':
-        country_mapper = JHU_TIME[
-            JHU_TIME['Date'] == official_date].groupby(
-            'country', as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[['country', 'lat', 'lon']])
-        sub_df = JHU_TIME[
-            JHU_TIME['Date'] == official_date].groupby('country', as_index=False).sum()[['country', 'confirmed', 'deaths']].merge(
-                country_mapper, on=['country'])
-        sizeref = 2. * JHU_TIME.groupby(
-            ['Date', group]).sum().max()[normalizer] / (20 ** 2)
+    # Lets trim down the dataframes
+    JHU_TIME_DATE = JHU_TIME[JHU_TIME['Date'] == official_date]
+    CSBS_TIME_DATE = CSBS[CSBS['Date'] == official_date]
 
-        print(sub_df.columns)
+    # Initialize empty
+    plot_data_frame = pd.DataFrame()
+    SUB_DF_COUNTRY = pd.DataFrame()
+    SUB_DF_PROVINCE = pd.DataFrame()
+    SUB_DF_COUNTY = pd.DataFrame()
 
-    elif group == 'province':
-        sub_df = JHU_TIME[JHU_TIME[group] != '']
-        province_mapper = sub_df[
-            sub_df['Date'] == official_date].groupby(
-                group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group, 'lat', 'lon']])
-        sub_df = sub_df[
-            sub_df['Date'] == official_date].groupby(group, as_index=False).sum()[['province', 'confirmed', 'deaths']].merge(province_mapper, on=['province'])
+    if 'country' in group:
+        SUB_DF_COUNTRY = JHU_TIME_DATE.sort_values('confirmed')[::-1].groupby(['country']).agg(
+            {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'country': 'location'}, axis=1)
+        SUB_DF_COUNTRY['Text_Cases'] = 'Country: '+SUB_DF_COUNTRY['location'] + \
+            '<br>Total Cases:' + \
+            SUB_DF_COUNTRY['confirmed'].apply(
+                lambda x: "{:,}".format(int(x)))
+        SUB_DF_COUNTRY['Text_Deaths'] = 'Country: '+SUB_DF_COUNTRY['location'] + \
+            '<br>Total Deaths:' + \
+            SUB_DF_COUNTRY['deaths'].apply(lambda x: "{:,}".format(int(x)))
+        SUB_DF_COUNTRY['type'] = 'country'
+        SUB_DF_COUNTRY['source'] = 'JHU'
 
-        # Now do it for the CSBS
-        province_mapper = CSBS.groupby(
-            group, as_index=False).apply(lambda x: x.sort_values('confirmed')[::-1].head(1)[[group,  'lat', 'lon']])
-        sub_df_csbs = CSBS[CSBS[group] != '']
-        sub_df_csbs = sub_df_csbs[sub_df_csbs['Date'] == official_date]
+    if 'province' in group:
+        SUB_DF_PROVINCE = JHU_TIME_DATE[JHU_TIME_DATE['province'] != ''].sort_values('confirmed')[::-1].groupby(['province']).agg(
+            {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'location'}, axis=1)
+        SUB_DF_PROVINCE['Text_Cases'] = 'Province: '+SUB_DF_PROVINCE['location'] + \
+            '<br>Total Cases:' + \
+            SUB_DF_PROVINCE['confirmed'].apply(
+                lambda x: "{:,}".format(int(x)))
+        SUB_DF_PROVINCE['Text_Deaths'] = 'Province: '+SUB_DF_PROVINCE['location'] + \
+            '<br>Total Deaths:' + \
+            SUB_DF_PROVINCE['deaths'].apply(
+            lambda x: "{:,}".format(int(x)))
+        SUB_DF_PROVINCE['source'] = 'JHU'
+        SUB_DF_PROVINCE['type'] = 'province'
 
-        sub_df_csbs = sub_df_csbs.groupby(group, as_index=False).sum()[
-            ['province', 'confirmed', 'deaths']].merge(province_mapper, on=['province'])
-        sub_df = pd.concat([sub_df, sub_df_csbs])
+        temp_df = CSBS_TIME_DATE[CSBS_TIME_DATE['province'] != ''].sort_values('confirmed')[::-1].groupby(['province']).agg(
+            {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'location'}, axis=1)
 
-        sizeref = 2. * JHU_TIME.groupby(
-            ['Date', group]).sum().max()[normalizer] / (20 ** 2)
+        temp_df['Text_Cases'] = 'State: '+temp_df['location']+'<br>Total Cases:' + \
+            temp_df['confirmed'].apply(lambda x: "{:,}".format(int(x)))
+        temp_df['Text_Deaths'] = 'State: '+temp_df['location'] + \
+            '<br>Total Deaths:' + \
+            temp_df['deaths'].apply(lambda x: "{:,}".format(int(x)))
+        temp_df['source'] = 'CSBS'
+        temp_df['type'] = 'state'
+        SUB_DF_PROVINCE = SUB_DF_PROVINCE.append(temp_df)
 
-    elif group == 'county':
-        lat = 42.312
-        lon = -85.512
-        zoom = 3.12
-        sub_df = CSBS[CSBS['Date'] == official_date]
-        sub_df = sub_df.sort_values('confirmed').groupby(
-            ['county', 'province', 'lat', 'lon'], as_index=False).head(1)
-        sub_df.rename({'cases': 'confirmed'}, axis=1, inplace=1)
-        sizeref = 2. * sub_df.max()[normalizer] / (20 ** 2)
+    if 'county' in group:
+        SUB_DF_COUNTY = CSBS_TIME_DATE[CSBS_TIME_DATE['county'] != ''].sort_values('confirmed')[::-1].groupby(['county']).agg(
+            {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'county': 'location'}, axis=1)
+        SUB_DF_COUNTY['Text_Cases'] = 'County: '+SUB_DF_COUNTY['location'] + \
+            '<br>Total Cases:' + \
+            SUB_DF_COUNTY['confirmed'].apply(
+                lambda x: "{:,}".format(int(x)))
+        SUB_DF_COUNTY['Text_Deaths'] = 'County: '+SUB_DF_COUNTY['location'] + \
+            '<br>Total Deaths:' + \
+            SUB_DF_COUNTY['deaths'].apply(lambda x: "{:,}".format(int(x)))
+        SUB_DF_COUNTY['source'] = 'CSBS'
+        SUB_DF_COUNTY['type'] = 'county'
 
-    sub_df['Text_Cases'] = sub_df[group] + '<br>Total Cases at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['confirmed'].apply(lambda x: "{:,}".format(int(x)))
-    sub_df['Text_Death'] = sub_df[group] + '<br>Total Deaths at {} : '.format(
-        official_date.strftime('%m/%d/%y')) + sub_df['deaths'].apply(lambda x: "{:,}".format(int(x)))
+    plot_data_frame = pd.concat(
+        [SUB_DF_COUNTRY, SUB_DF_PROVINCE, SUB_DF_COUNTY])
 
-    sub_df.loc[sub_df['confirmed'] < 0, 'confirmed'] = 0
+    # Setting up Sizes and Colors
+    grey_to_yellow = ['#808080', '#a19e79',
+                      '#c1bd70', '#e0dc63', '#fffd50']
+    orange_to_red = ['#ffa500', '#ff8c00', '#ff7000', '#ff4e00', '#ff0000']
 
-    fig = go.Figure()
+    sizes = [5, 10, 30, 60]
 
-    if 'cases' in metrics:
-            # Binning
-        yellows = ["#ffffcc", "#ffff99", "#ffff4d",
-                   "#cccc00"]
-        bin_labels = [10, 20, 40, 80]
-        sub_df['size_bin'] = pd.qcut(
-            sub_df['confirmed'], len(bin_labels), labels=bin_labels)
-        sub_df['confirmed_colors'] = sub_df['size_bin'].apply(
-            lambda x: dict(zip(bin_labels, yellows))[x])
-        #sizeref = (2 * labels+1) / (75**2)
-        gb = sub_df.groupby('size_bin')
+    death_bins = [0, 2, 100, 1000, 1000000]
+    cases_bins = [0, 10, 1000, 10000, 10000000]
 
-        for g in gb.groups:
-            sub_sub_df = gb.get_group(g)
-            min_ = sub_sub_df['confirmed'].min()
-            max_ = sub_sub_df['confirmed'].max()
-            fig.add_trace(go.Scattermapbox(
-                lon=sub_sub_df['lon'].astype(float),
-                #np.random.normal(0, .02, len(sub_df['lon'])),
-                lat=sub_sub_df['lat'].astype(float),
-                #np.random.normal(0, .02, len(sub_df['lat'])),
-                customdata=sub_sub_df[group],
-                textposition='top right',
-                text=sub_sub_df['Text_Cases'],
-                hoverinfo='text',
-                mode='markers',
-                name='{0} - {1} Confirmed'.format(min_,
-                                                  max_),
-                marker=dict(
-                    opacity=.75,
-                    size=sub_sub_df['size_bin'].astype(int),
-                    color=sub_sub_df['confirmed_colors'])))
+    plot_data_frame['death_size'] = pd.cut(
+        plot_data_frame['deaths'], bins=death_bins, include_lowest=True, labels=sizes)
+    plot_data_frame['confirmed_size'] = pd.cut(
+        plot_data_frame['confirmed'], bins=cases_bins, include_lowest=True, labels=sizes)
 
-    if 'deaths' in metrics:
-            # Binning
-        reds = ["#ffe6e6", "#ffb3b3", "#ff1a1a",
-                "#e60000"]
-        bin_labels = [10, 20, 40, 80]
-        sub_df['size_bin'] = pd.cut(sub_df['deaths'], bins=[
-                                    0, 2, 100, 1000, 1000000], include_lowest=True, labels=bin_labels)
-        sub_df['death_colors'] = sub_df['size_bin'].apply(
-            lambda x: dict(zip(bin_labels, reds))[x])
-        #sizeref = (2 * labels+1) / (75**2)
-        gb = sub_df.groupby('size_bin')
+    plot_data_frame['death_colors'] = plot_data_frame['death_size'].apply(
+        lambda x: dict(zip(sizes, orange_to_red))[x])
+    plot_data_frame['case_colors'] = plot_data_frame['confirmed_size'].apply(
+        lambda x: dict(zip(sizes, grey_to_yellow))[x])
 
-        for g in gb.groups:
-            try:
-                sub_sub_df = gb.get_group(g)
-            except KeyError:
-                break
-            min_ = sub_sub_df['deaths'].min()
-            max_ = sub_sub_df['deaths'].max()
-
-            fig.add_trace(go.Scattermapbox(
-                lon=sub_sub_df['lon'],
-                lat=sub_sub_df['lat'],
-                customdata=sub_df[group],
-                textposition='top right',
-                text=sub_sub_df['Text_Death'],
-                hoverinfo='text',
-                name='{0} - {1} Deaths'.format(int(min_), int(max_)),
-                mode='markers',
-                marker=dict(
-                    opacity=.75,
-                    size=sub_sub_df['size_bin'].astype(int),
-                    color=sub_sub_df['death_colors'])))
+    # And Plot the DataSet
+    data_traces = []
 
     if not metrics:
-        fig.add_trace(go.Scattermapbox(
+        data_traces.append(go.Scattermapbox(
             lon=[],
             lat=[]
         ))
+
+    if 'confirmed' in metrics:
+        # First Do Confirmed
+        gb_confirmed = plot_data_frame.groupby('confirmed_size')
+        gb_groups = sorted(gb_confirmed.groups)
+        for indexer in range(len(gb_groups)):
+            plotting_df = gb_confirmed.get_group(gb_groups[indexer])
+            if indexer+1 == len(cases_bins)-1:
+                max_ = int(
+                    math.ceil(plot_data_frame['confirmed'].max()/10000)) * 10000
+                name = "{0:,}-{1:,}".format(int(cases_bins[indexer]), max_)
+            else:
+                name = "{0:,}-{1:,}".format(
+                    cases_bins[indexer], cases_bins[indexer+1])
+            data = go.Scattermapbox(
+                lon=plotting_df['lon'],
+                lat=plotting_df['lat'],
+                customdata=plotting_df['location'] + "_" +
+                plotting_df['source'] + "_" + plotting_df['type']+"_confirmed",
+                textposition='top right',
+                text=plotting_df['Text_Cases'],
+                hoverinfo='text',
+                mode='markers',
+                name=name,
+                marker=dict(
+                    opacity=0.75,
+                    size=plotting_df['confirmed_size'],
+                    color=plotting_df['case_colors']
+                )
+            )
+            data_traces.append(data)
+
+    if 'deaths' in metrics:
+        # Then Do Deaths
+        gb_deaths = plot_data_frame.groupby('death_size')
+        gb_groups = sorted(gb_deaths.groups)
+        for indexer in range(len(gb_groups)):
+            plotting_df = gb_deaths.get_group(gb_groups[indexer])
+            if indexer+1 == len(death_bins)-1:
+                max_ = int(
+                    math.ceil(plot_data_frame['deaths'].max()/10000)) * 10000
+                name = "{0:,}-{1:,}".format(int(death_bins[indexer]), max_)
+            else:
+                name = "{0:,}-{1:,}".format(
+                    death_bins[indexer], death_bins[indexer+1])
+            data = go.Scattermapbox(
+                lon=plotting_df['lon'],
+                lat=plotting_df['lat'],
+                customdata=plotting_df['location'],
+                textposition='top right',
+                text=plotting_df['Text_Deaths'],
+                hoverinfo='text',
+                mode='markers',
+                name=name,
+                marker=dict(
+                    opacity=0.75,
+                    size=plotting_df['death_size'],
+                    color=plotting_df['death_colors']
+                )
+            )
+            data_traces.append(data)
+
     layout = dict(
-        title_text='The Corona is Coming',
         autosize=True,
         showlegend=True,
         mapbox=dict(
             accesstoken=mapbox_access_token,
             style=mapbox_style,
-            # layers=[
-            #     {
-            #         "above": 'traces',
-            #         "sourcetype": "raster",
-            #         "source": [
-            #             "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
-            #         ]
-            #     }],
-            zoom=zoom,
-            center=dict(lat=lat, lon=lon)
+            zoom=1.5,
+            center=dict(lat=20.74, lon=15.4)
         ),
         hovermode="closest",
         margin=dict(r=0, l=0, t=0, b=0),
         dragmode="pan",
         legend=dict(
-            x=0.05,
-            # itemsizing='constant',
-            y=0.1,
+            x=0.88,
+            y=0.05,
             traceorder="normal",
             font=dict(
                 family="sans-serif",
-                size=24,
+                size=16,
                 color="white"
             ),
             bgcolor='rgba(0,0,0,0)',
-            # bordercolor="",
-            # borderwidth=2
         )
     )
 
-    fig.update_layout(layout)
-    return fig
+    return {'data': data_traces, 'layout': layout}
 
 
 @app.callback(Output('map-title', 'children'),
@@ -550,9 +488,10 @@ def update_description(date_int):
 
 
 @app.callback(Output('per_date', 'figure'),
-              [Input('state-graph', 'clickData'),
+              [Input('plot-map', 'clickData'),
                Input('radio-items', 'value')])
 def update_new_case_graph(hoverData, group):
+    pprint.pprint(hoverData)
 
     if group == 'country' and hoverData:
         selection = hoverData['points'][0]['customdata']
