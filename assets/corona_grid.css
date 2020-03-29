@@ -97,7 +97,7 @@
         border-left: #2cfec1 solid 0.5rem;
         padding-left: 1rem;
         max-width: 100rem;
-        margin: 1rem 0 1rem 1rem;
+        margin: 1rem 0 0rem 1rem;
         color: white;
         letter-spacing: 0rem;
     }
@@ -109,7 +109,8 @@
         display: grid;
         grid-template-columns: 50% 50%;
         grid-column-gap: 2rem;
-        margin: 1vw;
+        padding-left: 1rem;
+        padding-right: 1rem;
         /* overflow: scroll; */
         /* min-height: 30vmax; */
         grid-template-areas: "left-container graph-container"
