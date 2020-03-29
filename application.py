@@ -153,7 +153,7 @@ def plot_sunburst():
         hovertemplate='<b>%{label} </b> <br> Confirmed Deaths: %{value}',
         name='Deaths',
         maxdepth=3,
-        textfont=dict(size=25, color='white'),
+        textfont=dict(color='white'),
         insidetextorientation='horizontal'
     ), 1, 2)
     margine = 15
@@ -516,12 +516,12 @@ def plot_map(date_int, group, metrics, figure, relay):
         dragmode="pan",
         legend=dict(
             x=0.012,
-            y=0.06,
+            y=0.12,
             orientation='h',
             traceorder="normal",
             font=dict(
                 family="sans-serif",
-                size=16,
+                # size=12,
                 color="white"
             ),
             bgcolor='rgba(0,0,0,0)',
@@ -596,11 +596,11 @@ def update_new_case_graph(values):
                 )), secondary_y=True)
 
     fig.update_layout(
-        xaxis_tickfont_size=22,
+        # xaxis_tickfont_size=22,
         yaxis=dict(
             title=dict(text='New Cases', standoff=2),
-            titlefont_size=22,
-            tickfont_size=22,
+            # titlefont_size=22,
+            # tickfont_size=22,
             showgrid=True,
             color='white',
             side='left',
@@ -618,12 +618,13 @@ def update_new_case_graph(values):
     fig.update_layout(
         yaxis2=dict(
             title=dict(text='Total Cases', standoff=2),
-            titlefont_size=22,
-            tickfont_size=22,
+            # titlefont_size=22,
+            # tickfont_size=22,
             showgrid=False,
             color='yellow',
             side='right',
         ),
+        autosize=True
 
     )
 
@@ -664,7 +665,8 @@ def plot_exponential(value):
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]: indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]
+                    : indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             if y < 100 or x < 100:
@@ -688,7 +690,7 @@ def plot_exponential(value):
                 line=dict(shape='linear', color=colors[enum_], width=3),
                 marker=dict(
                     symbol='circle-open',
-                    size=7
+                    # size=7
                 ),
                 hovertemplate="On %{text} <br> Total Cases: %{x}<br> Cummulative Cases Last Week %{y}"
             )
@@ -704,7 +706,7 @@ def plot_exponential(value):
                 hoverlabel=dict(align='left'),
                 marker=dict(
                     symbol='circle',
-                    size=18,
+                    # size=18,
                     color=colors[enum_]
                 ),
                 hovertemplate="On %{text} <br> Total Cases: %{x}<br> Cummulative Cases Last Week %{y}"
@@ -725,12 +727,12 @@ def plot_exponential(value):
         fig.update_yaxes(type="log", dtick=1)
 
     fig.update_layout(
-        xaxis_tickfont_size=22,
+        # xaxis_tickfont_size=22,
         yaxis=dict(
             title=dict(text='New Cases Previous {} Days'.format(
                 backtrack), standoff=2),
-            titlefont_size=22,
-            tickfont_size=22,
+            # titlefont_size=22,
+            # tickfont_size=22,
             showgrid=True,
             color='white',
         ),
@@ -738,13 +740,13 @@ def plot_exponential(value):
         xaxis=dict(
             color='white',
             showgrid=False,
-            title=dict(text='Total Cases', standoff=1), titlefont_size=22
+            title=dict(text='Total Cases', standoff=1)
         ),
         autosize=True,
         showlegend=True,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgb(52,51,50)',
-        legend=dict(font=dict(size=22, color='white'), orientation='h', x=0, y=1.15))
+        legend=dict(font=dict(color='white'), orientation='h', x=0, y=1.15))
 
     print(max_number, np.log10(max_number))
     annotations = []
@@ -753,7 +755,7 @@ def plot_exponential(value):
                             # xanchor='center', yanchor='middle',
                             text="Exponential Growth",
                             font=dict(family='Arial',
-                                      size=20,
+                                      #   size=20,
                                       color='white'),
                             showarrow=True,
                             startarrowsize=10,

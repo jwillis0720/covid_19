@@ -1,283 +1,229 @@
-@media (min-width: 900px){
-
-@import url('https://fonts.googleapis.com/css?family=Open+Sans');
-@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
-
-html{
-    font-size: 100%;
-    background-color: #1f2630;
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0;
-    font-family:  "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-body {
-    font-size: 1.1rem; /* currently ems cause chrome bug misinterpreting rems on body element */
-    line-height: 1.6;
-    font-weight: 400;
-    font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: white;
-    zoom:100%;
-}
-
-
-
-h1, h2, h3, h4, h5, h6 {
-    margin-top: 0;
-    margin-bottom: 0;
-    font-weight: 300;
-}
-
-h4 {
-    font-family: "Fjalla One", sans-serif;
-    font-size: 2vh;
-    /* line-height: 1.35; */
-    letter-spacing: -.08rem;
-    margin-bottom: 1.2rem;
-    margin-top: 1.2rem;
-    font-weight: bold;
-    color: #2cfec1;
-}
-
-.hovertext text {
-    font-size: 1vw !important;
-}
-
-div .rc-slider-handle{
-    height: 17px;
-    width: 17px;
-    position: relative;
-    bottom: 50%;
-}
-
-
-div .rc-slider-handle{
-    height: 17px;
-    width: 17px;
-    position: relative;
-    bottom: 50%;
-    background-color: rgb(148, 32, 32);
-}
-.rc-slider-mark-text{
-    color: white;
-    font-size: 0.75vw;
-}
-
-
-.rc-slider-mark-text{
-    color: grey;
-    font-weight: bolder;
-}
-
-.rc-slider-mark-text-active{
-    color: white
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-   /* vertical-align: ; */
-   height:0.75vw;
-   width: 0.75vw;
-   margin-right: 0.5rem;
-    
-
-}
-
-
-.rc-slider-dot-active, .rc-slider-handle {
-    border-color: #33fe2c   !important;
-
-
-}
-
-.rc-slider-track {
-    background-color: #33fe2c !important
-}
-
-.rc-slider-rail {
-    background-color: gold !important;
-    height: 0.1rem
-}
-
-.radio-list{
-    padding-right: 0.5rem;
-    font-size: 0.75vw;
-}
-
-#root_container{
-    display:grid;
-    grid-template-rows: 15% auto;
-    grid-template-areas: auto;
-    row-gap: 2vh;
-}
-#header{
-    margin-left: 2rem;
-    grid-row-start: 1;
-    grid-row-end: 2;
-
-}
-
-#description{
-    font-family: sans-serif;
-    font-size: 1.5rem;
-    font-weight: normal;
-    border-left: #2cfec1 solid 0.5rem;
-    padding-left: 1rem;
-    max-width: 100rem;
-    margin: 1rem 0 1rem 2rem;
-    color: white;
-    letter-spacing: 0rem;
-}
-#description a {
-    color:#2cfec1 
-}
-
-
-#app-container {
-    grid-row-start: 2;
-    display: grid;
-    grid-template-columns: 55% minmax(42vw,auto);
-    grid-template-rows: auto;
-    grid-column-gap: 2rem;
-    margin: 1vw;
-    /* overflow: scroll; */
-    /* min-height: 30vmax; */
-    grid-template-areas: 
-       "left-container graph-container"
-}
-
-
-
-
-#left-container{
-    grid-area: left-container;
-    display: grid;
-    grid-template-columns: auto;
-    grid-template-rows: 15% auto;
-    row-gap: 1.5vh;
-    grid-template-areas:
-       "slider-container"
-       "map-container";
-}
-
-#slider-container{
-    grid-area: slider-container;
-    row-gap: 1rem;
-    background-color:    #1B222A;
-    display: grid;
-    grid-template-rows: 40% auto;
-    grid-template-areas: auto;
-}
-
-#slider-text{
-    grid-row:1;
-    justify-self: start;
-    padding-inline-start: 2vw;
-    align-self: center;
-    justify-self: stretch;
-    font-family: "Fjalla One";
-    font-size: 1vw;
-    color: white;
-}
-
-#date_slider{
-    grid-row: 2;
-    padding-inline-start: 2.2vw;
-    padding-inline-end: 2.2vw;
-    align-self: start;
-}
-
-
-#map-container{
-    grid-area: map-container;
-    row-gap: 1%;
-    background-color: #1B222A;
-    display: grid;
-    grid-template-columns: auto;
-    grid-template-rows: 5vh minmax(50vh, auto);
-    grid-template-areas:
-        "map-title-container"
-        "map";
-    overflow: hidden;
-}
-
-#map-title-container{
-    grid-area: map-title-container;
-    display: grid;
-    grid-template-columns: 40% 20% auto;
-    grid-template-rows: auto;
-    grid-template-areas: 
-        "radio-buttons map-title checkbox";
-
-}
-
-#map-title{
-    grid-area: map-title;
-    justify-self: center;
-    align-self: center;
-    font-size: 1.2vw;
-    color:#2cfec1;
-    margin-block-end: 0;
-}
-
-#radio-items{
-    grid-area: radio-buttons;
-    justify-self: start;
-    align-self: end;
-    font-size:0.65vw;
-    padding-inline-start:3rem;
-}
-
-#check-items{
-    grid-area: checkbox;
-    justify-self: end;
-    align-self: end;
-    font-size:0.65vw;
-    padding-inline-end: 2rem;
-}
-
-div.VirtualizedSelectOption{
-    color: black;
-}
-
-#plot-map{
-    border: 20px;
-    border-color: black;
-    grid-area: map;
-    /* justify-items: stretch; */
-    align-items: center;
-    margin: 2rem;
-    display: flex;
-    flex-direction: column;
-    height:90%;
-    /* padding-block-end: 5rem; */
-}
-
-
-#graph-container{
-    background-color: #1B222A;;
-    grid-area: graph-container;
-    display: grid;
-    grid-gap: 1vh;
-    grid-template-rows: 2% minmax(3%,4%) auto;
-    grid-template-columns: auto;
-    justify-self: stretch;
-}
-
-#graph-container-tile{
-    grid-row-start: 1;
-    grid-row-end: 2;
-    align-self: start;
-    justify-self: center;
-  }
-
-#dropdown_container{
-    grid-row-start: 2;
-    margin-right: 2vw;
-    margin-left: 1vw;
-}
-/* #dropdown_container{
+@media (min-width: 900px) {
+    @import url('https://fonts.googleapis.com/css?family=Open+Sans');
+    @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
+    html {
+        font-size: 100%;
+        background-color: #1f2630;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0;
+        font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    body {
+        font-size: 1.1rem;
+        /* currently ems cause chrome bug misinterpreting rems on body element */
+        line-height: 1.6;
+        font-weight: 400;
+        font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: white;
+        zoom: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-weight: 300;
+    }
+    h4 {
+        font-family: "Fjalla One", sans-serif;
+        font-size: 2vh;
+        /* line-height: 1.35; */
+        letter-spacing: -.08rem;
+        margin-bottom: 1.2rem;
+        margin-top: 1.2rem;
+        font-weight: bold;
+        color: #2cfec1;
+    }
+    .hovertext text {
+        font-size: 1vw !important;
+    }
+    div .rc-slider-handle {
+        height: 17px;
+        width: 17px;
+        position: relative;
+        bottom: 50%;
+    }
+    div .rc-slider-handle {
+        height: 17px;
+        width: 17px;
+        position: relative;
+        bottom: 50%;
+        background-color: rgb(148, 32, 32);
+    }
+    .rc-slider-mark-text {
+        color: white;
+        font-size: 0.75vw;
+    }
+    .rc-slider-mark-text {
+        color: grey;
+        font-weight: bolder;
+    }
+    .rc-slider-mark-text-active {
+        color: white
+    }
+    input[type="checkbox"], input[type="radio"] {
+        /* vertical-align: ; */
+        height: 0.75vw;
+        width: 0.75vw;
+        margin-right: 0.5rem;
+    }
+    .rc-slider-dot-active, .rc-slider-handle {
+        border-color: #33fe2c !important;
+    }
+    .rc-slider-track {
+        background-color: #33fe2c !important
+    }
+    .rc-slider-rail {
+        background-color: gold !important;
+        height: 0.1rem
+    }
+    .radio-list {
+        padding-right: 0.5rem;
+        font-size: 0.75vw;
+    }
+    #root_container {
+        display: grid;
+        grid-template-rows: 15% auto;
+        grid-template-areas: auto;
+        row-gap: 1vh;
+    }
+    #header {
+        margin-left: 2rem;
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+    #description {
+        font-family: sans-serif;
+        font-weight: normal;
+        border-left: #2cfec1 solid 0.5rem;
+        padding-left: 1rem;
+        max-width: 100rem;
+        margin: 1rem 0 1rem 1rem;
+        color: white;
+        letter-spacing: 0rem;
+    }
+    #description a {
+        color: #2cfec1
+    }
+    #app-container {
+        grid-row-start: 2;
+        display: grid;
+        grid-template-columns: 50% 50%;
+        grid-column-gap: 2rem;
+        margin: 1vw;
+        /* overflow: scroll; */
+        /* min-height: 30vmax; */
+        grid-template-areas: "left-container graph-container"
+    }
+    #left-container {
+        grid-area: left-container;
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: 15% auto;
+        row-gap: 1.5vh;
+        grid-template-areas: "slider-container" "map-container";
+    }
+    #slider-container {
+        grid-area: slider-container;
+        row-gap: 1rem;
+        background-color: #1B222A;
+        display: grid;
+        grid-template-rows: 40% auto;
+        grid-template-areas: auto;
+    }
+    #slider-text {
+        grid-row: 1;
+        justify-self: start;
+        padding-inline-start: 2vw;
+        align-self: center;
+        justify-self: stretch;
+        font-family: "Fjalla One";
+        font-size: 1vw;
+        color: white;
+    }
+    #date_slider {
+        grid-row: 2;
+        padding-inline-start: 2.2vw;
+        padding-inline-end: 2.2vw;
+        align-self: start;
+    }
+    #map-container {
+        grid-area: map-container;
+        row-gap: 1%;
+        background-color: #1B222A;
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: 5vh minmax(50vh, auto);
+        grid-template-areas: "map-title-container" "map";
+        overflow: hidden;
+    }
+    #map-title-container {
+        grid-area: map-title-container;
+        display: grid;
+        grid-template-columns: 40% 20% auto;
+        grid-template-rows: auto;
+        grid-template-areas: "radio-buttons map-title checkbox";
+    }
+    #map-title {
+        grid-area: map-title;
+        justify-self: center;
+        align-self: center;
+        font-size: 1.2vw;
+        color: #2cfec1;
+        margin-block-end: 0;
+    }
+    #radio-items {
+        grid-area: radio-buttons;
+        justify-self: start;
+        align-self: end;
+        font-size: 0.65vw;
+        padding-inline-start: 3rem;
+    }
+    #check-items {
+        grid-area: checkbox;
+        justify-self: end;
+        align-self: end;
+        font-size: 0.65vw;
+        padding-inline-end: 2rem;
+    }
+    div.VirtualizedSelectOption {
+        color: black;
+    }
+    #plot-map {
+        border: 20px;
+        border-color: black;
+        grid-area: map;
+        /* justify-items: stretch; */
+        align-items: center;
+        margin: 2rem;
+        display: flex;
+        flex-direction: column;
+        height: 90%;
+        /* padding-block-end: 5rem; */
+    }
+    #graph-container {
+        background-color: #1B222A;
+        grid-area: graph-container;
+        display: grid;
+        grid-gap: 1vh;
+        grid-template-rows: 2% minmax(3%, 4%) auto;
+        grid-template-columns: auto;
+        justify-self: stretch;
+    }
+    #graph-container-tile {
+        grid-row-start: 1;
+        grid-row-end: 2;
+        align-self: start;
+        justify-self: center;
+    }
+    #dropdown_container {
+        grid-row-start: 2;
+        margin-right: 2vw;
+        margin-left: 1vw;
+    }
+    /* .loading-container {
+        max-height: 20vh;
+    } */
+    /* #dropdown_container{
     grid-row-start: 2;
     display: flex;
     margin:0;
@@ -290,42 +236,31 @@ div.VirtualizedSelectOption{
     
 
 } */
-
-/* .loading-container{
+    /* .loading-container{
    margin-bottom: -2vh;
 
 } */
-.loading_graph{
-    align-self: center;
-    justify-self: end;
-    margin-left: 2rem;
-}
-#per_date{
-    grid-row-start: 3;
-    margin-bottom: -3.5vh;
-}
-
-#minute-p{
-   margin-right: 2vw;
-   padding-bottom: 2vh;
-}
-
-/* #per_date_line{
+    .loading_graph {
+        align-self: center;
+        justify-self: end;
+        margin-left: 2rem;
+    }
+    #per_date {
+        grid-row-start: 3;
+        margin-bottom: -3.5vh;
+    }
+    #minute-p {
+        margin-right: 2vw;
+        padding-bottom: 2vh;
+    }
+    /* #per_date_line{
     grid-row-start: 2;
     grid-row-end: 3;
 } */
-
-
-#table-container{
-    grid-area: table-container
-}
-
-
-/* .infolayer [class^='y'][class$='title'] {
+    #table-container {
+        grid-area: table-container
+    }
+    /* .infolayer [class^='y'][class$='title'] {
     transform: rotate(90deg);
   } */
-
-
-
-
-} 
+}
