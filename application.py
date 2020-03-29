@@ -515,8 +515,9 @@ def plot_map(date_int, group, metrics, figure, relay):
         margin=dict(r=0, l=0, t=0, b=0),
         dragmode="pan",
         legend=dict(
-            x=0.88,
-            y=0.05,
+            x=0.012,
+            y=0.06,
+            orientation='h',
             traceorder="normal",
             font=dict(
                 family="sans-serif",
