@@ -16,6 +16,7 @@ try:
     import dash_html_components as html
     from dash.exceptions import PreventUpdate
     import dash_table
+    import plotly
     from dash.dependencies import Input, Output, State
     import plotly.graph_objects as go
     import plotly.express as px
@@ -61,6 +62,18 @@ mapbox_style = 'mapbox://styles/jwillis0720/ck89nznm609pg1ipadkyrelvb'
 mapbox_access_token = open('.mapbox_token').readlines()[0]
 
 MERGE_NO_US, MERGED_CSBS_JHU, JHU_TIME, JHU_RECENT, DATE_MAPPER, CSBS, CENTROID_MAPPER = data.get_data()
+
+JHU_DF_AGG_COUNTRY = JHU_TIME.sort_values('confirmed')[::-1].groupby(['Date', 'country']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+JHU_DF_AGG_PROVINCE = JHU_TIME[JHU_TIME['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'province']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+CSBS_DF_AGG_STATE = CSBS[CSBS['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'province']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'state'}, axis=1)
+
+CSBS_DF_AGG_COUNTY = CSBS[CSBS['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'county']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
 
 
 def build_hierarchical_dataframe(df, levels, value_column, color_columns=None):
@@ -154,6 +167,32 @@ def plot_sunburst():
     pprint.pprint(fig.data)
     pprint.pprint(fig.layout)
     return fig
+
+
+def get_dropdown():
+    countries = [{'label': x, 'value': "COUNTRY_{0}".format(
+        x)} for x in JHU_DF_AGG_COUNTRY['country'].unique()]
+
+    countries.append({'label': 'Worldwide', 'value': 'worldwide'})
+    provinces = [{'label': x, 'value': "PROVINCE_{0}".format(
+        x)} for x in JHU_DF_AGG_PROVINCE['province'].unique()]
+    state = [{'label': x, 'value': "STATE_{0}".format(
+        x)} for x in CSBS_DF_AGG_STATE['state'].unique()]
+    counties = [{'label': x+" County", 'value': "COUNTY_{0}".format(
+        x)} for x in CSBS_DF_AGG_COUNTY['county'].unique()]
+
+    # Post HOc Correciton
+    for index in countries:
+        if index['label'] == 'US':
+            index['label'] = 'United States'
+
+    dd = dcc.Dropdown(
+        id='dropdown_container',
+        options=countries+provinces+state+counties,
+        value=['worldwide', 'COUNTRY_US', 'COUNTRY_China'],
+        multi=True
+    )
+    return dd
 
 
 def get_date_slider():
@@ -265,16 +304,16 @@ def serve_dash_layout():
                         id="graph-container",
                         children=[
                             html.H5(id='graph-container-tile',
-                                    children=['Click Place on Map or Chart to Get More Information']),
-
-                            # dcc.Graph(id='per_date_line',
-                            #           figure=plot_sunburst()),
+                                    children=['Click Place on Map or Chart to Update List']),
+                            get_dropdown(),
                             dcc.Loading(
-                                className='loading-container', children=[dcc.Graph(id='per_date')], type='cube'),
+                                className='loading-container', children=[dcc.Graph(id='per_date', className='loading_graph')], type='cube'),
+                            dcc.Loading(
+                                className='loading-container', children=[dcc.Graph(id='minute-p', className='loading_graph')], type='cube'),
                         ]),
-                    # html.Div(
-                    #     id='table-container',
-                    #     children=[])
+                    html.Div(
+                        id='table-container',
+                        children=[])
                 ]),
         ])
 
@@ -289,9 +328,11 @@ application = app.server
               [Input('date_slider', 'value'),
                Input('radio-items', 'value'),
                Input('check-items', 'value')],
-              [State('plot-map', 'figure')])
-def plot_map(date_int, group, metrics, figure):
-        # Date INT comes from the slider and can only return integers:
+              [State('plot-map', 'figure'),
+               State('plot-map', 'relayoutData')])
+def plot_map(date_int, group, metrics, figure, relay):
+    pprint.pprint(relay)
+    # Date INT comes from the slider and can only return integers:
     official_date = DATE_MAPPER.iloc[date_int]['Date']
 
     # Lets trim down the dataframes
@@ -303,6 +344,18 @@ def plot_map(date_int, group, metrics, figure):
     SUB_DF_COUNTRY = pd.DataFrame()
     SUB_DF_PROVINCE = pd.DataFrame()
     SUB_DF_COUNTY = pd.DataFrame()
+
+    if relay:
+        center = dict(lat=relay['mapbox.center']['lat'],
+                      lon=relay['mapbox.center']['lon'])
+        zoom = relay['mapbox.zoom']
+    else:
+        zoom = 2.0,
+        center = dict(lat=20.74, lon=15.4)
+        # {'mapbox.bearing': 0,
+        #  'mapbox.center': {'lat': 39.06944801157573, 'lon': -63.32395235178592},
+        #  'mapbox.pitch': 0,
+        # 'mapbox.zoom': 2.4811482816327537}
 
     if 'country' in group:
         SUB_DF_COUNTRY = JHU_TIME_DATE.sort_values('confirmed')[::-1].groupby(['country']).agg(
@@ -455,8 +508,8 @@ def plot_map(date_int, group, metrics, figure):
         mapbox=dict(
             accesstoken=mapbox_access_token,
             style=mapbox_style,
-            zoom=1.5,
-            center=dict(lat=20.74, lon=15.4)
+            zoom=zoom,
+            center=center
         ),
         hovermode="closest",
         margin=dict(r=0, l=0, t=0, b=0),
@@ -488,89 +541,70 @@ def update_description(date_int):
 
 
 @app.callback(Output('per_date', 'figure'),
-              [Input('plot-map', 'clickData'),
-               Input('radio-items', 'value')])
-def update_new_case_graph(hoverData, group):
-    pprint.pprint(hoverData)
-
-    if group == 'country' and hoverData:
-        selection = hoverData['points'][0]['customdata']
-        print(selection)
-        sub_df = JHU_TIME[JHU_TIME['country'] == selection]
-        # Just incase a country with provinces is selected
-        sub_df = sub_df.groupby('Date').sum()
-    elif group == 'province' and hoverData:
-        selection = hoverData['points'][0]['customdata']
-        print(selection)
-        if selection in list(JHU_TIME['province']):
-            sub_df = JHU_TIME[JHU_TIME['province'] == selection]
-        else:
-            sub_df = CSBS[CSBS['province'] == selection]
-
-        print(sub_df)
-        sub_df = sub_df.groupby(['province', 'Date']).sum().reset_index()
-        # sub_df = per_day_stats_by_state[per_day_stats_by_state['province'] == country]
-
-    elif group == 'county' and hoverData:
-        selection = hoverData['points'][0]['customdata']
-        print(selection)
-        sub_df = CSBS[CSBS['county'] == selection]
-
-    #     if sub_df.empty:
-    #         country = "{} - No Data Available".format(country)
-    #     sub_df_time = ""
-    else:
-        sub_df = JHU_TIME.groupby('Date').sum().reset_index()
-        # sub_df_time = JHU_TIME.groupby('Date').sum().reset_index()
-        selection = 'World'
-
+              [Input('dropdown_container', 'value')])
+def update_new_case_graph(values):
+    colors = plotly.colors.qualitative.Dark24
+    pprint.pprint(values)
     fig = make_subplots(specs=[[{"secondary_y": True}]])
+    for enum_, item in enumerate(values):
+        color_ = colors[enum_]
+        if item == 'worldwide':
+            sub_df = JHU_DF_AGG_COUNTRY.groupby('Date').sum().reset_index()
+            name = 'World'
+        else:
+            if item.split('_')[0] == 'COUNTRY':
+                name = item.split('_')[1]
+                sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
+                    'Date').sum().reset_index()
 
-    dates = DATE_MAPPER['Date_text'].unique()
-    fig.add_trace(go.Bar(x=dates,
-                         y=sub_df['confirmed'].diff().fillna(
-                             0),
-                         name=selection,
-                         showlegend=False,
-                         text=sub_df['confirmed'].diff().fillna(0),
-                         textposition='auto',
-                         hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
+            elif item.split('_')[0] == 'PROVINCE':
+                name = item.split('_')[1]
+                sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
+                    'Date').sum().reset_index()
 
-                         marker=dict(
-                             color='white',
-                             line=dict(
-                                 color='white')
-                         )))
-    fig.add_trace(
-        go.Scatter(
-            x=dates,
-            y=sub_df['confirmed'],
-            name=selection,
-            showlegend=False,
-            mode='lines+markers',
-            hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
-            marker=dict(
-                color='yellow',
-                size=0.1,
-                line=dict(
-                    width=10,
-                    color='yellow')
-            )), secondary_y=True)
+        xs = sub_df['Date']
+        ys = sub_df['confirmed'].diff().fillna(0)
+        fig.add_trace(
+            go.Bar(
+                x=xs,
+                y=ys,
+                name=name,
+                showlegend=True,
+                text=ys,
+                textposition='auto',
+                hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
+                marker=dict(
+                    color=color_,
+                    line=dict(
+                        color=color_)
+                )))
+        fig.add_trace(
+            go.Scatter(
+                x=sub_df['Date'],
+                y=sub_df['confirmed'],
+                name=name,
+                showlegend=False,
+                mode='lines+markers',
+                hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
+                marker=dict(
+                    color=color_,
+                    size=2,
+                    line=dict(
+                        width=10,
+                        color=color_),
+                )), secondary_y=True)
 
     fig.update_layout(
-        title=dict(text='New Cases Per Day: {}'.format(
-            selection), font=dict(color='white', size=24)),
-        xaxis_tickfont_size=14,
+        xaxis_tickfont_size=22,
         yaxis=dict(
             title=dict(text='New Cases', standoff=2),
-            titlefont_size=18,
-            tickfont_size=18,
-            showgrid=False,
+            titlefont_size=22,
+            tickfont_size=22,
+            showgrid=True,
             color='white',
             side='left',
         ),
         xaxis=dict(
-            title='Date',
             color='white'
         ),
         showlegend=False,
@@ -583,8 +617,8 @@ def update_new_case_graph(hoverData, group):
     fig.update_layout(
         yaxis2=dict(
             title=dict(text='Total Cases', standoff=2),
-            titlefont_size=18,
-            tickfont_size=18,
+            titlefont_size=22,
+            tickfont_size=22,
             showgrid=False,
             color='yellow',
             side='right',
@@ -592,7 +626,224 @@ def update_new_case_graph(hoverData, group):
 
     )
 
+    fig.update_layout(
+        margin=dict(t=10)
+    )
+
     return fig
+
+
+@app.callback(Output('minute-p', 'figure'),
+              [Input('dropdown_container', 'value')])
+def plot_exponential(value):
+    backtrack = 7
+    log = True
+    fig = go.Figure()
+    colors = plotly.colors.qualitative.Dark24
+    max_number = 0
+    for enum_, item in enumerate(value):
+        if item == 'worldwide':
+            location = 'World'
+            full_report = JHU_DF_AGG_COUNTRY.groupby(
+                'Date').sum().drop(['lat', 'lon'], axis=1)
+        else:
+            class_location, location = item.split('_')
+            if class_location == 'COUNTRY':
+                full_report = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == location].groupby(
+                    'Date').sum().drop(['lat', 'lon'], axis=1)
+        per_day = full_report.diff()
+        plottable = full_report.join(
+            per_day, lsuffix='_cum', rsuffix='_diff')
+        plottable = plottable.fillna(0)
+
+        xs = []
+        ys = []
+        dates = []
+        indexes = plottable.index
+        for indexer in range(1, len(indexes)):
+            x = plottable.loc[indexes[indexer]]['confirmed_cum']
+            if indexer > backtrack:
+                y = plottable.loc[indexes[indexer-backtrack]: indexes[indexer]].sum()['confirmed_diff']
+            else:
+                y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
+            if y < 100 or x < 100:
+                continue
+            if x > max_number:
+                max_number = x
+            if y > max_number:
+                max_number = y
+            xs.append(x)
+            ys.append(y)
+            dates.append(indexes[indexer].strftime('%m/%d/%Y'))
+        fig.add_trace(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                mode='lines',
+                name=location,
+                text=dates,
+                showlegend=False,
+                legendgroup=item,
+                line=dict(shape='linear', color=colors[enum_], width=3),
+                marker=dict(
+                    symbol='circle-open',
+                    size=7
+                ),
+                hovertemplate="On %{text} <br> Total Cases: %{x}<br> Cummulative Cases Last Week %{y}"
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[xs[-1]],
+                y=[ys[-1]],
+                mode='markers',
+                name=location,
+                text=[dates[-1]],
+                legendgroup=location,
+                hoverlabel=dict(align='left'),
+                marker=dict(
+                    symbol='circle',
+                    size=18,
+                    color=colors[enum_]
+                ),
+                hovertemplate="On %{text} <br> Total Cases: %{x}<br> Cummulative Cases Last Week %{y}"
+            )
+        )
+    fig.add_trace(
+        go.Scatter(
+            x=[100, max_number],
+            y=[100, max_number],
+            mode='lines',
+            name='Exponential',
+            showlegend=False,
+            line=dict(color='white', width=4, dash='dash')
+        )
+    )
+    if log:
+        fig.update_xaxes(type="log", dtick=1)
+        fig.update_yaxes(type="log", dtick=1)
+
+    fig.update_layout(
+        xaxis_tickfont_size=22,
+        yaxis=dict(
+            title=dict(text='New Cases Previous {} Days'.format(
+                backtrack), standoff=2),
+            titlefont_size=22,
+            tickfont_size=22,
+            showgrid=True,
+            color='white',
+        ),
+        margin=dict(t=20),
+        xaxis=dict(
+            color='white',
+            showgrid=False,
+            title=dict(text='Total Cases', standoff=1), titlefont_size=22
+        ),
+        autosize=True,
+        showlegend=True,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgb(52,51,50)',
+        legend=dict(font=dict(size=22, color='white'), orientation='h', x=0, y=1.15))
+
+    print(max_number, np.log10(max_number))
+    annotations = []
+    annotations.append(dict(xref='x', x=6-1, yref='y', y=6-0.6,
+
+                            # xanchor='center', yanchor='middle',
+                            text="Exponential Growth",
+                            font=dict(family='Arial',
+                                      size=20,
+                                      color='white'),
+                            showarrow=True,
+                            startarrowsize=10,
+                            arrowwidth=2,
+                            arrowcolor='white',
+                            arrowhead=2,
+                            ))
+
+    fig.update_layout(legend=dict(title='Click to Toggle'),
+                      annotations=annotations)
+
+    return fig
+
+
+# @app.callback(
+#     Output('hover-data', 'children'),
+#     [Input('basic-interactions', 'hoverData')])
+# def display_hover_data(hoverData):
+#     return json.dumps(hoverData, indent=2)
+
+
+@app.callback(
+    Output('dropdown_container', 'value'),
+    [Input('plot-map', 'clickData')],
+    [State('dropdown_container', 'value'),
+     State('dropdown_container', 'options')])
+def display_click_data(clickData, dropdown_selected, dropdown_options):
+    if not clickData:
+        return dropdown_selected
+    new = []
+    label_dataframes = pd.DataFrame(dropdown_options)
+    label_dataframes['cat'] = label_dataframes['value'].str.split(
+        '_').str.get(0)
+    label_dataframes['name'] = label_dataframes['value'].str.split(
+        '_').str.get(1)
+
+    clickdata_name = clickData['points'][0]['customdata'].split('_')[0]
+    clickdata_category = clickData['points'][0]['text'].split(':')[0].upper()
+    #print(clickdata_name, clickdata_category)
+    sub_label_df = label_dataframes[label_dataframes['cat']
+                                    == clickdata_category]
+    n_ = sub_label_df.loc[sub_label_df['name']
+                          == clickdata_name, 'name']
+    # print(n_.iloc[0])
+
+    # pprint.pprint((clickData))
+    try:
+        new_addition = clickdata_category+"_"+n_.iloc[0]
+        print(new_addition)
+    except IndexError:
+        pprint.pprint(clickData)
+        print('not found', clickdata_name, clickdata_category)
+        return dropdown_selected
+    if new_addition not in list(label_dataframes['value']):
+        print('Warning, cant find {}'.format(new_addition))
+    else:
+        print("We found it {}".format(new_addition))
+        if new_addition not in dropdown_selected:
+            new = dropdown_selected+[new_addition]
+            return new
+
+    #     {'points': [{'curveNumber': 4,
+    #              'customdata': 'Kosovo',
+    #              'lat': 42.602636,
+    #              'lon': 20.902977,
+    #              'marker.color': '#ffa500',
+    #              'marker.size': 5,
+    #              'pointIndex': 46,
+    #              'pointNumber': 46,
+    #              'text': 'Country: Kosovo<br>Total Deaths:1'}]}
+    # ['worldwide', 'COUNTRY_US', 'COUNTRY_China']
+    #
+    # pprint.pprint(clickData)
+    # pprint.pprint(dropdown_values)
+
+    # pprint.pprint(dropdown_options)
+    return dropdown_selected
+
+
+# @app.callback(
+#     Output('table-container', 'children'),
+#     [Input('basic-interactions', 'selectedData')])
+# def display_selected_data(selectedData):
+#     return json.dumps(selectedData, indent=2)
+
+
+# @app.callback(
+#     Output('table-container', 'children'),
+#     [Input('basic-interactions', 'relayoutData')])
+# def display_relayout_data(relayoutData):
+#     return json.dumps(relayoutData, indent=2)
 
 
 if __name__ == '__main__':
