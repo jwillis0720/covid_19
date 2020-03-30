@@ -224,30 +224,54 @@ def serve_dash_layout():
             html.Div(
                 id="header",
                 children=[
-                    html.H4(
-                        children="COVID-19 Infection Dashboard"),
                     html.Div(
                         id="description",
                         children=[
-                            "COVID-19 Infection App by ",
-                            html.A(
-                                "Jordan R. Willis PhD", href="https://jordanrwillis.com", target="_blank"),
-                            html.Br(),
-                            "Data generated  nightly from Johns Hopkins ",
-                            html.A(
-                                "CSSE repository", href='https://github.com/CSSEGISandData/COVID-19'),
-                            html.Br(),
-                            "Inspiration from ",
-                            html.A(
-                                "CSSE", href="https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6"),
-                            ", ",
-                            html.A(
-                                "Bing", href='www.bing.com/covid'),
-                            ", ",
-                           html.A(
-                                "Dash Opioid Epidemic", href='https://dash-gallery.plotly.host/dash-opioid-epidemic/'),
-                            "."]
-                    ),
+                            html.H1(
+                                children="COVID-19 Infection Dashboard"),
+                            html.Div(
+                                id='header-info', children=[
+                                    "App by ",
+                                    html.A(
+                                        "Jordan R. Willis PhD", href="https://jordanrwillis.com", target="_blank"),
+                                    # html.Br(),
+                                    # "Data generated  nightly from Johns Hopkins ",
+                                    # html.A(
+                                    #     "CSSE repository", href='https://github.com/CSSEGISandData/COVID-19'),
+                                    # html.Br(),
+                                    # "Inspiration from ",
+                                    # html.A(
+                                    #     "CSSE", href="https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6"),
+                                    # ", ",
+                                    # html.A(
+                                    #     "Bing", href='www.bing.com/covid'),
+                                    # ", ",
+                                    # html.A(
+                                    #     "Dash Opioid Epidemic", href='https://dash-gallery.plotly.host/dash-opioid-epidemic/'),
+                                ]
+                            )]),
+                    html.Div(id='counters', children=[
+                        html.Div(id='total-cases-card', className='card',
+                                 children=[html.H3('Total Cases'),
+                                           html.P(id='total-cases',
+                                                  children=[get_total_cases()])
+                                           ]),
+                        html.Div(id='total-deaths-card', className='card',
+                                 children=[html.H3('Total Deaths'),
+                                           html.P(id='total-deaths',
+                                                  children=[get_total_deaths()])
+                                           ]),
+                                html.Div(id='mortality-card', className='card',
+                                         children=[html.H3('Mortality Rate'),
+                                                   html.P(id='mortality-rate',
+                                                          children=[get_mortality_rate()])
+                                                   ]),
+                        html.Div(id='growth-rate-card', className='card',
+                                 children=[html.H3('Growth Rate'),
+                                           html.P(id='growth-rate',
+                                                  children=[get_growth_rate()])
+                                           ])
+                    ])
                 ]),
             html.Div(
                 id="app-container",
@@ -324,6 +348,24 @@ app.layout = serve_dash_layout
 application = app.server
 
 
+def get_total_cases():
+    return "{:,}".format(JHU_RECENT['confirmed'].sum())
+
+
+def get_total_deaths():
+    return "{:,}".format(JHU_RECENT['deaths'].sum())
+
+
+def get_mortality_rate():
+    return "{:.3}%".format(JHU_RECENT['deaths'].sum()/JHU_RECENT['confirmed'].sum()*100)
+
+
+def get_growth_rate():
+    x = JHU_TIME.groupby('Date').sum().pct_change()[
+        'confirmed'][-10:].mean()*100
+    return "{:.4}%".format(x)
+
+
 @app.callback(Output('plot-map', 'figure'),
               [Input('date_slider', 'value'),
                Input('radio-items', 'value'),
@@ -346,9 +388,13 @@ def plot_map(date_int, group, metrics, figure, relay):
     SUB_DF_COUNTY = pd.DataFrame()
 
     if relay:
-        center = dict(lat=relay['mapbox.center']['lat'],
-                      lon=relay['mapbox.center']['lon'])
-        zoom = relay['mapbox.zoom']
+        if 'mapbox.center' in relay.keys():
+            center = dict(lat=relay['mapbox.center']['lat'],
+                          lon=relay['mapbox.center']['lon'])
+            zoom = relay['mapbox.zoom']
+        else:
+            zoom = 2.0,
+            center = dict(lat=20.74, lon=15.4)
     else:
         zoom = 2.0,
         center = dict(lat=20.74, lon=15.4)
@@ -419,29 +465,29 @@ def plot_map(date_int, group, metrics, figure, relay):
 
     sizes = [5, 10, 30, 60]
 
-    death_bins = [0, 2, 100, 1000, 1000000]
-    cases_bins = [0, 10, 1000, 10000, 10000000]
+    death_bins = [1, 2, 100, 1000, 1000000]
+    cases_bins = [1, 10, 1000, 10000, 10000000]
+    if not plot_data_frame.empty:
+        plot_data_frame['death_size'] = pd.cut(
+            plot_data_frame['deaths'], bins=death_bins, include_lowest=True, labels=sizes)
+        plot_data_frame['confirmed_size'] = pd.cut(
+            plot_data_frame['confirmed'], bins=cases_bins, include_lowest=True, labels=sizes)
 
-    plot_data_frame['death_size'] = pd.cut(
-        plot_data_frame['deaths'], bins=death_bins, include_lowest=True, labels=sizes)
-    plot_data_frame['confirmed_size'] = pd.cut(
-        plot_data_frame['confirmed'], bins=cases_bins, include_lowest=True, labels=sizes)
-
-    plot_data_frame['death_colors'] = plot_data_frame['death_size'].apply(
-        lambda x: dict(zip(sizes, orange_to_red))[x])
-    plot_data_frame['case_colors'] = plot_data_frame['confirmed_size'].apply(
-        lambda x: dict(zip(sizes, grey_to_yellow))[x])
+        plot_data_frame['death_colors'] = plot_data_frame['death_size'].apply(
+            lambda x: dict(zip(sizes, orange_to_red))[x])
+        plot_data_frame['case_colors'] = plot_data_frame['confirmed_size'].apply(
+            lambda x: dict(zip(sizes, grey_to_yellow))[x])
 
     # And Plot the DataSet
     data_traces = []
 
-    if not metrics:
+    if not metrics or plot_data_frame.empty:
         data_traces.append(go.Scattermapbox(
             lon=[],
             lat=[]
         ))
 
-    if 'confirmed' in metrics:
+    if 'confirmed' in metrics and not plot_data_frame.empty:
         # First Do Confirmed
         gb_confirmed = plot_data_frame.groupby('confirmed_size')
         gb_groups = sorted(gb_confirmed.groups)
@@ -472,12 +518,16 @@ def plot_map(date_int, group, metrics, figure, relay):
             )
             data_traces.append(data)
 
-    if 'deaths' in metrics:
+    if 'deaths' in metrics and not plot_data_frame.empty:
         # Then Do Deaths
         gb_deaths = plot_data_frame.groupby('death_size')
         gb_groups = sorted(gb_deaths.groups)
         for indexer in range(len(gb_groups)):
-            plotting_df = gb_deaths.get_group(gb_groups[indexer])
+            try:
+                plotting_df = gb_deaths.get_group(gb_groups[indexer])
+            except KeyError:
+                print('No group in gb_deaths {}'.format(gb_groups[indexer]))
+
             if indexer+1 == len(death_bins)-1:
                 max_ = int(
                     math.ceil(plot_data_frame['deaths'].max()/10000)) * 10000
@@ -563,6 +613,18 @@ def update_new_case_graph(values):
                 sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
                     'Date').sum().reset_index()
 
+            elif item.split('_')[0] == 'STATE':
+                name = item.split('_')[1]
+                sub_df = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == name].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'COUNTY':
+                name = item.split('_')[1]
+                sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
+                    'Date').sum().reset_index()
+            else:
+                raise Exception('YOu have messed up {}'.format(item))
+
         xs = sub_df['Date']
         ys = sub_df['confirmed'].diff().fillna(0)
         fig.add_trace(
@@ -629,7 +691,7 @@ def update_new_case_graph(values):
     )
 
     fig.update_layout(
-        margin=dict(t=10)
+        margin=dict(t=20)
     )
 
     return fig
@@ -652,6 +714,16 @@ def plot_exponential(value):
             class_location, location = item.split('_')
             if class_location == 'COUNTRY':
                 full_report = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == location].groupby(
+                    'Date').sum().drop(['lat', 'lon'], axis=1)
+
+            elif class_location == 'PROVINCE':
+                full_report = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == location].groupby(
+                    'Date').sum().drop(['lat', 'lon'], axis=1)
+            elif class_location == 'STATE':
+                full_report = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == location].groupby(
+                    'Date').sum().drop(['lat', 'lon'], axis=1)
+            elif class_location == 'COUNTY':
+                full_report = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == location].groupby(
                     'Date').sum().drop(['lat', 'lon'], axis=1)
         per_day = full_report.diff()
         plottable = full_report.join(
@@ -794,7 +866,7 @@ def display_click_data(clickData, dropdown_selected, dropdown_options):
 
     clickdata_name = clickData['points'][0]['customdata'].split('_')[0]
     clickdata_category = clickData['points'][0]['text'].split(':')[0].upper()
-    #print(clickdata_name, clickdata_category)
+    # print(clickdata_name, clickdata_category)
     sub_label_df = label_dataframes[label_dataframes['cat']
                                     == clickdata_category]
     n_ = sub_label_df.loc[sub_label_df['name']
