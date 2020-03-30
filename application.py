@@ -776,114 +776,6 @@ def per_day_case_graph(values):
     return fig
 
 
-# @app.callback(Output('per_date', 'figure'),
-#               [Input('dropdown_container', 'value')])
-# def update_new_case_graph(values):
-#     colors = plotly.colors.qualitative.Dark24
-#     pprint.pprint(values)
-#     fig = make_subplots(specs=[[{"secondary_y": True}]])
-#     for enum_, item in enumerate(values):
-#         color_ = colors[enum_]
-#         if item == 'worldwide':
-#             sub_df = JHU_DF_AGG_COUNTRY.groupby('Date').sum().reset_index()
-#             name = 'World'
-#         else:
-#             if item.split('_')[0] == 'COUNTRY':
-#                 name = item.split('_')[1]
-#                 sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
-#                     'Date').sum().reset_index()
-
-#             elif item.split('_')[0] == 'PROVINCE':
-#                 name = item.split('_')[1]
-#                 sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
-#                     'Date').sum().reset_index()
-
-#             elif item.split('_')[0] == 'STATE':
-#                 name = item.split('_')[1]
-#                 sub_df = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == name].groupby(
-#                     'Date').sum().reset_index()
-
-#             elif item.split('_')[0] == 'COUNTY':
-#                 name = item.split('_')[1]
-#                 sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
-#                     'Date').sum().reset_index()
-#             else:
-#                 raise Exception('YOu have messed up {}'.format(item))
-
-#         xs = sub_df['Date']
-#         ys = sub_df['confirmed'].diff().fillna(0)
-#         fig.add_trace(
-#             go.Bar(
-#                 x=xs,
-#                 y=ys,
-#                 name=name,
-#                 showlegend=True,
-#                 text=ys,
-#                 textposition='auto',
-#                 hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
-#                 marker=dict(
-#                     color=color_,
-#                     line=dict(
-#                         color=color_)
-#                 )))
-#         fig.add_trace(
-#             go.Scatter(
-#                 x=sub_df['Date'],
-#                 y=sub_df['confirmed'],
-#                 name=name,
-#                 showlegend=False,
-#                 mode='lines+markers',
-#                 hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
-#                 marker=dict(
-#                     color=color_,
-#                     size=2,
-#                     line=dict(
-#                         width=10,
-#                         color=color_),
-#                 )), secondary_y=True)
-
-#     fig.update_layout(
-#         # xaxis_tickfont_size=22,
-#         yaxis=dict(
-#             title=dict(text='New Cases', standoff=2),
-#             # titlefont_size=22,
-#             # tickfont_size=22,
-#             showgrid=True,
-#             color='white',
-#             side='left',
-#         ),
-#         xaxis=dict(
-#             color='white'
-#         ),
-#         showlegend=False,
-#         paper_bgcolor='rgba(0,0,0,0)',
-#         plot_bgcolor='rgb(52,51,50)',
-#         barmode='group',
-#         bargap=0.15,  # gap between bars of adjacent location coordinates.
-#         bargroupgap=0.1)
-
-#     fig.update_layout(
-#         yaxis2=dict(
-#             title=dict(text='Total Cases', standoff=2),
-#             # titlefont_size=22,
-#             # tickfont_size=22,
-#             showgrid=False,
-#             color='yellow',
-#             side='right',
-#         ),
-#         autosize=True
-
-#     )
-
-#     fig.update_layout(
-#         margin=dict(t=20)
-#     )
-
-#     return fig
-
-
-# @app.callback(Output('minute-p', 'figure'),
-#               [Input('dropdown_container', 'value')])
 def plot_exponential(value):
     backtrack = 7
     log = True
@@ -1002,7 +894,7 @@ def plot_exponential(value):
         showlegend=True,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgb(52,51,50)',
-        legend=dict(font=dict(color='white'), orientation='h', x=0, y=1.15))
+        legend=dict(x=0, y=1, font=dict(color='white')))
 
     # print(max_number, np.log10(max_number))
     annotations = []
@@ -1024,8 +916,7 @@ def plot_exponential(value):
                       annotations=annotations)
 
     fig.update_layout(
-        margin=dict(t=20))
-
+        margin=dict(t=20, b=20, r=30, l=20, pad=0))
     return fig
 
 
