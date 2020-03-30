@@ -330,14 +330,31 @@ def serve_dash_layout():
                             html.H5(id='graph-container-tile',
                                     children=['Click Place on Map or Chart to Update List']),
                             get_dropdown(),
-                            dcc.Loading(
-                                className='loading-container', children=[dcc.Graph(id='per_date', className='loading_graph')], type='cube'),
-                            dcc.Loading(
-                                className='loading-container', children=[dcc.Graph(id='minute-p', className='loading_graph')], type='cube'),
-                        ]),
-                    html.Div(
-                        id='table-container',
-                        children=[])
+                            # html.Div(id='tab-container', className='custom-tabs-container', children=[
+                            dcc.Tabs(id='tabs-values', parent_className='tabs-container', className='custom-tabs', children=[
+                                dcc.Tab(label='Total Cases',
+                                        className='custom-tab',
+                                        selected_className='custom-tab--selected',
+                                        value='total_cases_graph'),
+                                dcc.Tab(label='Cases Per Day',
+                                        className='custom-tab',
+                                        selected_className='custom-tab--selected',
+                                        value='per_day_cases'),
+                                dcc.Tab(label='Exponential',
+                                        className='custom-tab',
+                                        selected_className='custom-tab--selected',
+                                        value='exponential')
+                            ],
+                                value='total_cases_graph'),
+
+
+                            dcc.Loading(id='graph-loading-container',
+                                        className='graph-container', type='cube')],
+
+                    ),
+                    # html.Div(
+                    #     id='table-container',
+                    #     children=[])
                 ]),
         ])
 
@@ -591,12 +608,32 @@ def update_description(date_int):
     return "{}".format(official_date.strftime('%B %d, %Y'))
 
 
-@app.callback(Output('per_date', 'figure'),
-              [Input('dropdown_container', 'value')])
-def update_new_case_graph(values):
+@app.callback(Output('graph-loading-container', 'children'),
+              [Input('tabs-values', 'value'),
+               Input('dropdown_container', 'value')])
+def render_tab_content(tab, values):
+    if tab == 'total_cases_graph':
+        return dcc.Graph(
+            id='minute-p',
+            className='loading_graph',
+            figure=total_case_graph(values))
+    elif tab == 'per_day_cases':
+        return dcc.Graph(
+            id='minute-p',
+            className='loading_graph',
+            figure=per_day_case_graph(values))
+
+    elif tab == 'exponential':
+        return dcc.Graph(
+            id='expoential-graph',
+            className='loading_graph',
+            figure=plot_exponential(values))
+
+
+def total_case_graph(values):
     colors = plotly.colors.qualitative.Dark24
     pprint.pprint(values)
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig = go.Figure()
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         if item == 'worldwide':
@@ -623,7 +660,79 @@ def update_new_case_graph(values):
                 sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
                     'Date').sum().reset_index()
             else:
-                raise Exception('YOu have messed up {}'.format(item))
+                raise Exception('You have messed up {}'.format(item))
+
+        fig.add_trace(
+            go.Scatter(
+                x=sub_df['Date'],
+                y=sub_df['confirmed'],
+                name=name,
+                showlegend=True,
+                mode='lines+markers',
+                hovertemplate='%{x}<br>Confirmed Cases - %{y:,f}',
+                marker=dict(
+                    color=color_,
+                    size=2,
+                    line=dict(
+                        width=5,
+                        color=color_),
+                )))
+
+    fig.update_layout(
+        # xaxis_tickfont_size=22,
+        yaxis=dict(
+            title=dict(text='Total Cases', standoff=2),
+            titlefont_size=12,
+            tickfont_size=12,
+            showgrid=True,
+            color='white',
+            side='left',
+        ),
+        xaxis=dict(
+            color='white'
+        ),
+        autosize=True,
+        showlegend=True,
+        legend=dict(x=0, y=1, font=dict(color='white')),
+        paper_bgcolor='#1f2630',
+        plot_bgcolor='rgb(52,51,50)',
+        margin=dict(t=20, pad=10, b=20, r=20, l=20))
+
+    return fig
+
+
+def per_day_case_graph(values):
+    colors = plotly.colors.qualitative.Dark24
+    pprint.pprint(values)
+    fig = go.Figure()
+    # fig = plotly.subplots.make_subplots(specs=[[{"secondary_y": True}]])
+    for enum_, item in enumerate(values):
+        color_ = colors[enum_]
+        if item == 'worldwide':
+            sub_df = JHU_DF_AGG_COUNTRY.groupby('Date').sum().reset_index()
+            name = 'World'
+        else:
+            if item.split('_')[0] == 'COUNTRY':
+                name = item.split('_')[1]
+                sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'PROVINCE':
+                name = item.split('_')[1]
+                sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'STATE':
+                name = item.split('_')[1]
+                sub_df = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == name].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'COUNTY':
+                name = item.split('_')[1]
+                sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
+                    'Date').sum().reset_index()
+            else:
+                raise Exception('You have messed up {}'.format(item))
 
         xs = sub_df['Date']
         ys = sub_df['confirmed'].diff().fillna(0)
@@ -633,36 +742,22 @@ def update_new_case_graph(values):
                 y=ys,
                 name=name,
                 showlegend=True,
-                text=ys,
-                textposition='auto',
-                hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
+                # text=ys,
+                # textposition='outside',
+                hovertemplate='%{x}<br>New Cases - %{y:,f}',
+                # texttemplate='%{text:.2s}',
+                textfont=dict(size=14, color='white'),
                 marker=dict(
                     color=color_,
                     line=dict(
-                        color=color_)
+                        color='white', width=0.5)
                 )))
-        fig.add_trace(
-            go.Scatter(
-                x=sub_df['Date'],
-                y=sub_df['confirmed'],
-                name=name,
-                showlegend=False,
-                mode='lines+markers',
-                hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
-                marker=dict(
-                    color=color_,
-                    size=2,
-                    line=dict(
-                        width=10,
-                        color=color_),
-                )), secondary_y=True)
 
     fig.update_layout(
-        # xaxis_tickfont_size=22,
         yaxis=dict(
             title=dict(text='New Cases', standoff=2),
-            # titlefont_size=22,
-            # tickfont_size=22,
+            titlefont_size=12,
+            tickfont_size=12,
             showgrid=True,
             color='white',
             side='left',
@@ -670,35 +765,125 @@ def update_new_case_graph(values):
         xaxis=dict(
             color='white'
         ),
-        showlegend=False,
-        paper_bgcolor='rgba(0,0,0,0)',
+        showlegend=True,
+        legend=dict(x=0, y=1, font=dict(color='white')),
+        paper_bgcolor='#1f2630',
         plot_bgcolor='rgb(52,51,50)',
         barmode='group',
-        bargap=0.15,  # gap between bars of adjacent location coordinates.
-        bargroupgap=0.1)
-
-    fig.update_layout(
-        yaxis2=dict(
-            title=dict(text='Total Cases', standoff=2),
-            # titlefont_size=22,
-            # tickfont_size=22,
-            showgrid=False,
-            color='yellow',
-            side='right',
-        ),
-        autosize=True
-
-    )
-
-    fig.update_layout(
-        margin=dict(t=20)
-    )
+        bargap=0.1,
+        margin=dict(t=20, pad=10, b=20, r=20, l=20))
 
     return fig
 
 
-@app.callback(Output('minute-p', 'figure'),
-              [Input('dropdown_container', 'value')])
+# @app.callback(Output('per_date', 'figure'),
+#               [Input('dropdown_container', 'value')])
+# def update_new_case_graph(values):
+#     colors = plotly.colors.qualitative.Dark24
+#     pprint.pprint(values)
+#     fig = make_subplots(specs=[[{"secondary_y": True}]])
+#     for enum_, item in enumerate(values):
+#         color_ = colors[enum_]
+#         if item == 'worldwide':
+#             sub_df = JHU_DF_AGG_COUNTRY.groupby('Date').sum().reset_index()
+#             name = 'World'
+#         else:
+#             if item.split('_')[0] == 'COUNTRY':
+#                 name = item.split('_')[1]
+#                 sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
+#                     'Date').sum().reset_index()
+
+#             elif item.split('_')[0] == 'PROVINCE':
+#                 name = item.split('_')[1]
+#                 sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
+#                     'Date').sum().reset_index()
+
+#             elif item.split('_')[0] == 'STATE':
+#                 name = item.split('_')[1]
+#                 sub_df = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == name].groupby(
+#                     'Date').sum().reset_index()
+
+#             elif item.split('_')[0] == 'COUNTY':
+#                 name = item.split('_')[1]
+#                 sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
+#                     'Date').sum().reset_index()
+#             else:
+#                 raise Exception('YOu have messed up {}'.format(item))
+
+#         xs = sub_df['Date']
+#         ys = sub_df['confirmed'].diff().fillna(0)
+#         fig.add_trace(
+#             go.Bar(
+#                 x=xs,
+#                 y=ys,
+#                 name=name,
+#                 showlegend=True,
+#                 text=ys,
+#                 textposition='auto',
+#                 hovertemplate='Date - %{x}<br>New Cases - %{y:,f}',
+#                 marker=dict(
+#                     color=color_,
+#                     line=dict(
+#                         color=color_)
+#                 )))
+#         fig.add_trace(
+#             go.Scatter(
+#                 x=sub_df['Date'],
+#                 y=sub_df['confirmed'],
+#                 name=name,
+#                 showlegend=False,
+#                 mode='lines+markers',
+#                 hovertemplate='Date - %{x}<br>Confirmed Cases - %{y:,f}',
+#                 marker=dict(
+#                     color=color_,
+#                     size=2,
+#                     line=dict(
+#                         width=10,
+#                         color=color_),
+#                 )), secondary_y=True)
+
+#     fig.update_layout(
+#         # xaxis_tickfont_size=22,
+#         yaxis=dict(
+#             title=dict(text='New Cases', standoff=2),
+#             # titlefont_size=22,
+#             # tickfont_size=22,
+#             showgrid=True,
+#             color='white',
+#             side='left',
+#         ),
+#         xaxis=dict(
+#             color='white'
+#         ),
+#         showlegend=False,
+#         paper_bgcolor='rgba(0,0,0,0)',
+#         plot_bgcolor='rgb(52,51,50)',
+#         barmode='group',
+#         bargap=0.15,  # gap between bars of adjacent location coordinates.
+#         bargroupgap=0.1)
+
+#     fig.update_layout(
+#         yaxis2=dict(
+#             title=dict(text='Total Cases', standoff=2),
+#             # titlefont_size=22,
+#             # tickfont_size=22,
+#             showgrid=False,
+#             color='yellow',
+#             side='right',
+#         ),
+#         autosize=True
+
+#     )
+
+#     fig.update_layout(
+#         margin=dict(t=20)
+#     )
+
+#     return fig
+
+
+# @app.callback(Output('minute-p', 'figure'),
+#               [Input('dropdown_container', 'value')])
 def plot_exponential(value):
     backtrack = 7
     log = True
@@ -737,8 +922,7 @@ def plot_exponential(value):
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]
-                    : indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]: indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             if y < 100 or x < 100:
@@ -820,7 +1004,7 @@ def plot_exponential(value):
         plot_bgcolor='rgb(52,51,50)',
         legend=dict(font=dict(color='white'), orientation='h', x=0, y=1.15))
 
-    print(max_number, np.log10(max_number))
+    # print(max_number, np.log10(max_number))
     annotations = []
     annotations.append(dict(xref='x', x=6-1, yref='y', y=6-0.6,
 
@@ -838,6 +1022,9 @@ def plot_exponential(value):
 
     fig.update_layout(legend=dict(title='Click to Toggle'),
                       annotations=annotations)
+
+    fig.update_layout(
+        margin=dict(t=20))
 
     return fig
 

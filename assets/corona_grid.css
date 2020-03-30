@@ -88,12 +88,11 @@
     }
     #header {
         /* margin-left: 2rem; */
-        margin-top: 3vh;
         grid-row-start: 1;
         grid-row-end: 2;
         display: grid;
         align-items: center;
-        margin-top: -10px;
+        margin-top: -20px;
         column-gap: 2rem;
         grid-template-columns: 1fr 2fr;
     }
@@ -111,7 +110,7 @@
     #counters {
         display: flex;
         flex-direction: rows;
-        justify-content: space-evenly;
+        justify-content: flex-end;
     }
     .card {
         width: 200px;
@@ -120,13 +119,55 @@
         transition: 0.3s;
         border: 3px solid black;
         align-items: center;
-        margin: 10px;
+        margin: 20px;
         margin-bottom: 0;
         text-align: center;
         color: black;
-        border-radius: 20px;
+        border-radius: 2px;
         /* 5px rounded corners */
         /* 5px rounded corners */
+    }
+    .custom-tabs-container {
+        width: 85%;
+    }
+    .custom-tabs {
+        border-top-left-radius: 3px;
+        margin: 0 20px;
+        align-self: stretch;
+        padding: 0px 24px;
+        /* border-bottom: 1px solid #d6d6d6; */
+    }
+    /* .tabs-container {
+        justify-content: start;
+    } */
+    .custom-tab {
+        background-color: #1f2630 !important;
+        color: white;
+        margin-top: 5px;
+        margin-bottom: 0;
+        min-width: 200px;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+        border-top: 3px solid transparent !important;
+        border-left: 0px !important;
+        border-right: 0px !important;
+        border-bottom: 0px !important;
+        padding: 12px !important;
+        font-family: "system-ui";
+        display: flex !important;
+        text-align: center;
+        justify-content: center;
+        justify-self: flex-start;
+        /* align-items: center;
+        justify-content: center; */
+    }
+    .custom-tab--selected {
+        color: white !important;
+        text-emphasis: bold;
+        box-shadow: 1px 1px 0px white;
+        border-left: 1px solid lightgrey !important;
+        border-right: 1px solid lightgrey !important;
+        border-top: 3px solid #e36209 !important;
     }
     h3 {
         font-size: 150%;
@@ -138,7 +179,7 @@
         color: black;
     }
     #total-deaths-card {
-        background-color: rgb(255, 0, 0);
+        background-color: rgb(244, 0, 0);
         color: black;
     }
     #mortality-card {
@@ -235,7 +276,7 @@
         padding-inline-end: 2rem;
     }
     div.VirtualizedSelectOption {
-        color: black;
+        color: #1B222A;
     }
     #plot-map {
         border: 20px;
@@ -253,8 +294,8 @@
         background-color: #1B222A;
         grid-area: graph-container;
         display: grid;
-        grid-gap: 1vh;
-        grid-template-rows: 2% minmax(3%, 4%) auto;
+        grid-gap: 0.5vh;
+        grid-template-rows: 2% minmax(3%, 10%) auto;
         grid-template-columns: auto;
         justify-self: stretch;
     }
@@ -267,7 +308,19 @@
     #dropdown_container {
         grid-row-start: 2;
         margin-right: 2vw;
-        margin-left: 1vw;
+        margin-left: 2vw;
+        align-self: center;
+    }
+    .Select--multi {
+        padding: 4px;
+        margin: 0;
+    }
+    .Select-control {
+        padding: 9px;
+        background-color: #1B222A;
+    }
+    .Select-value {
+        color: white;
     }
     /* .loading-container {
         max-height: 20vh;
