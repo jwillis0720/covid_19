@@ -1,6 +1,9 @@
 import dash
-from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
+import plotly.express as px
+import pandas as pd
+
+from dash.dependencies import Input, Output, State
 
 
 def get_date_slider():
@@ -54,6 +57,16 @@ def get_dummy_graph(id_):
     )
 
 
+def get_dummy_map(id_):
+    us_cities = pd.read_csv(
+        "https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv")
+    fig = px.scatter_mapbox(us_cities, lat="lat", lon="lon", hover_name="City", hover_data=["State", "Population"],
+                            color_discrete_sequence=["fuchsia"], zoom=3, height=300)
+    fig.update_layout(mapbox_style="open-street-map")
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    return dcc.Graph(id=id_, figure=fig)
+
+
 def register_callbacks(app):
     # Learn more popup
     @app.callback(
@@ -80,7 +93,7 @@ def register_callbacks(app):
         [Input("date_slider", "value")]
     )
     def render_map(value):
-        return get_dummy_graph('map-render')
+        return get_dummy_map('map')
 
     @app.callback(
         Output("content-readout", "children"),

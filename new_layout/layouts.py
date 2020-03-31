@@ -8,6 +8,7 @@ import callbacks
 def layout_header():
     header = html.Div(
         id="header",
+        className='container',
         children=[
             html.Div(
                 id="description",
@@ -105,14 +106,17 @@ def get_content_readout():
 def layout_app():
     return html.Div(id='app-container', className='app-container', children=[
         html.Div(id='left-container', className='left-container', children=[
-            html.Div(id='slider-container',
-                     children=callbacks.get_date_slider()),
-            html.Div(id='map-container', children=[
+            html.Div(id='slider-container', className='container',
+                     children=[
+                       html.H4('Slide to Change Date'),
+                       callbacks.get_date_slider()]),
+            html.Div(id='map-container', className='container', children=[
                 html.Div(id='map-dials', children=get_map_dials()),
                 html.Div(id='map')
             ])
         ]),
-        html.Div(id='right-container', className='right-container', children=[
+        html.Div(id='right-container', className='container', children=[
+            html.H4('Select For Comparisons'),
             html.Div(id='location-dropdown',
                      children=callbacks.get_dropdown()),
             html.Div(id='tabs-container', children=get_tabs_container()),

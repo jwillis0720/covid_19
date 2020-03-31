@@ -45,11 +45,16 @@ body {
     
 }
 
-#header{
+.container{
     margin: 5px;
     padding: 5px 10px 10px 10px;
     background-color: color( primary);
     border-radius: 15px;
+    border: 2px solid rgba(0,0,0,0.125);
+
+}
+
+#header{
     #description {
         text-align: center;
         h1 {
@@ -139,6 +144,136 @@ body {
     }      
 }
 
+#app-container{
+
+    #slider-container{
+        text-align: center;
+        h4{
+            margin: 0;
+            margin-bottom: 5px;
+            color: color(accent);
+            font-family: $TITLEFONT;
+            
+        }
+        #date_slider{
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .rc-slider-mark-text{
+            display: none;
+        }
+
+        .rc-slider-track{
+            background-color: color(accent) !important;
+            z-index: 1 !important;
+        }
+  
+
+        .rc-slider-dot{
+           border: 2px solid white; 
+           z-index: 2 !important;
+        }
+
+        .rc-slider-step{
+            background-color: color(secondary);
+        }
+
+        .rc-slider-rail{
+            background-color: color(secondary);
+        }
+            //outisde the context of the slider-container I suppose
+        .rc-slider-handle{
+            border-color: color(accent); 
+            z-index: 3 !important;
+        }
+
+        .rc-slider-dot-active{
+            border: 3px solid color(accent) !important;
+        }
+
+
+    }
+
+    #map-container{
+        #map-dials{
+            margin-top: 10px;
+            display:grid;
+            grid-template-rows: auto;
+            row-gap: 3px;
+            grid-template-areas:
+                "metrics"
+                "location"
+                    "title";
+            justify-content: center;
+            text-align: center;
+            #check-metrics{
+                grid-area: metrics;
+                font-size: 80%;
+            }
+
+            #check-locations{
+                grid-area: location;
+                font-size: 80%;
+
+            }
+
+            #map-title{
+                grid-area: title;
+                margin-top: 10px;
+                margin-bottom: 0px;
+                font-family: $TITLEFONT;
+                color: color(accent);
+            }
+        }
+
+
+    }
+
+    #right-container{
+        padding: 10px;
+        text-align: center;
+
+        h4{
+            margin: 0;
+            margin-bottom: 2px;
+            
+        }
+        #location-dropdown{
+            margin-bottom: 20px;
+        }
+
+        .Select-control{
+            background-color: color(text);
+        }
+
+        .Select-value{
+            color: color(accent);
+            background-color: color(secondary);
+            border-color: color(primary);
+        }
+        #tabs-container{
+            margin-bottom: 20px;
+        }
+
+        .tab--selected{
+            border-color:color(accent);
+            border-top-width: 4px;
+            font: $TITLEFONT;
+            font-weight: bolder;
+        }
+
+        .tab-custom-tab{
+        background-color: color(text);
+        }
+
+    }
+
+
+
+
+
+}
 
 
 

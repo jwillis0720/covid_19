@@ -12,11 +12,12 @@ body {
           box-sizing: border-box;
 }
 
-#header {
+.container {
   margin: 5px;
   padding: 5px 10px 10px 10px;
   background-color: #2D3142;
   border-radius: 15px;
+  border: 2px solid rgba(0, 0, 0, 0.125);
 }
 
 #header #description {
@@ -134,5 +135,129 @@ body {
 
 #header #counters-container #growth-card {
   background-color: #28a745;
+}
+
+#app-container #slider-container {
+  text-align: center;
+}
+
+#app-container #slider-container h4 {
+  margin: 0;
+  margin-bottom: 5px;
+  color: #EF8354;
+  font-family: "Baloo 2", cursive;
+}
+
+#app-container #slider-container #date_slider {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#app-container #slider-container .rc-slider-mark-text {
+  display: none;
+}
+
+#app-container #slider-container .rc-slider-track {
+  background-color: #EF8354 !important;
+  z-index: 1 !important;
+}
+
+#app-container #slider-container .rc-slider-dot {
+  border: 2px solid white;
+  z-index: 2 !important;
+}
+
+#app-container #slider-container .rc-slider-step {
+  background-color: #4F5D75;
+}
+
+#app-container #slider-container .rc-slider-rail {
+  background-color: #4F5D75;
+}
+
+#app-container #slider-container .rc-slider-handle {
+  border-color: #EF8354;
+  z-index: 3 !important;
+}
+
+#app-container #slider-container .rc-slider-dot-active {
+  border: 3px solid #EF8354 !important;
+}
+
+#app-container #map-container #map-dials {
+  margin-top: 10px;
+  display: -ms-grid;
+  display: grid;
+  -ms-grid-rows: auto;
+      grid-template-rows: auto;
+  row-gap: 3px;
+      grid-template-areas: "metrics" "location" "title";
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  text-align: center;
+}
+
+#app-container #map-container #map-dials #check-metrics {
+  -ms-grid-row: 1;
+  -ms-grid-column: 1;
+  grid-area: metrics;
+  font-size: 80%;
+}
+
+#app-container #map-container #map-dials #check-locations {
+  -ms-grid-row: 2;
+  -ms-grid-column: 1;
+  grid-area: location;
+  font-size: 80%;
+}
+
+#app-container #map-container #map-dials #map-title {
+  -ms-grid-row: 3;
+  -ms-grid-column: 1;
+  grid-area: title;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  font-family: "Baloo 2", cursive;
+  color: #EF8354;
+}
+
+#app-container #right-container {
+  padding: 10px;
+  text-align: center;
+}
+
+#app-container #right-container h4 {
+  margin: 0;
+  margin-bottom: 2px;
+}
+
+#app-container #right-container #location-dropdown {
+  margin-bottom: 20px;
+}
+
+#app-container #right-container .Select-control {
+  background-color: #BFC0C0;
+}
+
+#app-container #right-container .Select-value {
+  color: #EF8354;
+  background-color: #4F5D75;
+  border-color: #2D3142;
+}
+
+#app-container #right-container #tabs-container {
+  margin-bottom: 20px;
+}
+
+#app-container #right-container .tab--selected {
+  border-color: #EF8354;
+  border-top-width: 4px;
+  font: "Baloo 2", cursive;
+  font-weight: bolder;
+}
+
+#app-container #right-container .tab-custom-tab {
+  background-color: #BFC0C0;
 }
 /*# sourceMappingURL=style.css.map */
