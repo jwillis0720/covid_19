@@ -625,23 +625,42 @@ body {
         grid-template-rows: auto;
         #map-dials{
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-            justify-items: center;
+            grid-template-columns: auto auto auto;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
             grid-template-areas:
-                "check-metrics check-metrics map-title check-locations check-locations check-locations";
+                "check-metrics map-title check-locations";
             #check-metrics{
                 grid-area: check-metrics;
                 padding-right: 2px;
+                font-size: 100%;
+                margin: 0;
+                padding-bottom: 5px;
             }
             #map-title{
                 grid-area: map-title;
                 margin-top: 0;
                 font-size:150%;
+                padding-bottom: 0;
+                line-height: 24px;
             }
             #check-locations{
                 grid-area: check-locations;
                 padding-right: 2px;
+                display: grid;
+                justify-items: space-between;
+                grid-template-columns: auto auto auto;
+                grid-template-rows: 1fr;
+                align-items: center;
+                font-size: 100%;
+                padding-bottom: 5px;
+                margin: 0;
             }
+            .map-list{
+                padding: 0;
+            }
+        
 
         }
 
