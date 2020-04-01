@@ -16,12 +16,13 @@ def layout_header():
                     html.H1(
                         children=["COVID-19 ", html.Span('Infection Dashboard')]),
                     html.H2([html.A('Jordan R. Willis PhD',
-                                    href='http://jordanrwillis.com', target='_blank')]),
-                    html.Button(
-                        id="learn-more-button", className='button', n_clicks=0, children=[
-                            html.Div(id='slide', children=html.A('Learn More'))]),
-                ]
-            ),
+                                    href='http://jordanrwillis.com', target='_blank'),
+                             html.Span(
+                        html.Button(id="learn-more-button", className='button', n_clicks=0, children=[
+                            html.Div(id='slide', children=html.A('Learn More'))]))]
+                            )
+                ]),
+
             html.Div(
                 id='counters-container',
                 children=get_counter_cards(),
@@ -36,25 +37,25 @@ def get_counter_cards():
                      children=[
                          html.H3('Total Cases'),
                          html.P(id='total-cases',
-                                children=[3000])]),
+                                children=callbacks.get_total_cases())]),
             html.Div(id='deaths-card',
                      className='card',
                      children=[
                          html.H3('Total Deaths'),
                          html.P(id='total-deaths',
-                                children=[3000])]),
+                                children=callbacks.get_total_deaths())]),
             html.Div(id='mortality-card',
                      className='card',
                      children=[
                          html.H3('Mortality Rate'),
                          html.P(id='mortality-rate',
-                                children=[30000])]),
+                                children=[callbacks.get_mortality_rate()])]),
             html.Div(id='growth-card',
                      className='card',
                      children=[
                          html.H3('Growth Factor'),
                          html.P(id='growth-rate',
-                                children=[3000])])]
+                                children=[callbacks.get_growth_rate()])])]
 
 
 def get_map_dials():
@@ -69,7 +70,7 @@ def get_map_dials():
                           {'label': 'County',
                            'value': 'county'}],
                       value=['country', 'province']),
-        html.H3(id="map-title", children='Yesteryear'),
+        html.H3(id="map-title"),
         dcc.Checklist(id='check-metrics',
                       labelClassName='map-list',
                       options=[
@@ -112,7 +113,7 @@ def layout_app():
                        callbacks.get_date_slider()]),
             html.Div(id='map-container', className='container', children=[
                 html.Div(id='map-dials', children=get_map_dials()),
-                html.Div(id='map')
+                dcc.Graph(id='map')
             ])
         ]),
         html.Div(id='right-container', className='container', children=[
@@ -120,13 +121,16 @@ def layout_app():
             html.Div(id='location-dropdown',
                      children=callbacks.get_dropdown()),
             html.Div(id='tabs-container', children=get_tabs_container()),
-            html.Div(id='content-readout', children=get_content_readout()),
+            dcc.Graph(id='content-readout'),
 
         ])
     ])
 
 
 def serve_dash_layout():
+
+    # Every time we serve the layout, we remake the Data:
+    callbacks.serve_data()
     return html.Div(id='root-container', children=[
         layout_header(),
         layout_app(),
