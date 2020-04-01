@@ -47,7 +47,7 @@ def get_mortality_rate():
 def get_growth_rate():
     x = JHU_TIME.groupby('Date').sum().pct_change()[
         'confirmed'][-10:].mean()
-    return "{:.3}%".format(1+x)
+    return "{:.3}".format(1+x)
 
 
 def get_dropdown():
