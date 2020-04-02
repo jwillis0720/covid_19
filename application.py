@@ -33,7 +33,7 @@ app = dash.Dash(__name__,
                 meta_tags=get_meta())
 app.layout = layouts.serve_dash_layout
 callbacks.register_callbacks(app)
-
+app.title = "COVID-19 Infection Dashboard"
 # We must expose this for Elastic Bean Stalk to Run
 application = app.server
 
