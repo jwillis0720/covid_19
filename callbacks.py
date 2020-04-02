@@ -101,7 +101,7 @@ def get_dummy_map(id_):
     return dcc.Graph(id=id_, figure=fig)
 
 
-def serve_data():
+def serve_data(ret=False):
     global JHU_RECENT
     global DATE_MAPPER
     global JHU_TIME
@@ -171,6 +171,9 @@ def serve_data():
 
     CSBS_DF_AGG_COUNTY = CSBS[CSBS['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'county']).agg(
         {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+    if ret:
+        return JHU_RECENT, JHU_TIME, CSBS, DATE_MAPPER
 
 
 def register_callbacks(app):

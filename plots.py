@@ -21,7 +21,11 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
         gb_confirmed = dataframe.groupby('confirmed_size')
         gb_groups = sorted(gb_confirmed.groups)
         for indexer in range(len(gb_groups)):
-            plotting_df = gb_confirmed.get_group(gb_groups[indexer])
+            try:
+                plotting_df = gb_confirmed.get_group(gb_groups[indexer])
+            except KeyError:
+                print('No group in gb_cases{}'.format(gb_groups[indexer]))
+                continue
             if indexer+1 == len(cases_bins)-1:
                 max_ = int(
                     math.ceil(dataframe['confirmed'].max()/10000)) * 10000
@@ -56,6 +60,7 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
                 plotting_df = gb_deaths.get_group(gb_groups[indexer])
             except KeyError:
                 print('No group in gb_deaths {}'.format(gb_groups[indexer]))
+                continue
 
             if indexer+1 == len(death_bins)-1:
                 max_ = int(
