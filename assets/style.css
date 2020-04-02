@@ -487,7 +487,7 @@ body {
   }
 }
 
-@media only screen and (min-width: 1660px) {
+@media only screen and (min-width: 1550px) {
   body {
     font-size: 200%;
   }
