@@ -121,6 +121,8 @@ def layout_app():
             html.Div(id='location-dropdown',
                      children=callbacks.get_dropdown()),
             html.Div(id='tabs-container', children=get_tabs_container()),
+            dcc.RadioItems(id='log-check', options=[{'label': 'Log', 'value': 'log'}, {
+                           'label': 'Linear', 'value': 'linear'}], value='log'),
             dcc.Graph(id='content-readout'),
 
         ])

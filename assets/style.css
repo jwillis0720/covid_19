@@ -240,6 +240,10 @@ body {
   border: 3px solid #EF8354 !important;
 }
 
+#app-container #map-container {
+  margin: 10px;
+}
+
 #app-container #map-container #map-dials {
   margin-top: 10px;
   display: -ms-grid;
@@ -315,6 +319,17 @@ body {
 
 #app-container #right-container .tab-custom-tab {
   background-color: #BFC0C0;
+}
+
+#app-container #right-container #log-check {
+  font-size: 60%;
+  position: relative;
+  z-index: 100;
+  margin-bottom: -20px;
+  margin-left: 20px;
+  text-align: left;
+  -webkit-transform: translateY(20px);
+          transform: translateY(20px);
 }
 
 @media only screen and (min-width: 768px) {

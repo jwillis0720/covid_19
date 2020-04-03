@@ -117,7 +117,7 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
     return {'data': data_traces, 'layout': layout}
 
 
-def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY):
+def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=False):
     colors = plotly.colors.qualitative.Dark24
     data_traces = []
     for enum_, item in enumerate(values):
@@ -175,17 +175,19 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
             side='left',
         ),
         xaxis=dict(
-            color='white'
+            color='white',
         ),
         autosize=True,
         showlegend=True,
         legend=dict(x=0, y=1, font=dict(color='white')),
         paper_bgcolor='#1f2630',
         plot_bgcolor='rgb(52,51,50)')
+    if log:
+        layout['yaxis']['type'] = 'log'
     return {'data': data_traces, 'layout': layout}
 
 
-def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY):
+def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=True):
     colors = plotly.colors.qualitative.Dark24
     data_traces = []
     for enum_, item in enumerate(values):
@@ -252,13 +254,14 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
         plot_bgcolor='rgb(52,51,50)',
         barmode='group',
         bargap=0.1)
+    if log:
+        layout['yaxis']['type'] = 'log'
 
     return {'data': data_traces, 'layout': layout}
 
 
-def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY):
+def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log):
     backtrack = 7
-    log = True
     fig = go.Figure()
     colors = plotly.colors.qualitative.Dark24
     max_number = 0
@@ -294,7 +297,7 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]: indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]                                  : indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             if y < 100 or x < 100:
@@ -374,7 +377,13 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         legend=dict(x=0, y=1, font=dict(color='white')))
 
     annotations = []
-    annotations.append(dict(xref='x', x=6-1, yref='y', y=6-0.6,
+    if log:
+        x_ref = 5
+        y_ref = 5.4
+    else:
+        x_ref = 8 * 10 ** 5
+        y_ref = 8 * 10 ** 5
+    annotations.append(dict(xref='x', x=x_ref, yref='y', y=y_ref,
                             text="Exponential Growth",
                             font=dict(family='Arial',
                                       color='white'),

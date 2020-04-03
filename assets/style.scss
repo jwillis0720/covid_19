@@ -245,6 +245,7 @@ body {
     }
 
     #map-container{
+        margin: 10px;
         #map-dials{
             margin-top: 10px;
             display:grid;
@@ -274,11 +275,8 @@ body {
                 font-family: $TITLEFONT;
                 color: color(accent);
             }
-            #map{
-            }
+
         }
-
-
     }
 
     #right-container{
@@ -318,6 +316,15 @@ body {
         background-color: color(text);
         }
 
+        #log-check{
+            font-size: 60%;
+            position: relative;
+            z-index: 100;
+            margin-bottom: -20px;
+            margin-left:20px;
+            text-align: left;
+            transform: translateY(20px);
+        }
     }
 }
 

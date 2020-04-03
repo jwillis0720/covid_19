@@ -301,15 +301,20 @@ def register_callbacks(app):
 
     @app.callback(Output('content-readout', 'figure'),
                   [Input('dropdown_container', 'value'),
-                   Input('tabs-values', 'value')])
-    def render_tab_content(values, tabs):
+                   Input('tabs-values', 'value'),
+                   Input('log-check', 'value')])
+    def render_tab_content(values, tabs, log):
+        if log == 'log':
+            log = True
+        else:
+            log = False
         if tabs == 'total_cases_graph':
             print(values, tabs)
-            return plots.total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY)
+            return plots.total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log)
         elif tabs == 'per_day_cases':
-            return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY)
+            return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log)
         elif tabs == 'exponential':
-            return plots.plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY)
+            return plots.plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log)
 
     @app.callback(
         Output('dropdown_container', 'value'),
