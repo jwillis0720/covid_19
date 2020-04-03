@@ -323,7 +323,7 @@ body {
 
 #app-container #right-container #log-check {
   font-size: 60%;
-  position: relative;
+  position: absolute;
   z-index: 100;
   margin-bottom: -20px;
   margin-left: 20px;
@@ -675,7 +675,7 @@ body {
   }
   #app-container #right-container #tabs-container {
     margin-top: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 20px;
     font-size: 65%;
   }
   #app-container #right-container #tabs-container .custom-tab {
