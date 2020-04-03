@@ -316,14 +316,30 @@ body {
         background-color: color(text);
         }
 
-        #log-check{
+        #sub-options{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
             font-size: 60%;
             position: absolute;
             z-index: 100;
-            margin-bottom: -20px;
-            margin-left:20px;
-            text-align: left;
-            transform: translateY(20px);
+            transform: translateY(25px)
+        }
+
+        #log-check{
+            justify-self: left;
+            padding-left:20px;
+            text-align: center;
+            // font-size: 60%;
+            // position: absolute;
+            // z-index: 100;
+            // margin-bottom: -20px;
+            // margin-left:20px;
+            // text-align: left;
+            //;
+        }
+        #deaths-confirmed{
+            justify-self: left;
         }
     }
 }

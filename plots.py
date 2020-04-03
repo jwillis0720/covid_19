@@ -117,7 +117,7 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
     return {'data': data_traces, 'layout': layout}
 
 
-def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=False):
+def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=False, metric='confirmed'):
     colors = plotly.colors.qualitative.Dark24
     data_traces = []
     for enum_, item in enumerate(values):
@@ -149,14 +149,21 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
             else:
                 raise Exception('You have messed up {}'.format(item))
 
+        if metric == 'confirmed':
+            hovert = '%{x}<br>Confirmed Cases - %{y:,f}'
+            y_axis_title = 'Total Cases'
+        else:
+            hovert = '%{x}<br>Confirmed Deaths - %{y:,f}'
+            y_axis_title = 'Total Deaths'
+
         data_traces.append(
             go.Scatter(
                 x=sub_df['Date'],
-                y=sub_df['confirmed'],
+                y=sub_df[metric],
                 name=name,
                 showlegend=True,
                 mode='lines+markers',
-                hovertemplate='%{x}<br>Confirmed Cases - %{y:,f}',
+                hovertemplate=hovert,
                 marker=dict(
                     color=color_,
                     size=2,
@@ -167,7 +174,7 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
         yaxis=dict(
-            title=dict(text='Total Cases', standoff=2),
+            title=dict(text=y_axis_title, standoff=2),
             titlefont_size=12,
             tickfont_size=12,
             showgrid=True,
@@ -187,7 +194,7 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
     return {'data': data_traces, 'layout': layout}
 
 
-def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=True):
+def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=True, metric='confirmed'):
     colors = plotly.colors.qualitative.Dark24
     data_traces = []
     for enum_, item in enumerate(values):
@@ -219,14 +226,22 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
                 raise Exception('You have messed up {}'.format(item))
 
         xs = sub_df['Date']
-        ys = sub_df['confirmed'].diff().fillna(0)
+        if metric == 'confirmed':
+            ys = sub_df['confirmed'].diff().fillna(0)
+            hovert = '%{x}<br>New Cases - %{y:,f}'
+            y_axis_title = 'Confirmed Cases Per Day'
+        else:
+            ys = sub_df[metric].diff().fillna(0)
+            hovert = '%{x}<br>New Deaths - %{y:,f}'
+            y_axis_title = 'Deaths Per Day'
+
         data_traces.append(
             go.Bar(
                 x=xs,
                 y=ys,
                 name=name,
                 showlegend=True,
-                hovertemplate='%{x}<br>New Cases - %{y:,f}',
+                hovertemplate=hovert,
                 textfont=dict(size=14, color='white'),
                 marker=dict(
                     color=color_,
@@ -238,7 +253,7 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
         margin=dict(t=70, r=40, l=80, b=80),
 
         yaxis=dict(
-            title=dict(text='New Cases', standoff=2),
+            title=dict(text=y_axis_title, standoff=2),
             titlefont_size=12,
             tickfont_size=12,
             showgrid=True,
@@ -372,7 +387,7 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         ),
         autosize=True,
         showlegend=True,
-        paper_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='#1f2630',
         plot_bgcolor='rgb(52,51,50)',
         legend=dict(x=0, y=1, font=dict(color='white')))
 

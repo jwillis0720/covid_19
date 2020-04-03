@@ -321,15 +321,30 @@ body {
   background-color: #BFC0C0;
 }
 
-#app-container #right-container #log-check {
+#app-container #right-container #sub-options {
+  display: -ms-grid;
+  display: grid;
+  -ms-grid-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
+  -ms-grid-rows: auto;
+      grid-template-rows: auto;
   font-size: 60%;
   position: absolute;
   z-index: 100;
-  margin-bottom: -20px;
-  margin-left: 20px;
-  text-align: left;
-  -webkit-transform: translateY(20px);
-          transform: translateY(20px);
+  -webkit-transform: translateY(25px);
+          transform: translateY(25px);
+}
+
+#app-container #right-container #log-check {
+  -ms-grid-column-align: left;
+      justify-self: left;
+  padding-left: 20px;
+  text-align: center;
+}
+
+#app-container #right-container #deaths-confirmed {
+  -ms-grid-column-align: left;
+      justify-self: left;
 }
 
 @media only screen and (min-width: 768px) {
