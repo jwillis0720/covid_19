@@ -4,8 +4,8 @@ import plotly.express as px
 import plotly.colors
 import pandas as pd
 import plots
+import dash_table
 from datetime import date, timedelta
-
 from dash.dependencies import Input, Output, State
 from pprint import pprint
 
@@ -69,7 +69,7 @@ def get_dropdown():
     dd = dcc.Dropdown(
         id='dropdown_container',
         options=countries+provinces+state+counties,
-        value=['worldwide', 'COUNTRY_US'],
+        value=['worldwide', 'COUNTRY_US', 'STATE_New York'],
         multi=True
     )
     return dd
@@ -316,6 +316,56 @@ def register_callbacks(app):
             return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
         elif tabs == 'exponential':
             return plots.plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log)
+
+    @app.callback(Output('table-container', 'children'),
+                  [Input('dropdown_container', 'value')])
+    def render_table(values):
+        date = JHU_RECENT['Date_text'].iloc[0]
+        data_entries = []
+        for value in values:
+            sub_category = value.split('_')[0]
+            # print(sub_category)
+            if sub_category == 'worldwide':
+                confirmed, deaths = JHU_RECENT.sum()[['confirmed', 'deaths']]
+                data_entries.append(
+                    {'Date': date, 'Country': 'Worldwide', 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': confirmed, 'Deaths': deaths})
+                continue
+            elif sub_category == 'COUNTRY':
+                c = value.split('_')[1]
+                sub_df = JHU_RECENT[JHU_RECENT['country'] == c]
+                data_entries.append(
+                    {'Date': date, 'Country': c, 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                continue
+            elif sub_category == 'PROVINCE':
+                c = value.split('_')[1]
+                drint('province')
+                sub_df = JHU_RECENT[JHU_RECENT['province'] == c].groupby(
+                    ['country', 'province']).sum().reset_index()
+                data_entries.append(
+                    {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                continue
+            elif sub_category == 'STATE':
+                c = value.split('_')[1]
+                print('State')
+                sub_df = CSBS[CSBS['province'] == c].groupby(
+                    ['country', 'province']).sum().reset_index()
+                print(sub_df)
+                data_entries.append(
+                    {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                continue
+            elif sub_category == 'COUNTY':
+                print(value.split('_')[1])
+                c = value.split('_')[1]
+                sub_df = CSBS[CSBS['county'] == c].groupby(
+                    ['country', 'province', 'county']).sum().reset_index()
+                for i in sub_df.iterrows():
+                    s = i[1]
+                    data_entries.append(
+                        {'Date': date, 'Country': s['country'], 'Province/State': s['province'], 'County': s['county'], 'Confirmed': s['confirmed'], 'Deaths': s['deaths']})
+            else:
+                raise Exception("YOu done fucked up")
+        df = pd.DataFrame(data_entries)
+        return dash_table.DataTable(id='table', columns=[{'name': i, 'id': i} for i in df.columns], data=df.to_dict('records'))
 
     @app.callback(
         Output('dropdown_container', 'value'),

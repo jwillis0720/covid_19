@@ -719,6 +719,8 @@ body {
         }
         }
     }
-
+    #table-container{
+        grid-column: 1/3;
+    }
 }
 }

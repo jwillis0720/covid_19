@@ -106,7 +106,7 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
             font=dict(
                 family="sans-serif",
                 color="white",
-                size=10
+                size=12
             ),
             bgcolor='rgba(0,0,0,0.4)'
             #

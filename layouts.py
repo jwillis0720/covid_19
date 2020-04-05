@@ -1,7 +1,6 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-
 import callbacks
 
 
@@ -128,7 +127,8 @@ def layout_app():
                     'label': 'Deaths', 'value': 'deaths'}], value='confirmed')]),
             dcc.Graph(id='content-readout'),
 
-        ])
+        ]),
+        html.Div(id='table-container', className='container')
     ])
 
 
