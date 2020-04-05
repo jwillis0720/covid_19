@@ -13,8 +13,8 @@ from pprint import pprint
 GREEN_TO_YELLOW = ['#808080', '#a19e79', '#c1bd70', '#e0dc63', '#fffd50']
 ORANGE_TO_RED = ['#ffa500', '#ff8c00', '#ff7000', '#ff4e00', '#ff0000']
 SIZES_BIN = [5, 10, 30, 60]
-DEATHS_BIN = [1, 2, 100, 1000, 1000000]
-CASES_BIN = [1, 10, 1000, 10000, 10000000]
+DEATHS_BIN = [1, 20, 100, 1000, 1000000]
+CASES_BIN = [1, 200, 1000, 50000, 10000000]
 
 
 def get_date_slider():
@@ -51,16 +51,15 @@ def get_growth_rate():
 
 
 def get_dropdown():
-    countries = [{'label': x, 'value': "COUNTRY_{0}".format(
+    countries = [{'label': x, 'value': "COUNTRY_{0}:NONE".format(
         x)} for x in JHU_DF_AGG_COUNTRY['country'].unique()]
     countries.append({'label': 'Worldwide', 'value': 'worldwide'})
-    provinces = [{'label': x, 'value': "PROVINCE_{0}".format(
-        x)} for x in JHU_DF_AGG_PROVINCE['province'].unique()]
-    state = [{'label': x, 'value': "STATE_{0}".format(
-        x)} for x in CSBS_DF_AGG_STATE['state'].unique()]
-    counties = [{'label': x+" County", 'value': "COUNTY_{0}".format(
-        x)} for x in CSBS_DF_AGG_COUNTY['county'].unique()]
-
+    provinces = [{'label': x, 'value': "PROVINCE_{0}:{1}".format(
+        x, y)} for x, y in JHU_DF_AGG_PROVINCE.groupby(['province', 'country']).groups.keys()]
+    state = [{'label': x, 'value': "STATE_{0}:{1}".format(
+        x, y)} for x, y in CSBS_DF_AGG_STATE.groupby(['state', 'country']).groups.keys()]
+    counties = [{'label': x+" County", 'value': "COUNTY_{0}:{1}".format(
+        x, y)} for x, y in CSBS_DF_AGG_COUNTY.groupby(['county', 'province']).groups.keys()]
     # Post HOc Correciton
     for index in countries:
         if index['label'] == 'US':
@@ -69,7 +68,7 @@ def get_dropdown():
     dd = dcc.Dropdown(
         id='dropdown_container',
         options=countries+provinces+state+counties,
-        value=['worldwide', 'COUNTRY_US', 'STATE_New York'],
+        value=['worldwide', 'COUNTRY_US:NONE', 'STATE_New York:US'],
         multi=True
     )
     return dd
@@ -163,13 +162,13 @@ def serve_data(ret=False):
     JHU_DF_AGG_COUNTRY = JHU_TIME.sort_values('confirmed')[::-1].groupby(['Date', 'country']).agg(
         {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
 
-    JHU_DF_AGG_PROVINCE = JHU_TIME[JHU_TIME['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'province']).agg(
+    JHU_DF_AGG_PROVINCE = JHU_TIME[JHU_TIME['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
         {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
 
-    CSBS_DF_AGG_STATE = CSBS[CSBS['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'province']).agg(
+    CSBS_DF_AGG_STATE = CSBS[CSBS['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
         {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'state'}, axis=1)
 
-    CSBS_DF_AGG_COUNTY = CSBS[CSBS['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'county']).agg(
+    CSBS_DF_AGG_COUNTY = CSBS[CSBS['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province', 'county']).agg(
         {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
 
     if ret:
@@ -185,7 +184,7 @@ def register_callbacks(app):
     )
     def update_click_output(button_click, close_click):
         ctx = dash.callback_context
-        print(ctx.triggered)
+        # print(ctx.triggered)
         prop_id = ""
         if ctx.triggered:
             prop_id = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -206,7 +205,6 @@ def register_callbacks(app):
          State("map", "relayoutData")]
     )
     def render_map(date_value, locations_values, metrics_values, figure, relative_layout):
-        pprint(relative_layout)
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
@@ -245,45 +243,53 @@ def register_callbacks(app):
                 SUB_DF_COUNTRY['deaths'].apply(lambda x: "{:,}".format(int(x)))
             SUB_DF_COUNTRY['type'] = 'country'
             SUB_DF_COUNTRY['source'] = 'JHU'
+            SUB_DF_COUNTRY['lookup'] = 'COUNTRY' + \
+                "_"+SUB_DF_COUNTRY['location']+':NONE'
 
         if 'province' in locations_values:
-            SUB_DF_PROVINCE = JHU_TIME_DATE[JHU_TIME_DATE['province'] != ''].sort_values('confirmed')[::-1].groupby(['province']).agg(
+            SUB_DF_PROVINCE = JHU_TIME_DATE[JHU_TIME_DATE['province'] != ''].sort_values('confirmed')[::-1].groupby(['country', 'province']).agg(
                 {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'location'}, axis=1)
-            SUB_DF_PROVINCE['Text_Cases'] = 'Province: '+SUB_DF_PROVINCE['location'] + \
-                '<br>Total Cases:' + \
+            SUB_DF_PROVINCE['Text_Cases'] = 'Province: '+SUB_DF_PROVINCE['location'] +\
+                '<br>Total Cases:' +\
                 SUB_DF_PROVINCE['confirmed'].apply(
-                    lambda x: "{:,}".format(int(x)))
-            SUB_DF_PROVINCE['Text_Deaths'] = 'Province: '+SUB_DF_PROVINCE['location'] + \
-                '<br>Total Deaths:' + \
+                lambda x: "{:,}".format(int(x)))
+            SUB_DF_PROVINCE['Text_Deaths'] = 'Province: '+SUB_DF_PROVINCE['location'] +\
+                '<br>Total Deaths:' +\
                 SUB_DF_PROVINCE['deaths'].apply(
                 lambda x: "{:,}".format(int(x)))
             SUB_DF_PROVINCE['source'] = 'JHU'
             SUB_DF_PROVINCE['type'] = 'province'
+            SUB_DF_PROVINCE['lookup'] = "PROVINCE"+"_" +\
+                SUB_DF_PROVINCE['location']+':'+SUB_DF_PROVINCE['country']
 
-            temp_df = CSBS_TIME_DATE[CSBS_TIME_DATE['province'] != ''].sort_values('confirmed')[::-1].groupby(['province']).agg(
+            temp_df = CSBS_TIME_DATE[CSBS_TIME_DATE['province'] != ''].sort_values('confirmed')[::-1].groupby(['country', 'province']).agg(
                 {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'location'}, axis=1)
 
-            temp_df['Text_Cases'] = 'State: '+temp_df['location']+'<br>Total Cases:' + \
+            temp_df['Text_Cases'] = 'State: '+temp_df['location']+'<br>Total Cases:' +\
                 temp_df['confirmed'].apply(lambda x: "{:,}".format(int(x)))
-            temp_df['Text_Deaths'] = 'State: '+temp_df['location'] + \
-                '<br>Total Deaths:' + \
+            temp_df['Text_Deaths'] = 'State: '+temp_df['location'] +\
+                '<br>Total Deaths:' +\
                 temp_df['deaths'].apply(lambda x: "{:,}".format(int(x)))
             temp_df['source'] = 'CSBS'
             temp_df['type'] = 'state'
+            temp_df['lookup'] = "STATE"+"_" +\
+                temp_df['location']+':'+temp_df['country']
             SUB_DF_PROVINCE = SUB_DF_PROVINCE.append(temp_df)
 
         if 'county' in locations_values:
-            SUB_DF_COUNTY = CSBS_TIME_DATE[CSBS_TIME_DATE['county'] != ''].sort_values('confirmed')[::-1].groupby(['county']).agg(
+            SUB_DF_COUNTY = CSBS_TIME_DATE[CSBS_TIME_DATE['county'] != ''].sort_values('confirmed')[::-1].groupby(['country', 'province', 'county']).agg(
                 {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'county': 'location'}, axis=1)
-            SUB_DF_COUNTY['Text_Cases'] = 'County: '+SUB_DF_COUNTY['location'] + \
-                '<br>Total Cases:' + \
+            SUB_DF_COUNTY['Text_Cases'] = 'County: '+SUB_DF_COUNTY['location'] +\
+                '<br>Total Cases:' +\
                 SUB_DF_COUNTY['confirmed'].apply(
-                    lambda x: "{:,}".format(int(x)))
-            SUB_DF_COUNTY['Text_Deaths'] = 'County: '+SUB_DF_COUNTY['location'] + \
-                '<br>Total Deaths:' + \
+                lambda x: "{:,}".format(int(x)))
+            SUB_DF_COUNTY['Text_Deaths'] = 'County: '+SUB_DF_COUNTY['location'] +\
+                '<br>Total Deaths:' +\
                 SUB_DF_COUNTY['deaths'].apply(lambda x: "{:,}".format(int(x)))
             SUB_DF_COUNTY['source'] = 'CSBS'
             SUB_DF_COUNTY['type'] = 'county'
+            SUB_DF_COUNTY['lookup'] = "COUNTY"+"_" +\
+                SUB_DF_COUNTY['location']+':' + SUB_DF_COUNTY['province']
 
         plot_data_frame = pd.concat(
             [SUB_DF_COUNTRY, SUB_DF_PROVINCE, SUB_DF_COUNTY])
@@ -296,7 +302,7 @@ def register_callbacks(app):
                 lambda x: dict(zip(SIZES_BIN, ORANGE_TO_RED))[x])
             plot_data_frame['case_colors'] = plot_data_frame['confirmed_size'].apply(
                 lambda x: dict(zip(SIZES_BIN, GREEN_TO_YELLOW))[x])
-
+        # print('plot_dataframe', plot_data_frame)
         return plots.plot_map(plot_data_frame, metrics_values, CASES_BIN, DEATHS_BIN, zoom, center)
 
     @app.callback(Output('content-readout', 'figure'),
@@ -310,7 +316,7 @@ def register_callbacks(app):
         else:
             log = False
         if tabs == 'total_cases_graph':
-            print(values, tabs)
+            # print(values, tabs)
             return plots.total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
         elif tabs == 'per_day_cases':
             return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
@@ -323,48 +329,47 @@ def register_callbacks(app):
         date = JHU_RECENT['Date_text'].iloc[0]
         data_entries = []
         for value in values:
-            sub_category = value.split('_')[0]
-            # print(sub_category)
-            if sub_category == 'worldwide':
+            if value.split('_')[0] == 'worldwide':
                 confirmed, deaths = JHU_RECENT.sum()[['confirmed', 'deaths']]
                 data_entries.append(
                     {'Date': date, 'Country': 'Worldwide', 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': confirmed, 'Deaths': deaths})
                 continue
-            elif sub_category == 'COUNTRY':
-                c = value.split('_')[1]
-                sub_df = JHU_RECENT[JHU_RECENT['country'] == c]
-                data_entries.append(
-                    {'Date': date, 'Country': c, 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
-                continue
-            elif sub_category == 'PROVINCE':
-                c = value.split('_')[1]
-                drint('province')
-                sub_df = JHU_RECENT[JHU_RECENT['province'] == c].groupby(
-                    ['country', 'province']).sum().reset_index()
-                data_entries.append(
-                    {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
-                continue
-            elif sub_category == 'STATE':
-                c = value.split('_')[1]
-                print('State')
-                sub_df = CSBS[CSBS['province'] == c].groupby(
-                    ['country', 'province']).sum().reset_index()
-                print(sub_df)
-                data_entries.append(
-                    {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
-                continue
-            elif sub_category == 'COUNTY':
-                print(value.split('_')[1])
-                c = value.split('_')[1]
-                sub_df = CSBS[CSBS['county'] == c].groupby(
-                    ['country', 'province', 'county']).sum().reset_index()
-                for i in sub_df.iterrows():
-                    s = i[1]
-                    data_entries.append(
-                        {'Date': date, 'Country': s['country'], 'Province/State': s['province'], 'County': s['county'], 'Confirmed': s['confirmed'], 'Deaths': s['deaths']})
             else:
-                raise Exception("YOu done fucked up")
+                sub_category = value.split('_')[0]
+                location = value.split('_')[1].split(':')[0]
+                parent = value.split('_')[1].split(':')[-1]
+                if sub_category == 'COUNTRY':
+                    c = value.split('_')[1]
+                    sub_df = JHU_RECENT[JHU_RECENT['country'] == location]
+                    data_entries.append(
+                        {'Date': date, 'Country': location, 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                    continue
+                elif sub_category == 'PROVINCE':
+                    sub_df = JHU_RECENT[(JHU_RECENT['province'] == location) & (JHU_RECENT['country'] == parent)].groupby(
+                        ['country', 'province']).sum().reset_index()
+                    data_entries.append(
+                        {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                    continue
+                elif sub_category == 'STATE':
+                    sub_df = CSBS[(CSBS['province'] == location) & (CSBS['Date'] == date) & (CSBS['country'] == parent)].groupby(
+                        ['country', 'province']).sum().reset_index()
+                    # print(sub_df)
+                    data_entries.append(
+                        {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                    continue
+                elif sub_category == 'COUNTY':
+                    sub_df = CSBS[(CSBS['county'] == location) & (CSBS['Date'] == date) & (CSBS['province'] == parent)].groupby(
+                        ['country', 'province', 'county']).sum().reset_index()
+                    for i in sub_df.iterrows():
+                        s = i[1]
+                        data_entries.append(
+                            {'Date': date, 'Country': s['country'], 'Province/State': s['province'], 'County': s['county'], 'Confirmed': s['confirmed'], 'Deaths': s['deaths']})
+                else:
+                    raise Exception("YOu done fucked up")
         df = pd.DataFrame(data_entries)
+        df['Confirmed'] = df['Confirmed'].apply(
+            lambda x: "{:,}".format(int(x)))
+        df['Deaths'] = df['Deaths'].apply(lambda x: "{:,}".format(int(x)))
         return dash_table.DataTable(id='table', columns=[{'name': i, 'id': i} for i in df.columns], data=df.to_dict('records'))
 
     @app.callback(
@@ -376,34 +381,17 @@ def register_callbacks(app):
         if not clickData:
             return dropdown_selected
 
-        # A vector for our new items
-        new = []
-        label_dataframes = pd.DataFrame(dropdown_options)
-        label_dataframes['cat'] = label_dataframes['value'].str.split(
-            '_').str.get(0)
-        label_dataframes['name'] = label_dataframes['value'].str.split(
-            '_').str.get(1)
-        clickdata_name = clickData['points'][0]['customdata'].split('_')[0]
-        clickdata_category = clickData['points'][0]['text'].split(':')[
-            0].upper()
-        sub_label_df = label_dataframes[label_dataframes['cat']
-                                        == clickdata_category]
-        n_ = sub_label_df.loc[sub_label_df['name']
-                              == clickdata_name, 'name']
-        try:
-            new_addition = clickdata_category+"_"+n_.iloc[0]
-            print(new_addition)
-        except IndexError:
-            pprint.pprint(clickData)
-            print('not found', clickdata_name, clickdata_category)
-            return dropdown_selected
-        if new_addition not in list(label_dataframes['value']):
-            print('Warning, cant find {}'.format(new_addition))
+        options = pd.DataFrame(dropdown_options)
+
+        # print(options)
+        new_loc = clickData['points'][0]['customdata']
+        if new_loc not in dropdown_selected:
+            if new_loc not in list(options['value']):
+                raise Exception(
+                    'new location {} does not exists in dropdown'.format(new_loc))
+            dropdown_selected.append(new_loc)
         else:
-            print("We found it {}".format(new_addition))
-            if new_addition not in dropdown_selected:
-                new = dropdown_selected+[new_addition]
-                return new
+            print('already here {}'.format(new_loc))
 
         return dropdown_selected
 

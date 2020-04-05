@@ -36,8 +36,7 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
-                customdata=plotting_df['location'] + "_" +
-                plotting_df['source'] + "_" + plotting_df['type']+"_confirmed",
+                customdata=plotting_df['lookup'],
                 textposition='top right',
                 text=plotting_df['Text_Cases'],
                 hoverinfo='text',
@@ -72,7 +71,7 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
-                customdata=plotting_df['location'],
+                customdata=plotting_df['lookup'],
                 textposition='top right',
                 text=plotting_df['Text_Deaths'],
                 hoverinfo='text',
@@ -128,23 +127,27 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
             name = 'World'
         else:
             if item.split('_')[0] == 'COUNTRY':
-                name = item.split('_')[1]
+                parent = 'None'
+                name = item.split('_')[1].split(':')[0]
                 sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
                     'Date').sum().reset_index()
 
             elif item.split('_')[0] == 'PROVINCE':
-                name = item.split('_')[1]
-                sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = JHU_DF_AGG_PROVINCE[(JHU_DF_AGG_PROVINCE['province'] == name) & (JHU_DF_AGG_PROVINCE['country'] == parent)].groupby(
                     'Date').sum().reset_index()
 
             elif item.split('_')[0] == 'STATE':
-                name = item.split('_')[1]
-                sub_df = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == name].groupby(
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = CSBS_DF_AGG_STATE[(CSBS_DF_AGG_STATE['state'] == name) & (CSBS_DF_AGG_STATE['country'] == parent)].groupby(
                     'Date').sum().reset_index()
 
             elif item.split('_')[0] == 'COUNTY':
-                name = item.split('_')[1]
-                sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = CSBS_DF_AGG_COUNTY[(CSBS_DF_AGG_COUNTY['county'] == name) & (CSBS_DF_AGG_COUNTY['province'] == parent)].groupby(
                     'Date').sum().reset_index()
             else:
                 raise Exception('You have messed up {}'.format(item))
@@ -204,23 +207,27 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
             name = 'World'
         else:
             if item.split('_')[0] == 'COUNTRY':
-                name = item.split('_')[1]
+                parent = 'None'
+                name = item.split('_')[1].split(':')[0]
                 sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
                     'Date').sum().reset_index()
 
             elif item.split('_')[0] == 'PROVINCE':
-                name = item.split('_')[1]
-                sub_df = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == name].groupby(
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = JHU_DF_AGG_PROVINCE[(JHU_DF_AGG_PROVINCE['province'] == name) & (JHU_DF_AGG_PROVINCE['country'] == parent)].groupby(
                     'Date').sum().reset_index()
 
             elif item.split('_')[0] == 'STATE':
-                name = item.split('_')[1]
-                sub_df = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == name].groupby(
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = CSBS_DF_AGG_STATE[(CSBS_DF_AGG_STATE['state'] == name) & (CSBS_DF_AGG_STATE['country'] == parent)].groupby(
                     'Date').sum().reset_index()
 
             elif item.split('_')[0] == 'COUNTY':
-                name = item.split('_')[1]
-                sub_df = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == name].groupby(
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = CSBS_DF_AGG_COUNTY[(CSBS_DF_AGG_COUNTY['county'] == name) & (CSBS_DF_AGG_COUNTY['province'] == parent)].groupby(
                     'Date').sum().reset_index()
             else:
                 raise Exception('You have messed up {}'.format(item))
@@ -286,24 +293,29 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
             full_report = JHU_DF_AGG_COUNTRY.groupby(
                 'Date').sum().drop(['lat', 'lon'], axis=1)
         else:
-            class_location, location = item.split('_')
+
+            class_location = item.split('_')[0]
+            location = item.split('_')[1].split(':')[0]
+            parent = item.split('_')[1].split(':')[-1]
+            # print(class_location, location, parent)
             if class_location == 'COUNTRY':
                 full_report = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == location].groupby(
                     'Date').sum().drop(['lat', 'lon'], axis=1)
 
             elif class_location == 'PROVINCE':
-                full_report = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['province'] == location].groupby(
+                full_report = JHU_DF_AGG_PROVINCE[(JHU_DF_AGG_PROVINCE['province'] == location) & (JHU_DF_AGG_PROVINCE['country'] == parent)].groupby(
                     'Date').sum().drop(['lat', 'lon'], axis=1)
             elif class_location == 'STATE':
-                full_report = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['state'] == location].groupby(
+                full_report = CSBS_DF_AGG_STATE[(CSBS_DF_AGG_STATE['state'] == location) & (CSBS_DF_AGG_STATE['country'] == parent)].groupby(
                     'Date').sum().drop(['lat', 'lon'], axis=1)
             elif class_location == 'COUNTY':
-                full_report = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['county'] == location].groupby(
+                full_report = CSBS_DF_AGG_COUNTY[(CSBS_DF_AGG_COUNTY['county'] == location) & (CSBS_DF_AGG_COUNTY['province'] == parent)].groupby(
                     'Date').sum().drop(['lat', 'lon'], axis=1)
         per_day = full_report.diff()
         plottable = full_report.join(
             per_day, lsuffix='_cum', rsuffix='_diff')
         plottable = plottable.fillna(0)
+        # print(item, plottable)
 
         xs = []
         ys = []
@@ -312,7 +324,8 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]                                  : indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]
+                    : indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             if y < 100 or x < 100:
