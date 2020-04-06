@@ -404,7 +404,7 @@ def register_callbacks(app):
                         'County': 'N/A',
                         'Total Confirmed': "{:,}".format(int(confirmed)),
                         'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                        'Total Deaths': "{:,}".format(int(confirmed)),
+                        'Total Deaths': "{:,}".format(int(deaths)),
                         'Deaths 24h': "+{:,}".format(int(deaths_24))})
                 elif sub_category == 'COUNTY':
                     gb = CSBS[(CSBS['county'] == location) & (CSBS['province'] == parent)].groupby(
