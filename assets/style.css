@@ -356,7 +356,7 @@ body {
       justify-self: left;
 }
 
-#app-container #table-container {
+#app-container #table {
   overflow: scroll;
 }
 
