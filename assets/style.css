@@ -69,6 +69,14 @@ body {
           box-sizing: border-box;
 }
 
+.VirtualizedSelectOption {
+  color: black;
+}
+
+.VirtualizedSelectFocusedOption {
+  color: #EF8354;
+}
+
 .container {
   margin: 5px;
   padding: 5px 10px 10px 10px;
@@ -298,6 +306,7 @@ body {
 
 #app-container #right-container .Select-control {
   background-color: #BFC0C0;
+  z-index: 3;
 }
 
 #app-container #right-container .Select-value {
@@ -330,7 +339,7 @@ body {
       grid-template-rows: auto;
   font-size: 60%;
   position: absolute;
-  z-index: 100;
+  z-index: 2;
   -webkit-transform: translateY(25px);
           transform: translateY(25px);
 }
@@ -345,6 +354,10 @@ body {
 #app-container #right-container #deaths-confirmed {
   -ms-grid-column-align: left;
       justify-self: left;
+}
+
+#app-container #table-container {
+  overflow: scroll;
 }
 
 @media only screen and (min-width: 768px) {

@@ -69,7 +69,8 @@ def get_dropdown():
         id='dropdown_container',
         options=countries+provinces+state+counties,
         value=['worldwide', 'COUNTRY_US:NONE', 'STATE_New York:US'],
-        multi=True
+        multi=True,
+        style={'position': 'relative', 'zIndex': '3'}
     )
     return dd
 
@@ -330,47 +331,115 @@ def register_callbacks(app):
         data_entries = []
         for value in values:
             if value.split('_')[0] == 'worldwide':
-                confirmed, deaths = JHU_RECENT.sum()[['confirmed', 'deaths']]
+                # confirmed, deaths = JHU_RECENT.sum()[['confirmed', 'deaths']]
+                gb = JHU_TIME.groupby(['Date_text', 'Date']).sum()
+                # 0 index will be date text
+                date = gb.index[-1][0]
+                confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
+                confirmed_24, deaths_24 = gb.diff(
+                ).iloc[-1][['confirmed', 'deaths']]
+                print(confirmed_24, deaths_24)
                 data_entries.append(
-                    {'Date': date, 'Country': 'Worldwide', 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': confirmed, 'Deaths': deaths})
+                    {'Date': date, 'Country': 'Worldwide',
+                     'Province/State': 'N/A',
+                     'County': 'N/A',
+                     'Total Confirmed': "{:,}".format(int(confirmed)),
+                     'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                     'Total Deaths': "{:,}".format(int(deaths)),
+                     'Deaths 24h': "+{:,}".format(int(deaths_24))})
                 continue
             else:
                 sub_category = value.split('_')[0]
                 location = value.split('_')[1].split(':')[0]
                 parent = value.split('_')[1].split(':')[-1]
                 if sub_category == 'COUNTRY':
-                    c = value.split('_')[1]
-                    sub_df = JHU_RECENT[JHU_RECENT['country'] == location]
-                    data_entries.append(
-                        {'Date': date, 'Country': location, 'Province/State': 'N/A', 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                    sub_df = JHU_TIME[JHU_TIME['country'] == location]
+                    gb = sub_df.groupby(['Date_text', 'Date']).sum()
+                    date = gb.index[-1][0]
+                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
+                    confirmed_24, deaths_24 = gb.diff(
+                    ).iloc[-1][['confirmed', 'deaths']]
+                    print(confirmed_24, deaths_24)
+                    data_entries.append({
+                        'Date': date,
+                        'Country': location,
+                        'Province/State': 'N/A',
+                        'County': 'N/A',
+                        'Total Confirmed': "{:,}".format(int(confirmed)),
+                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                        'Total Deaths': "{:,}".format(int(deaths)),
+                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
                     continue
                 elif sub_category == 'PROVINCE':
-                    sub_df = JHU_RECENT[(JHU_RECENT['province'] == location) & (JHU_RECENT['country'] == parent)].groupby(
-                        ['country', 'province']).sum().reset_index()
-                    data_entries.append(
-                        {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
+                    gb = JHU_TIME[(JHU_TIME['province'] == location) & (JHU_TIME['country'] == parent)].groupby(
+                        ['Date_text', 'Date', 'country', 'province']).sum()
+                    date = gb.index[-1][0]
+                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
+                    confirmed_24, deaths_24 = gb.diff(
+                    ).iloc[-1][['confirmed', 'deaths']]
+                    # print(confirmed_24, deaths_24)
+                    data_entries.append({
+                        'Date': date,
+                        'Country': parent,
+                        'Province/State': location,
+                        'County': 'N/A',
+                        'Total Confirmed': "{:,}".format(int(confirmed)),
+                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                        'Total Deaths': "{:,}".format(int(deaths)),
+                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
+
                     continue
                 elif sub_category == 'STATE':
-                    sub_df = CSBS[(CSBS['province'] == location) & (CSBS['Date'] == date) & (CSBS['country'] == parent)].groupby(
-                        ['country', 'province']).sum().reset_index()
-                    # print(sub_df)
-                    data_entries.append(
-                        {'Date': date, 'Country': sub_df['country'], 'Province/State': sub_df['province'], 'County': 'N/A', 'Confirmed': sub_df['confirmed'], 'Deaths': sub_df['deaths']})
-                    continue
+                    gb = CSBS[(CSBS['province'] == location) & (CSBS['country'] == parent)].groupby(
+                        ['Date_text', 'Date']).sum()
+                    date = gb.index[-1][0]
+                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
+                    confirmed_24, deaths_24 = gb.diff(
+                    ).iloc[-1][['confirmed', 'deaths']]
+                    # print(confirmed_24, deaths_24)
+                    data_entries.append({
+                        'Date': date,
+                        'Country': parent,
+                        'Province/State': location,
+                        'County': 'N/A',
+                        'Total Confirmed': "{:,}".format(int(confirmed)),
+                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                        'Total Deaths': "{:,}".format(int(confirmed)),
+                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
                 elif sub_category == 'COUNTY':
-                    sub_df = CSBS[(CSBS['county'] == location) & (CSBS['Date'] == date) & (CSBS['province'] == parent)].groupby(
-                        ['country', 'province', 'county']).sum().reset_index()
-                    for i in sub_df.iterrows():
-                        s = i[1]
-                        data_entries.append(
-                            {'Date': date, 'Country': s['country'], 'Province/State': s['province'], 'County': s['county'], 'Confirmed': s['confirmed'], 'Deaths': s['deaths']})
+                    gb = CSBS[(CSBS['county'] == location) & (CSBS['province'] == parent)].groupby(
+                        ['Date_text', 'Date', 'country', 'province', 'county']).sum()
+                    date = gb.index[-1][0]
+                    country = gb.index[-1][2]
+                    province = gb.index[-1][3]
+                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
+                    confirmed_24, deaths_24 = gb.diff(
+                    ).iloc[-1][['confirmed', 'deaths']]
+                    # print(confirmed_24, deaths_24)
+                    data_entries.append({
+                        'Date': date,
+                        'Country': country,
+                        'Province/State': province,
+                        'County': location,
+                        'Total Confirmed': "{:,}".format(int(confirmed)),
+                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                        'Total Deaths': "{:,}".format(int(deaths)),
+                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
                 else:
                     raise Exception("YOu done fucked up")
         df = pd.DataFrame(data_entries)
-        df['Confirmed'] = df['Confirmed'].apply(
-            lambda x: "{:,}".format(int(x)))
-        df['Deaths'] = df['Deaths'].apply(lambda x: "{:,}".format(int(x)))
-        return dash_table.DataTable(id='table', columns=[{'name': i, 'id': i} for i in df.columns], data=df.to_dict('records'))
+
+        # df = df[['Date', 'Country', 'Province/State',
+        #          'County', 'Confirmed', 'Confirmed 24h', 'Deaths']]
+        return dash_table.DataTable(id='table',
+                                    columns=[{'name': i, 'id': i}
+                                             for i in df.columns],
+                                    style_header={
+                                        'backgroundColor': 'rgb(30, 30, 30)',
+                                        'color': 'white'},
+                                    style_cell={
+                                        'color': 'black'},
+                                    data=df.to_dict('records'))
 
     @app.callback(
         Output('dropdown_container', 'value'),

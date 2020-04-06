@@ -93,6 +93,16 @@ body {
     
 }
 
+.VirtualizedSelectOption{
+    color: black;
+}
+
+.VirtualizedSelectFocusedOption{
+    color: color(accent);
+}
+
+
+
 .container{
     margin: 5px;
     padding: 5px 10px 10px 10px;
@@ -294,6 +304,7 @@ body {
 
         .Select-control{
             background-color: color(text);
+            z-index: 3;
         }
 
         .Select-value{
@@ -322,7 +333,7 @@ body {
             grid-template-rows: auto;
             font-size: 60%;
             position: absolute;
-            z-index: 100;
+            z-index: 2;
             transform: translateY(25px)
         }
 
@@ -341,6 +352,9 @@ body {
         #deaths-confirmed{
             justify-self: left;
         }
+    }
+    #table-container{
+        overflow: scroll;
     }
 }
 
