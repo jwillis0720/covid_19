@@ -58,7 +58,7 @@ def get_dropdown():
         x, y)} for x, y in JHU_DF_AGG_PROVINCE.groupby(['province', 'country']).groups.keys()]
     state = [{'label': x, 'value': "STATE_{0}:{1}".format(
         x, y)} for x, y in CSBS_DF_AGG_STATE.groupby(['state', 'country']).groups.keys()]
-    counties = [{'label': x+" County", 'value': "COUNTY_{0}:{1}".format(
+    counties = [{'label': x+" County, "+y, 'value': "COUNTY_{0}:{1}".format(
         x, y)} for x, y in CSBS_DF_AGG_COUNTY.groupby(['county', 'province']).groups.keys()]
     # Post HOc Correciton
     for index in countries:
@@ -70,7 +70,7 @@ def get_dropdown():
         options=countries+provinces+state+counties,
         value=['worldwide', 'COUNTRY_US:NONE', 'STATE_New York:US'],
         multi=True,
-        style={'position': 'relative', 'zIndex': '3'}
+        style={'position': 'relative', 'zIndex': '3', 'font-size': '75%'}
     )
     return dd
 
