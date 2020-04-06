@@ -357,7 +357,7 @@ body {
 }
 
 #app-container #table {
-  overflow: scroll;
+  overflow-x: scroll;
 }
 
 @media only screen and (min-width: 768px) {
@@ -698,7 +698,8 @@ body {
     margin-top: 5px;
     margin-bottom: 5px;
   }
-  #app-container #right-container #dropdown_container {
+  #app-container #right-container e
+#dropdown_container {
     font-size: 60%;
   }
   #app-container #right-container #tabs-container {
