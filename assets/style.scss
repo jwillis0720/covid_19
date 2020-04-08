@@ -163,13 +163,15 @@ body {
         margin-top: 20px;
         margin-bottom: 20px;
         .card{
-            width: 150px;
-            height: 130px;
+            // width: 150px;
+            // height: 130px;
             box-shadow: 0 10px 8px 0 black;
             transition: 0.3s;
             align-items: center;
             margin: 5px;
+            min-width: 155px;
             margin-top: 5px;
+            padding: 10px;
             text-align: center;
             color: black;
             border-radius: 2px;
@@ -177,11 +179,14 @@ body {
             color: white;
             h3{
                 margin-top: 4px;
+                // margin-right: 20px;
+                // margin-left: 10px;
+                // margin: 0 10px;
                 border-bottom:1px solid rgba(0,0,0,.125);
                 margin-bottom: 0px;
             }
             p{
-                padding-top: 10px;
+                // padding-top: 10px;
                 font-size: 140%;
                 margin-block-start: 0.5em;
                 margin-bottom: 0;
@@ -405,16 +410,17 @@ body {
     
         #counters-container{
             .card{
-                width: 150px;
-                height: 130px;
-                h3{
-                    margin-top: 4px;
-                    border-bottom:1px solid rgba(0,0,0,.125);
-                }
-                p{
-                    padding-top: 10px;
-                    font-size: 120%;
-                }
+                font-size: 120%;
+                // width: 150px;
+                // height: 130px;
+                // h3{
+                //     margin-top: 4px;
+                //     border-bottom:1px solid rgba(0,0,0,.125);
+                // }
+                // p{
+                //     padding-top: 10px;
+                //     font-size: 120%;
+                // }
                
                 
             }
@@ -498,13 +504,15 @@ body {
             margin-top: 20px;
             margin-bottom: 20px;
             .card{
-                width: 200px;
-                height: 170px;
+                // width: 200px;
+                // height: 170px;
+                min-width: 241px;
                 box-shadow: 0 10px 8px 0 black;
                 border-radius: 4px;
                 perspective: 1000;
                 h3{
                     font-size: 80%;
+                    margin: 0 20p;
                 }
                 p{
                     font-size: 100%;
@@ -616,6 +624,7 @@ body {
         grid-template-columns: 0.5fr 1fr;
         padding-bottom: 23px;
         #description{
+            display: block;
             grid-column: 1/2;
             h1{
                 font-size: 150%;
@@ -626,18 +635,18 @@ body {
                 position: relative;
                 
             }
-
-            h2{
-                position:absolute;
-                left: 7%;
-
+            .bottom-div{
+                display: flex;
+                justify-content: center;
             }
 
+    
+
             .button {
-                position: absolute;
-                top: -5%;
+                // position: absolute;
+                // top: -5%;
                 height: 35px;
-                width: 100px;
+                width: 120px;
             }
         }
 
@@ -648,8 +657,9 @@ body {
             margin-top: 20px;
             margin-bottom: 20px;
             .card{
-                width: 200px;
-                height: 132px;
+                // width: 200px;
+                // height: 132px;
+                min-width: 241px;
                 box-shadow: 0 10px 8px 0 black;
                 border-radius: 4px;
                 perspective: 1000;
@@ -743,7 +753,6 @@ body {
             margin-top: 5px;
             margin-bottom: 5px;
         }
-e
         #dropdown_container{
             font-size: 60%;
         }
@@ -762,3 +771,4 @@ e
     }
 }
 }
+

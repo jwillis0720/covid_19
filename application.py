@@ -171,16 +171,16 @@ def layout_header(params):
             html.Div(
                 id="description",
                 children=[
-                    html.H1(
-                        children=["COVID-19 ", html.Span('Infection Dashboard')]),
-                    html.H2([html.A('Jordan R. Willis PhD',
-                                    href='http://jordanrwillis.com', target='_blank'),
-                             html.Span(
+                    html.Div(className='title-div', children=[
+                        html.H1(children=[
+                            "COVID-19 ",
+                            html.Span('Infection Dashboard')])]
+                    ),
+                    html.Div(className='bottom-div', children=[
+                        html.H2(html.A('Jordan R. Willis PhD',
+                                       href='http://jordanrwillis.com', target='_blank')),
                         html.Button(id="learn-more-button", className='button', n_clicks=0, children=[
-                            html.Div(id='slide', children=html.A('Learn More'))]))]
-                            )
-                ]),
-
+                            html.Div(id='slide', children=html.A('Learn More'))])])]),
             html.Div(
                 id='counters-container',
                 children=get_counter_cards(),

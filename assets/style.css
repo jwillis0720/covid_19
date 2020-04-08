@@ -155,8 +155,6 @@ body {
 }
 
 #header #counters-container .card {
-  width: 150px;
-  height: 130px;
   -webkit-box-shadow: 0 10px 8px 0 black;
           box-shadow: 0 10px 8px 0 black;
   -webkit-transition: 0.3s;
@@ -165,7 +163,9 @@ body {
       -ms-flex-align: center;
           align-items: center;
   margin: 5px;
+  min-width: 155px;
   margin-top: 5px;
+  padding: 10px;
   text-align: center;
   color: black;
   border-radius: 2px;
@@ -181,7 +181,6 @@ body {
 }
 
 #header #counters-container .card p {
-  padding-top: 10px;
   font-size: 140%;
   -webkit-margin-before: 0.5em;
           margin-block-start: 0.5em;
@@ -404,15 +403,6 @@ body {
     border-radius: 4px;
   }
   #header #counters-container .card {
-    width: 150px;
-    height: 130px;
-  }
-  #header #counters-container .card h3 {
-    margin-top: 4px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-  }
-  #header #counters-container .card p {
-    padding-top: 10px;
     font-size: 120%;
   }
   #app-container #slider-container {
@@ -473,8 +463,7 @@ body {
     margin-bottom: 20px;
   }
   #header #counters-container .card {
-    width: 200px;
-    height: 170px;
+    min-width: 241px;
     -webkit-box-shadow: 0 10px 8px 0 black;
             box-shadow: 0 10px 8px 0 black;
     border-radius: 4px;
@@ -483,6 +472,7 @@ body {
   }
   #header #counters-container .card h3 {
     font-size: 80%;
+    margin: 0 20p;
   }
   #header #counters-container .card p {
     font-size: 100%;
@@ -566,6 +556,7 @@ body {
     padding-bottom: 23px;
   }
   #header #description {
+    display: block;
     -ms-grid-column: 1;
     -ms-grid-column-span: 1;
     grid-column: 1/2;
@@ -578,15 +569,17 @@ body {
   #header #description h1 span {
     display: block;
   }
-  #header #description h2 {
-    position: absolute;
-    left: 7%;
+  #header #description .bottom-div {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
   }
   #header #description .button {
-    position: absolute;
-    top: -5%;
     height: 35px;
-    width: 100px;
+    width: 120px;
   }
   #header #counters-container {
     -ms-grid-column: 2;
@@ -602,8 +595,7 @@ body {
     margin-bottom: 20px;
   }
   #header #counters-container .card {
-    width: 200px;
-    height: 132px;
+    min-width: 241px;
     -webkit-box-shadow: 0 10px 8px 0 black;
             box-shadow: 0 10px 8px 0 black;
     border-radius: 4px;
@@ -724,8 +716,7 @@ body {
     margin-top: 5px;
     margin-bottom: 5px;
   }
-  #app-container #right-container e
-#dropdown_container {
+  #app-container #right-container #dropdown_container {
     font-size: 60%;
   }
   #app-container #right-container #tabs-container {
