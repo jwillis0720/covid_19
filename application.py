@@ -320,9 +320,9 @@ def build_layout(params):
         layout_header(params),
         layout_app(params),
         markdown_popup(),
-        html.Button(id="tiny-url", className='button', n_clicks=0, children=[
-            html.Div(id='tiny_url_div', children=html.A('Get Link'))]),
-        html.Div(id='url-container', style={'display': 'none'})
+        # html.Button(id="tiny-url", className='button', n_clicks=0, children=[
+        # html.Div(id='tiny_url_div', children=html.A('Get Link'))]),
+        # html.Div(id='url-container', style={'display': 'none'})
     ])
 
 
