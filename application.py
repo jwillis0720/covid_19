@@ -39,6 +39,7 @@ app = dash.Dash(__name__, meta_tags=get_meta())
 app.title = "COVID-19 Infection Dashboard"
 
 app.config['suppress_callback_exceptions'] = True
+app.index_string = open('assets/customIndex.html').read()
 
 # Serve layout in a function so we can update it dynamically
 # Must go after the app is initialized
