@@ -5,6 +5,11 @@ import plotly.colors
 
 mapbox_style = 'mapbox://styles/jwillis0720/ck89nznm609pg1ipadkyrelvb'
 mapbox_access_token = open('./.mapbox_token').readlines()[0]
+colors = plotly.colors.qualitative.Dark24
+# remove black elment
+colors.remove(colors[5])
+# lets repeat it enough time sjust incase
+colors = colors * 10
 
 
 def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
@@ -117,7 +122,6 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
 
 
 def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=False, metric='confirmed'):
-    colors = plotly.colors.qualitative.Dark24
     data_traces = []
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
@@ -198,7 +202,7 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
 
 
 def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=True, metric='confirmed'):
-    colors = plotly.colors.qualitative.Dark24
+
     data_traces = []
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
@@ -285,7 +289,6 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
 def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log):
     backtrack = 7
     fig = go.Figure()
-    colors = plotly.colors.qualitative.Dark24
     max_number = 0
     for enum_, item in enumerate(values):
         if item == 'worldwide':
@@ -325,8 +328,7 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]
-                    : indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]                                  : indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             # if y < 100 or x < 100:

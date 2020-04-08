@@ -72,6 +72,10 @@ body {
           box-sizing: border-box;
 }
 
+#tiny-url {
+  display: none;
+}
+
 .VirtualizedSelectOption {
   color: black;
 }
@@ -86,6 +90,28 @@ body {
   background-color: #2D3142;
   border-radius: 15px;
   border: 2px solid rgba(0, 0, 0, 0.125);
+}
+
+.button {
+  height: 35px;
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  width: 110px;
+  border: 2px solid #BFC0C0;
+  margin: 10px 20px 20px 20px;
+  border-radius: 4px;
+  color: #BFC0C0;
+  background-color: #2D3142;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  overflow: hidden;
 }
 
 #header #description {
@@ -113,28 +139,6 @@ body {
   color: #BFC0C0;
   font-family: "Baloo 2", cursive;
   text-underline-offset: 2px;
-}
-
-#header #description .button {
-  height: 35px;
-  display: -webkit-inline-box;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  width: 110px;
-  border: 2px solid #BFC0C0;
-  margin: 10px 20px 20px 20px;
-  border-radius: 4px;
-  color: #BFC0C0;
-  background-color: #2D3142;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  -webkit-box-pack: center;
-      -ms-flex-pack: center;
-          justify-content: center;
-  overflow: hidden;
 }
 
 #header #counters-container {
@@ -442,6 +446,31 @@ body {
 }
 
 @media only screen and (min-width: 1224px) {
+  #tiny-url {
+    display: inline;
+    position: fixed;
+    width: auto;
+    font-size: 67%;
+    min-height: 40px;
+    min-width: 110px;
+    bottom: -10px;
+    left: -16px;
+    z-index: 2;
+    color: #EF8354;
+    border-color: #EF8354;
+    -webkit-box-shadow: 0px 5px 3px 2px rgba(0, 0, 0, 0.603);
+            box-shadow: 0px 5px 3px 2px rgba(0, 0, 0, 0.603);
+    -webkit-transition: color 0.5s linear;
+    transition: color 0.5s linear;
+    -webkit-transform: border-color 0.5s linear;
+            transform: border-color 0.5s linear;
+  }
+  #tiny-url:hover {
+    color: #2D3142;
+    cursor: pointer;
+    background-color: #EF8354;
+    border-color: #2D3142;
+  }
   body {
     font-size: 200%;
   }

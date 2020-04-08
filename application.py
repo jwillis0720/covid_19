@@ -320,9 +320,9 @@ def build_layout(params):
         layout_header(params),
         layout_app(params),
         markdown_popup(),
-        # html.Button(id="tiny-url", className='button', n_clicks=0, children=[
-        #     html.Div(id='tiny_url_div', children=html.A('Learn More'))])
-
+        html.Button(id="tiny-url", className='button', n_clicks=0, children=[
+            html.Div(id='tiny_url_div', children=html.A('Get Link'))]),
+        html.Div(id='url-container', style={'display': 'none'})
     ])
 
 
@@ -365,18 +365,21 @@ def update_url_state(*values):
     return encode_state(component_ids_zipped, values)
 
 
-@app.callback(Output('tiny_url', 'children'),
-              [Input('tinyurl-button', 'n_clicks')],
+@app.callback(Output('url-container', 'children'),
+              [Input('tiny-url', 'n_clicks')],
               [State('url', 'href')])
 def return_short(n_clicks, state):
     """
     Return a tinyurl whenever the `tinyurl-button` is clicked:
     """
+    print(state)
     if not state or not n_clicks:
-        return "No url to shorten"
+        return ""
     elif n_clicks > 0 and state:
         shortener = Shortener()
-        return shortener.tinyurl.short('http://127.0.0.1:8050' + state)
+        print(state)
+        # return "Get Link"
+        return shortener.tinyurl.short(state)
 
 
 callbacks.register_callbacks(app)
