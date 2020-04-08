@@ -30,6 +30,7 @@
   padding: 10px 15px;
   background-color: #f9f9f9;
   border-radius: 10px;
+  color: black;
 }
 
 .close-container {
@@ -40,19 +41,21 @@
 }
 
 .markdown-text {
-  padding: 0px 10px;
+  padding: 10px 10px;
+  text-align: justify;
 }
 
 .closeButton {
   padding: 0 15px;
   font-weight: normal;
   float: right;
-  border: none;
+  font-size: 112%;
+  border: 1px black solid;
   height: 100%;
 }
 
 .closeButton:hover {
-  color: red !important;
+  background-color: red !important;
 }
 
 body {
