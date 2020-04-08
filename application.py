@@ -352,6 +352,7 @@ def return_short(n_clicks, state):
 
 
 callbacks.register_callbacks(app)
+application = app.server
 
 
 if __name__ == '__main__':
