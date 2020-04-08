@@ -556,7 +556,8 @@ body {
     display: grid;
     -ms-grid-columns: 0.5fr 1fr;
         grid-template-columns: 0.5fr 1fr;
-    padding-bottom: 23px;
+    padding: 0;
+    padding-top: 0;
   }
   #header #description {
     display: block;
@@ -566,6 +567,8 @@ body {
   }
   #header #description h1 {
     font-size: 150%;
+    -webkit-margin-before: 0.5em;
+            margin-block-start: 0.5em;
     line-height: 1;
     position: relative;
   }
@@ -596,6 +599,7 @@ body {
             align-items: center;
     margin-top: 20px;
     margin-bottom: 20px;
+    font-size: 80%;
   }
   #header #counters-container .card {
     min-width: 241px;
@@ -606,13 +610,12 @@ body {
             perspective: 1000;
   }
   #header #counters-container .card h3 {
-    font-size: 80%;
+    font-size: 100%;
     margin-bottom: 5px;
   }
   #header #counters-container .card p {
     margin: 12px;
     margin-top: 0px;
-    font-size: 100%;
     margin-bottom: 0;
   }
   #header #counters-container .card .change-card {

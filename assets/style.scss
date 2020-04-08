@@ -626,12 +626,14 @@ body {
     #header{
         display: grid;
         grid-template-columns: 0.5fr 1fr;
-        padding-bottom: 23px;
+        padding: 0;
+        padding-top: 0;
         #description{
             display: block;
             grid-column: 1/2;
             h1{
                 font-size: 150%;
+                margin-block-start: 0.5em;
                 line-height: 1;
                 span{
                     display: block;
@@ -660,6 +662,7 @@ body {
             align-items: center;
             margin-top: 20px;
             margin-bottom: 20px;
+            font-size: 80%;
             .card{
                 // width: 200px;
                 // height: 132px;
@@ -668,13 +671,12 @@ body {
                 border-radius: 4px;
                 perspective: 1000;
                 h3{
-                    font-size: 80%;
+                    font-size: 100%;
                     margin-bottom: 5px;
                 }
                 p{
                     margin: 12px;
                     margin-top: 0px;
-                    font-size: 100%;
                     margin-bottom: 0;
                 }
                 .change-card{

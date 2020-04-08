@@ -9,7 +9,35 @@ import callbacks
 # to generate the tinyurl:
 from pyshorteners import Shortener
 
-app = dash.Dash(__name__)
+
+def get_meta():
+    meta_tags = [
+        {"name": "viewport",
+         "content": "width=device-width, initial-scale=1.0"},
+        {"name": "author",
+         "content": "Jordan R. Willis PhD"},
+
+        {"name": "description",
+         "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
+        {"name": "keywords",
+         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
+        {'property': 'og:image',
+         "content": "https://i.imgur.com/IOSVSbI.png"},
+        {'property': 'og:title',
+         "content": "Coronavirus 2019 - A tracking application"
+         },
+        {'property': 'og:description',
+         "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. It is updated with various scraping APIS. Timescale Resolution."
+         }
+
+    ]
+
+    return meta_tags
+
+
+app = dash.Dash(__name__, meta_tags=get_meta())
+app.title = "COVID-19 Infection Dashboard"
+
 app.config['suppress_callback_exceptions'] = True
 
 # Serve layout in a function so we can update it dynamically
