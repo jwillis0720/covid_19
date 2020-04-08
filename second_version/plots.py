@@ -321,7 +321,6 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         ys = []
         dates = []
         indexes = plottable.index
-        print(plottable)
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
@@ -329,8 +328,8 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
                     : indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
-            # if y < 100 or x < 100:
-            #     continue
+            if y < 100 or x < 100:
+                continue
             if x > max_number:
                 max_number = x
             if y > max_number:
@@ -374,8 +373,8 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         )
     fig.add_trace(
         go.Scatter(
-            x=[0, max_number],
-            y=[0, max_number],
+            x=[100, max_number],
+            y=[100, max_number],
             mode='lines',
             name='Exponential',
             showlegend=False,

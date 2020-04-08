@@ -1,0 +1,7 @@
+## What am I looking at? 
+This application uses real time updates from Johns Hopkins Center for Systems Science and Engineering (CSSE). The application can be found [here](https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6). It also uses United States, county wide data from the Conference of Bank Supervisors (CSBS) that can be found [here](https://facts.csbs.org/covid-19/covid19_county.csv). I used a publicly available map at [mapbox](https://www.mapbox.com). The app is written with [Dash and Plotly](https://plotly.com/) with my own CSS. I am not an epidemiologist nor a front-end developer.
+
+## How to use:
+Confirmed cases and deaths are available at the Region/Country, State/Province, or County level. All can be compared by clicking the hover icon on the map. They can be manually added to the list for comparison. The date slider can be used to show the disease progression across time. Three graphs are available. Showing the total cases over time. The new cases every day, and an exponential plot to show if a region is out of exponential growth. The later graph was inspired by [MinutePhysics](https://www.youtube.com/watch?v=54XLXg4fYsc) on youtube. It's a great way to see exponential growth.
+
+The code is available at my [github](https://github.com/jwillis0720/covid_19). You can find me on [LinkedIn](https://www.linkedin.com/in/jwillis0720) or my [website](https://www.jordanrwillis.com).

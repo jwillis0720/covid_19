@@ -33,28 +33,18 @@ def layout_header():
 def get_counter_cards():
     return [html.Div(id='cases-card',
                      className='card',
-                     children=[
-                         html.H3('Total Cases'),
-                         html.P(id='total-cases',
-                                children=callbacks.get_total_cases())]),
+                     children=callbacks.get_total_cases()),
+
             html.Div(id='deaths-card',
                      className='card',
-                     children=[
-                         html.H3('Total Deaths'),
-                         html.P(id='total-deaths',
-                                children=callbacks.get_total_deaths())]),
+                     children=callbacks.get_total_deaths()),
+
             html.Div(id='mortality-card',
                      className='card',
-                     children=[
-                         html.H3('Mortality Rate'),
-                         html.P(id='mortality-rate',
-                                children=[callbacks.get_mortality_rate()])]),
+                     children=callbacks.get_mortality_rate()),
             html.Div(id='growth-card',
                      className='card',
-                     children=[
-                         html.H3('Growth Factor'),
-                         html.P(id='growth-rate',
-                                children=[callbacks.get_growth_rate()])])]
+                     children=callbacks.get_growth_rate())]
 
 
 def get_map_dials():
@@ -123,7 +113,7 @@ def layout_app():
             html.Div(id='sub-options', children=[
                 dcc.RadioItems(id='log-check', options=[{'label': 'Log', 'value': 'log'}, {
                     'label': 'Linear', 'value': 'linear'}], value='log'),
-                dcc.RadioItems(id='deaths-confirmed', options=[{'label': 'Confirmed Cases', 'value': 'confirmed'}, {
+                dcc.RadioItems(id='deaths-confirmed', options=[{'label': 'Confirmed', 'value': 'confirmed'}, {
                     'label': 'Deaths', 'value': 'deaths'}], value='confirmed')]),
             dcc.Graph(id='content-readout'),
 

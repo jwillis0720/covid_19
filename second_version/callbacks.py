@@ -7,26 +7,10 @@ import pandas as pd
 import plots
 import dash_table
 from datetime import date, timedelta
-import ast
-
 from dash.dependencies import Input, Output, State
 from pprint import pprint
-from urllib.parse import urlparse, parse_qs, urlencode
 
 # print(session.cookies.get_dict())
-# List of component (id, parameter) tuples. Can be be any parameter
-# not just (., 'value'), and the value van be either a single value or a list:
-component_ids = [
-    ('date_slider', 'value'),
-    ('check-locations', 'value'),
-    ('check-metrics', 'value'),
-    ('dropdown_container', 'value'),
-    ('tabs-values', 'value')
-]
-
-# Turn the list of 4 (id, param) tuples into a list of
-# one component id tuple (len=4) and one parameter tuple (len=4):
-component_ids_zipped = list(zip(*component_ids))
 
 
 # Setting up Sizes and Colors
@@ -39,82 +23,20 @@ CASES_BIN = [1, 200, 1000, 50000, 10000000]
 up_triangle = "▲"
 down_tirangle = "▼"
 
-'''All the functions in the callback need access to the GLOBAL DATA served in callbacks.serveData'''
 
-
-def serve_data(ret=False):
-    global JHU_RECENT
-    global DATE_MAPPER
-    global JHU_TIME
-    global CSBS
-    global CENTROID_MAPPER
-    global MERGED_CSBS_JHU
-    global JHU_DF_AGG_COUNTRY
-    global JHU_DF_AGG_PROVINCE
-    global CSBS_DF_AGG_STATE
-    global CSBS_DF_AGG_COUNTY
-
-    jhu_df = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df.csv.gz', index_col=0)
-    jhu_df_time = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df_time.csv.gz', index_col=0)
-    csbs_df = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/csbs_df.csv.gz', index_col=0)
-
-    jhu_df_time['Date'] = pd.to_datetime(jhu_df_time['Date'])
-    jhu_df['Date'] = pd.to_datetime(jhu_df['Date'])
-    csbs_df['Date'] = pd.to_datetime(csbs_df['Date'])
-
-    date_mapper = pd.DataFrame(
-        jhu_df_time['Date'].unique(), columns=['Date'])
-    date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
-
-    # JHU and CSBS are out of sync, so we should use the latest date from JHU
-    latest_date = jhu_df_time.sort_values('Date')['Date'].iloc[-1]
-    merge = pd.concat([jhu_df, csbs_df[csbs_df['Date'] == latest_date]])
-    merge = merge.fillna('')
-
-    # Countries without a code may be a problem
-    problem_countries = merge[merge['country_code'] == '']['country'].tolist()
-
-    # I know for a fact Namibia has no coud
-    merge.loc[merge['country'] == 'Namibia', 'country_code'] = ''
-
-    # Lets grab the centroids from this great spread sheet
-    centroid_mapper = pd.read_csv('./country_centroids_az8.csv')
-    problem_states = merge[~merge['country_code'].isin(
-        centroid_mapper['iso_a2'])]
-    new_merge = merge.merge(
-        centroid_mapper, left_on='country_code', right_on='iso_a2')
-
-    # If something is has the same name for continent and subregion, lets just add the word _subregion
-    new_merge.loc[new_merge['continent'] == new_merge['subregion'],
-                  'subregion'] = new_merge['subregion'] + ' Subregion'
-
-    # # Lets remove the US Data since we are doubel counting htis by merging CSBSS
-    new_merge_no_us = new_merge[~((new_merge['country'] == 'US') & (
-        new_merge['province'] == ''))]
-    MERGED_CSBS_JHU = new_merge
-    JHU_TIME = jhu_df_time
-    JHU_RECENT = jhu_df
-    DATE_MAPPER = date_mapper
-    CSBS = csbs_df
-    CENTROID_MAPPER = centroid_mapper
-
-    JHU_DF_AGG_COUNTRY = JHU_TIME.sort_values('confirmed')[::-1].groupby(['Date', 'country']).agg(
-        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
-
-    JHU_DF_AGG_PROVINCE = JHU_TIME[JHU_TIME['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
-        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
-
-    CSBS_DF_AGG_STATE = CSBS[CSBS['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
-        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'state'}, axis=1)
-
-    CSBS_DF_AGG_COUNTY = CSBS[CSBS['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province', 'county']).agg(
-        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
-
-    if ret:
-        return JHU_RECENT, JHU_TIME, CSBS, DATE_MAPPER
+def get_date_slider():
+    how_many_labels = (len(DATE_MAPPER))//10
+    marks = {k: {'label': v}
+             for k, v in list(DATE_MAPPER['Date'].dt.strftime(
+                 '%m/%d').to_dict().items())[::how_many_labels]}
+    return dcc.Slider(
+        id='date_slider',
+        min=DATE_MAPPER.index[0],
+        max=DATE_MAPPER.index[-1],
+        step=1,
+        value=DATE_MAPPER.index[-1],
+        marks=marks
+    )
 
 
 def get_min_date():
@@ -212,6 +134,14 @@ def get_dropdown_options():
             index['label'] = 'United States'
 
     return countries+provinces+state+counties
+    # dd = dcc.Dropdown(
+    #     id='dropdown_container',
+    #     options=countries+provinces+state+counties,
+    #     value=['worldwide', 'COUNTRY_US:NONE', 'STATE_New York:US'],
+    #     multi=True,
+    #     style={'position': 'relative', 'zIndex': '3', 'font-size': '75%'}
+    # )
+    # return dd
 
 
 def get_dummy_graph(id_):
@@ -240,10 +170,83 @@ def get_dummy_map(id_):
     return dcc.Graph(id=id_, figure=fig)
 
 
-'''Now for the magic of the callback functions which we serve app too'''
+def serve_data(ret=False):
+    global JHU_RECENT
+    global DATE_MAPPER
+    global JHU_TIME
+    global CSBS
+    global CENTROID_MAPPER
+    global MERGED_CSBS_JHU
+    global JHU_DF_AGG_COUNTRY
+    global JHU_DF_AGG_PROVINCE
+    global CSBS_DF_AGG_STATE
+    global CSBS_DF_AGG_COUNTY
+
+    jhu_df = pd.read_csv(
+        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df.csv.gz', index_col=0)
+    jhu_df_time = pd.read_csv(
+        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df_time.csv.gz', index_col=0)
+    csbs_df = pd.read_csv(
+        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/csbs_df.csv.gz', index_col=0)
+
+    jhu_df_time['Date'] = pd.to_datetime(jhu_df_time['Date'])
+    jhu_df['Date'] = pd.to_datetime(jhu_df['Date'])
+    csbs_df['Date'] = pd.to_datetime(csbs_df['Date'])
+
+    date_mapper = pd.DataFrame(
+        jhu_df_time['Date'].unique(), columns=['Date'])
+    date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
+
+    # JHU and CSBS are out of sync, so we should use the latest date from JHU
+    latest_date = jhu_df_time.sort_values('Date')['Date'].iloc[-1]
+    merge = pd.concat([jhu_df, csbs_df[csbs_df['Date'] == latest_date]])
+    merge = merge.fillna('')
+
+    # Countries without a code may be a problem
+    problem_countries = merge[merge['country_code'] == '']['country'].tolist()
+
+    # I know for a fact Namibia has no coud
+    merge.loc[merge['country'] == 'Namibia', 'country_code'] = ''
+
+    # Lets grab the centroids from this great spread sheet
+    centroid_mapper = pd.read_csv('./country_centroids_az8.csv')
+    problem_states = merge[~merge['country_code'].isin(
+        centroid_mapper['iso_a2'])]
+    new_merge = merge.merge(
+        centroid_mapper, left_on='country_code', right_on='iso_a2')
+
+    # If something is has the same name for continent and subregion, lets just add the word _subregion
+    new_merge.loc[new_merge['continent'] == new_merge['subregion'],
+                  'subregion'] = new_merge['subregion'] + ' Subregion'
+
+    # # Lets remove the US Data since we are doubel counting htis by merging CSBSS
+    new_merge_no_us = new_merge[~((new_merge['country'] == 'US') & (
+        new_merge['province'] == ''))]
+    MERGED_CSBS_JHU = new_merge
+    JHU_TIME = jhu_df_time
+    JHU_RECENT = jhu_df
+    DATE_MAPPER = date_mapper
+    CSBS = csbs_df
+    CENTROID_MAPPER = centroid_mapper
+
+    JHU_DF_AGG_COUNTRY = JHU_TIME.sort_values('confirmed')[::-1].groupby(['Date', 'country']).agg(
+        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+    JHU_DF_AGG_PROVINCE = JHU_TIME[JHU_TIME['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
+        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+    CSBS_DF_AGG_STATE = CSBS[CSBS['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
+        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'state'}, axis=1)
+
+    CSBS_DF_AGG_COUNTY = CSBS[CSBS['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province', 'county']).agg(
+        {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+    if ret:
+        return JHU_RECENT, JHU_TIME, CSBS, DATE_MAPPER
 
 
 def register_callbacks(app):
+    # Learn more popup
     @app.callback(
         Output("markdown", "style"),
         [Input("learn-more-button", "n_clicks"),
@@ -251,15 +254,14 @@ def register_callbacks(app):
     )
     def update_click_output(button_click, close_click):
         ctx = dash.callback_context
-        print(ctx.triggered)
+        # print(ctx.triggered)
         prop_id = ""
         if ctx.triggered:
             prop_id = ctx.triggered[0]["prop_id"].split(".")[0]
-            n_clicks = ctx.triggered[0]["value"]
 
         # If a person clicks learn more then the display turns to block
         # If anything else is clicked change the markdown to display:none
-        if prop_id == "learn-more-button" and n_clicks > 0:
+        if prop_id == "learn-more-button":
             return {"display": "block"}
         else:
             return {"display": "none"}

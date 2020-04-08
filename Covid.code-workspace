@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "/Users/jordanwillis/repos/dash-sample-apps/apps/dash-opioid-epidemic"
+		},
+		{
+			"path": "/Users/jordanwillis/repos/dash-sample-apps/apps/dash-object-detection"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "covid19_dash"
+	}
+}
