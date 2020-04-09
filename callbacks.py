@@ -13,21 +13,6 @@ from dash.dependencies import Input, Output, State
 from pprint import pprint
 from urllib.parse import urlparse, parse_qs, urlencode
 
-# print(session.cookies.get_dict())
-# List of component (id, parameter) tuples. Can be be any parameter
-# not just (., 'value'), and the value van be either a single value or a list:
-component_ids = [
-    ('date_slider', 'value'),
-    ('check-locations', 'value'),
-    ('check-metrics', 'value'),
-    ('dropdown_container', 'value'),
-    ('tabs-values', 'value')
-]
-
-# Turn the list of 4 (id, param) tuples into a list of
-# one component id tuple (len=4) and one parameter tuple (len=4):
-component_ids_zipped = list(zip(*component_ids))
-
 
 # Setting up Sizes and Colors
 GREEN_TO_YELLOW = ['#808080', '#a19e79', '#c1bd70', '#e0dc63', '#fffd50']
@@ -175,25 +160,25 @@ def get_mortality_rate():
 
 def get_growth_rate():
     gb = JHU_TIME.groupby('Date').sum()
-    todays_gf = 1+gb.pct_change()['confirmed'].iloc[-1]
-    yesterrday_gf = 1+gb.pct_change()['confirmed'].iloc[-2]
+    todays_gf = gb.pct_change()['confirmed'].iloc[-1]*100
+    yesterrday_gf = gb.pct_change()['confirmed'].iloc[-2]*100
     change_in_gf = todays_gf - yesterrday_gf
-    todays_gf = round(todays_gf, 3)
-    change_in_gf = round(change_in_gf, 3)
+    todays_gf = round(todays_gf, 2)
+    change_in_gf = round(change_in_gf, 2)
     if change_in_gf > 0:
         symbol = up_triangle
         c_name = 'up-triangle'
     else:
         symbol = down_tirangle
         c_name = 'down-triangle'
-    return [html.H3('Growth Factor'),
+    return [html.H3('Growth Rate'),
             html.P(id='growth-rate',
-                   children=todays_gf),
+                   children="{}%".format(todays_gf)),
             html.Div(
             className='change-card',
             children=[
                 html.Span(className=c_name, children=symbol),
-                html.Span(abs(change_in_gf))])]
+                html.Span("{}%".format(abs(change_in_gf)))])]
 
 
 def get_dropdown_options():
@@ -390,6 +375,8 @@ def register_callbacks(app):
             return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
         elif tabs == 'exponential':
             return plots.plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log)
+        elif tabs == 'gr':
+            return plots.per_gr(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
 
     @app.callback(Output('table-container', 'children'),
                   [Input('dropdown_container', 'value')])

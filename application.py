@@ -257,7 +257,12 @@ def get_tabs_container(params):
             dcc.Tab(label='Exponential',
                     className='custom-tab',
                     selected_className='custom-tab--selected',
-                    value='exponential')
+                    value='exponential'),
+            dcc.Tab(label='Growth Rate',
+                    className='custom-tab',
+                    selected_className='custom-tab--selected',
+                    value='gr'),
+
         ],
         value='total_cases_graph')
 

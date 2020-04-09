@@ -1,5 +1,6 @@
 from plotly import graph_objs as go
 import math
+import numpy as np
 import plotly.colors
 
 
@@ -328,7 +329,8 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]                                  : indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]
+                    : indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             # if y < 100 or x < 100:
@@ -431,3 +433,94 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
     fig.update_layout(
         margin=dict(t=50, b=20, r=30, l=20, pad=0))
     return fig
+
+
+def per_gr(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=False, metric='confirmed'):
+
+    data_traces = []
+    for enum_, item in enumerate(values):
+        color_ = colors[enum_]
+        if item == 'worldwide':
+            sub_df = JHU_DF_AGG_COUNTRY.groupby('Date').sum().reset_index()
+            name = 'World'
+        else:
+            if item.split('_')[0] == 'COUNTRY':
+                parent = 'None'
+                name = item.split('_')[1].split(':')[0]
+                sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'PROVINCE':
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = JHU_DF_AGG_PROVINCE[(JHU_DF_AGG_PROVINCE['province'] == name) & (JHU_DF_AGG_PROVINCE['country'] == parent)].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'STATE':
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = CSBS_DF_AGG_STATE[(CSBS_DF_AGG_STATE['state'] == name) & (CSBS_DF_AGG_STATE['country'] == parent)].groupby(
+                    'Date').sum().reset_index()
+
+            elif item.split('_')[0] == 'COUNTY':
+                parent = item.split(':')[-1]
+                name = item.split('_')[1].split(':')[0]
+                sub_df = CSBS_DF_AGG_COUNTY[(CSBS_DF_AGG_COUNTY['county'] == name) & (CSBS_DF_AGG_COUNTY['province'] == parent)].groupby(
+                    'Date').sum().reset_index()
+            else:
+                raise Exception('You have messed up {}'.format(item))
+
+        xs = sub_df['Date']
+        if metric == 'confirmed':
+            s = sub_df['confirmed'].replace(
+                to_replace=0, method='ffill').pct_change()*100
+            ys = s.replace(np.inf, 1)
+            ys = ys.fillna(1)
+            #ys = s.diff()
+            hovert = '%{x}<br>Growth Factor - %{y:.3f}%'
+            y_axis_title = 'Confirmed Cases Growth Factor'
+        else:
+            s = sub_df['deaths'].replace(
+                to_replace=0, method='ffill').pct_change()*100
+            ys = s.replace(np.inf, 1)
+            ys = ys.fillna(1)
+            hovert = '%{x}<br>Death Growth - %{y:.3f}%'
+            y_axis_title = 'Deaths Growth Factor'
+
+        data_traces.append(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                name=name,
+                showlegend=True,
+                hovertemplate=hovert,
+                mode='lines+markers',
+                textfont=dict(size=14, color='white'),
+                marker=dict(
+                    color=color_,
+                    line=dict(
+                        color=color_, width=0.5)
+                )))
+
+    layout = dict(
+        margin=dict(t=70, r=40, l=80, b=80),
+
+        yaxis=dict(
+            title=dict(text=y_axis_title, standoff=2),
+            titlefont_size=12,
+            tickfont_size=12,
+            showgrid=True,
+            color='white',
+            side='left',
+        ),
+        xaxis=dict(
+            color='white'
+        ),
+        showlegend=True,
+        legend=dict(x=0, y=1, font=dict(color='white')),
+        paper_bgcolor='#1f2630',
+        plot_bgcolor='rgb(52,51,50)')
+    if log:
+        layout['yaxis']['type'] = 'log'
+
+    return {'data': data_traces, 'layout': layout}
