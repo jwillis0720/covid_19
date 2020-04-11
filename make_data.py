@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 import warnings
 import pandas as pd
 import glob
@@ -8,10 +8,49 @@ import boto3
 from botocore.exceptions import ClientError
 import COVID19Py
 import pandas
+import sys
+import numpy as np
+from sklearn import preprocessing
+from pmdarima.arima import auto_arima
+
+warnings.simplefilter(
+    "ignore", UserWarning)
 
 # Cancel copy warnings of pandas
 warnings.filterwarnings(
     "ignore", category=pd.core.common.SettingWithCopyWarning)
+
+
+def predict(sub_df, days):
+    sub_df['forcast'] = False
+    base_date = sub_df.sort_values('Date')['Date'].iloc[-1]
+    date_list = [base_date +
+                 timedelta(days=x) for x in range(1, days+1)]
+    forcasts = []
+    upper_bounds = []
+    lower_bounds = []
+    for metric in ['confirmed', 'deaths']:
+        fit = sub_df[metric]
+        stepwise_model = auto_arima(
+            fit,
+            seasonal=False,
+            trace=False,
+            out_of_sample_size=2,
+            error_action='ignore',
+            suppress_warnings=True)
+        model_fit = stepwise_model.fit(fit)
+        forcast, conf = model_fit.predict(days, return_conf_int=True)
+        forcasts.append(forcast)
+        upper_bounds.append(conf[:, 1])
+        lower_bounds.append(conf[:, 0])
+    return pd.DataFrame({'Date': date_list,
+                         'confirmed': forcasts[0],
+                         'confirmed_upper': upper_bounds[0],
+                         'confirmed_lower': lower_bounds[0],
+                         'deaths': forcasts[1],
+                         'deaths_upper': upper_bounds[1],
+                         'deaths_lower': lower_bounds[1],
+                         'forcast': True}).ffill().reset_index(drop=True)
 
 
 def upload_file(file_name, bucket, object_name=None):
@@ -30,7 +69,7 @@ def upload_file(file_name, bucket, object_name=None):
     # Upload the file
     s3_client = boto3.client('s3')
     try:
-        response = s3_client.upload_file(
+        s3_client.upload_file(
             file_name, bucket, object_name,  ExtraArgs={'ACL': 'public-read'})
     except ClientError as e:
         logging.error(e)
@@ -261,9 +300,69 @@ jhu_time.to_csv('Data/jhu_df_time.csv.gz', compression='gzip')
 # Write out Current CSV
 csbs_new.to_csv('Data/csbs_df.csv.gz', compression='gzip')
 
+
+JHU_DF_AGG_COUNTRY = jhu_time.sort_values('confirmed')[::-1].groupby(['Date', 'country']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+JHU_DF_AGG_PROVINCE = jhu_time[jhu_time['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+CSBS_DF_AGG_STATE = csbs_new[csbs_new['province'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index().rename({'province': 'state'}, axis=1)
+
+CSBS_DF_AGG_COUNTY = csbs_new[csbs_new['county'] != ''].sort_values('confirmed')[::-1].groupby(['Date', 'country', 'province', 'county']).agg(
+    {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
+
+
+# predicitons_dfs = []
+# gb = JHU_DF_AGG_COUNTRY.groupby('country')
+# for country in gb.groups.keys():
+#     sub_df = gb.get_group(country)
+#     predictions_df = predict(sub_df, 7)
+#     predicitons_dfs.append(
+#         pd.concat([sub_df, predictions_df]).ffill().fillna(0))
+#     print('predicted {}'.format(country))
+# JHU_DF_AGG_COUNTRY = pd.concat(predicitons_dfs)
+# JHU_DF_AGG_COUNTRY.to_csv('Data/JHU_DF_AGG_COUNTRY.csv.gz', compression='gzip')
+
+# predicitons_dfs = []
+# gb = JHU_DF_AGG_PROVINCE.groupby(['country', 'province'])
+# for province in gb.groups.keys():
+#     sub_df = gb.get_group(province)
+#     predictions_df = predict(sub_df, 7)
+#     predicitons_dfs.append(
+#         pd.concat([sub_df, predictions_df]).ffill().fillna(0))
+#     print('predicted {}'.format(province))
+# province_df = pd.concat(predicitons_dfs)
+# province_df.to_csv('Data/JHU_DF_AGG_PROVINCE.csv.gz', compression='gzip')
+
+
+predicitons_dfs = []
+gb = CSBS_DF_AGG_STATE.groupby(['country', 'state'])
+for province in gb.groups.keys():
+    sub_df = gb.get_group(province)
+    predictions_df = predict(sub_df, 7)
+    predicitons_dfs.append(
+        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
+    print('predicted {}'.format(province))
+state_df = pd.concat(predicitons_dfs)
+state_df.to_csv('Data/CSBS_DF_AGG_STATE.csv.gz', compression='gzip')
+
+
+predicitons_dfs = []
+gb = CSBS_DF_AGG_COUNTY.groupby(['country', 'province', 'county'])
+for province in gb.groups.keys():
+    sub_df = gb.get_group(province)
+    predictions_df = predict(sub_df, 7)
+    predicitons_dfs.append(
+        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
+    print('predicted {}'.format(province))
+county_df = pd.concat(predicitons_dfs)
+county_df.to_csv('Data/CSBS_DF_AGG_COUNTY.csv.gz', compression='gzip')
+
 print('Syncing Data')
 ea = ExtraArgs = {'ACL': 'public-read'}
-gs = glob.glob('Data/*.csv.gz')
+gs = [i for i in glob.glob('Data/*.csv.gz') if 'Archive' not in i]
 for file in gs:
     upload_file(file, 'jordansdatabucket', os.path.join(
         'covid19data', os.path.basename(file)))

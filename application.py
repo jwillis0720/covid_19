@@ -222,13 +222,12 @@ def get_map_dials(params):
     return [
         apply_value_from_querystring(params)(dcc.Checklist)(id='check-locations',
                                                             labelClassName='map-list',
-                                                            options=[
-                                                                {'label': 'Country',
-                                                                 'value': 'country'},
-                                                                {'label': 'Province/State',
-                                                                 'value': 'province'},
-                                                                {'label': 'County',
-                                                                 'value': 'county'}],
+                                                            options=[{'label': 'Country',
+                                                                      'value': 'country'},
+                                                                     {'label': 'Province/State',
+                                                                      'value': 'province'},
+                                                                     {'label': 'County',
+                                                                      'value': 'county'}],
                                                             value=['country', 'province']),
         html.H3(id="map-title"),
         apply_value_from_querystring(params)(dcc.Checklist)(id='check-metrics',
@@ -278,7 +277,7 @@ def layout_app(params):
                            min=callbacks.get_min_date(),
                            max=callbacks.get_max_date(),
                            step=1,
-                           value=callbacks.get_max_date(),
+                           value=callbacks.get_max_date()-7,
                            marks=callbacks.get_date_marks()
                        )]),
 

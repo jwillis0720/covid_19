@@ -2,6 +2,7 @@ from plotly import graph_objs as go
 import math
 import numpy as np
 import plotly.colors
+from datetime import date, timedelta
 
 
 mapbox_style = 'mapbox://styles/jwillis0720/ck89nznm609pg1ipadkyrelvb'
@@ -13,18 +14,26 @@ colors.remove(colors[5])
 colors = colors * 10
 
 
-def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
+def get_rgb_with_opacity(hex_color, opacity=0.5):
+    h = hex_color.lstrip('#')
+    return 'rgba'+'{}'.format(tuple(list(int(h[i:i+2], 16) for i in (0, 2, 4))+[opacity]))
+
+
+def plot_map(dataframe, metrics, zoom, center):
     data_traces = []
 
+    # sizeref_confirmed = 2. * max(max_confirmed) / (120 ** 2)
+    # sizeref_death = 2. * max(dataframe['deaths']) / (120 ** 2)
     if not metrics or dataframe.empty:
         data_traces.append(go.Scattermapbox(
             lon=[],
             lat=[]
         ))
 
+    dataframe = dataframe[dataframe['CSize'] > 0]
     if 'confirmed' in metrics and not dataframe.empty:
         # First Do Confirmed
-        gb_confirmed = dataframe.groupby('confirmed_size')
+        gb_confirmed = dataframe.groupby('CSize')
         gb_groups = sorted(gb_confirmed.groups)
         for indexer in range(len(gb_groups)):
             try:
@@ -32,13 +41,37 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
             except KeyError:
                 print('No group in gb_cases{}'.format(gb_groups[indexer]))
                 continue
-            if indexer+1 == len(cases_bins)-1:
-                max_ = int(
-                    math.ceil(dataframe['confirmed'].max()/10000)) * 10000
-                name = "{0:,}-{1:,}".format(int(cases_bins[indexer]), max_)
-            else:
-                name = "{0:,}-{1:,}".format(
-                    cases_bins[indexer], cases_bins[indexer+1])
+            #  if indexer+1 == len(cases_bins)-1:
+            max_scale = 100000
+            if plotting_df['confirmed'].max() < 100000:
+                max_scale = 10000
+            if plotting_df['confirmed'].max() < 10000:
+                max_scale = 1000
+            if plotting_df['confirmed'].max() < 1000:
+                max_scale = 100
+            if plotting_df['confirmed'].max() < 100:
+                max_scale = 10
+            if plotting_df['confirmed'].max() < 10:
+                max_scale = 1
+
+            min_scale = 10000
+            if plotting_df['confirmed'].min() < 10000:
+                min_scale = 1000
+            if plotting_df['confirmed'].min() < 1000:
+                min_scale = 100
+            if plotting_df['confirmed'].min() < 100:
+                min_scale = 10
+            if plotting_df['confirmed'].min() < 10:
+                min_scale = 1
+            max_ = int(
+                math.ceil(plotting_df['confirmed'].max()/max_scale)) * max_scale
+            if max_ == 1:
+                max_ += 1
+            min_ = int(
+                math.ceil(plotting_df['confirmed'].min()/min_scale)) * min_scale
+            name = "{0:,}-{1:,}".format(min_, max_)
+            sizes = plotting_df['confirmed']
+            sizes[sizes < 1] = 1
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
@@ -49,31 +82,57 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
                 mode='markers',
                 name=name,
                 marker=dict(
-                    opacity=0.75,
-                    size=plotting_df['confirmed_size'],
-                    color=plotting_df['case_colors']
+                    opacity=0.8,
+                    sizemin=3,
+                    size=plotting_df['CSize'],
+                    # colorscale=[[0, 'rgb(0,0,255)'], [1, 'rgb(255,0,0)']],
+                    color=plotting_df['CColor'],
+                    sizemode='area'
                 )
             )
             data_traces.append(data)
 
     if 'deaths' in metrics and not dataframe.empty:
-        # Then Do Deaths
-        gb_deaths = dataframe.groupby('death_size')
+          # First Do Confirmed
+        dataframe = dataframe[dataframe['DSize'] > 0]
+        gb_deaths = dataframe.groupby('DSize')
         gb_groups = sorted(gb_deaths.groups)
         for indexer in range(len(gb_groups)):
             try:
                 plotting_df = gb_deaths.get_group(gb_groups[indexer])
             except KeyError:
-                print('No group in gb_deaths {}'.format(gb_groups[indexer]))
+                print('No group in gb_cases{}'.format(gb_groups[indexer]))
                 continue
+            max_scale = 100000
+            if plotting_df['deaths'].max() < 100000:
+                max_scale = 10000
+            if plotting_df['deaths'].max() < 10000:
+                max_scale = 1000
+            if plotting_df['deaths'].max() < 1000:
+                max_scale = 100
+            if plotting_df['deaths'].max() < 100:
+                max_scale = 10
+            if plotting_df['deaths'].max() < 10:
+                max_scale = 1
 
-            if indexer+1 == len(death_bins)-1:
-                max_ = int(
-                    math.ceil(dataframe['deaths'].max()/10000)) * 10000
-                name = "{0:,}-{1:,}".format(int(death_bins[indexer]), max_)
-            else:
-                name = "{0:,}-{1:,}".format(
-                    death_bins[indexer], death_bins[indexer+1])
+            min_scale = 10000
+            if plotting_df['deaths'].min() < 10000:
+                min_scale = 1000
+            if plotting_df['deaths'].min() < 1000:
+                min_scale = 100
+            if plotting_df['deaths'].min() < 100:
+                min_scale = 10
+            if plotting_df['deaths'].min() < 10:
+                min_scale = 1
+            max_ = int(
+                math.ceil(plotting_df['deaths'].max()/max_scale)) * max_scale
+            if max_ == 1:
+                max_ += 1
+            min_ = int(
+                math.ceil(plotting_df['deaths'].min()/min_scale)) * min_scale
+            name = "{0:,}-{1:,}".format(min_, max_)
+            sizes = plotting_df['deaths']
+            sizes[sizes < 1] = 1
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
@@ -84,15 +143,21 @@ def plot_map(dataframe, metrics, cases_bins, death_bins, zoom, center):
                 mode='markers',
                 name=name,
                 marker=dict(
-                    opacity=0.75,
-                    size=plotting_df['death_size'],
-                    color=plotting_df['death_colors']
+                    opacity=0.8,
+                    sizemin=3,
+                    size=plotting_df['DSize'],
+                    # colorscale=[[0, 'rgb(0,0,255)'], [1, 'rgb(255,0,0)']],
+                    color=plotting_df['DColor'],
+                    sizemode='area'
                 )
             )
             data_traces.append(data)
+
+    annotations = []
     layout = dict(
         autosize=True,
         showlegend=True,
+        annotations=annotations,
         mapbox=dict(
             accesstoken=mapbox_access_token,
             style=mapbox_style,
@@ -126,34 +191,36 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
     data_traces = []
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
+        color_rgba = get_rgb_with_opacity(color_, opacity=0.2)
+
         if item == 'worldwide':
             sub_df = JHU_DF_AGG_COUNTRY.groupby(
-                'Date').sum().reset_index()
+                ['Date', 'forcast']).sum().reset_index()
             name = 'World'
         else:
             if item.split('_')[0] == 'COUNTRY':
                 parent = 'None'
                 name = item.split('_')[1].split(':')[0]
                 sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
-                    'Date').sum().reset_index()
+                    ['Date', 'forcast']).sum().reset_index()
 
             elif item.split('_')[0] == 'PROVINCE':
                 parent = item.split(':')[-1]
                 name = item.split('_')[1].split(':')[0]
                 sub_df = JHU_DF_AGG_PROVINCE[(JHU_DF_AGG_PROVINCE['province'] == name) & (JHU_DF_AGG_PROVINCE['country'] == parent)].groupby(
-                    'Date').sum().reset_index()
+                    ['Date', 'forcast']).sum().reset_index()
 
             elif item.split('_')[0] == 'STATE':
                 parent = item.split(':')[-1]
                 name = item.split('_')[1].split(':')[0]
                 sub_df = CSBS_DF_AGG_STATE[(CSBS_DF_AGG_STATE['state'] == name) & (CSBS_DF_AGG_STATE['country'] == parent)].groupby(
-                    'Date').sum().reset_index()
+                    ['Date', 'forcast']).sum().reset_index()
 
             elif item.split('_')[0] == 'COUNTY':
                 parent = item.split(':')[-1]
                 name = item.split('_')[1].split(':')[0]
                 sub_df = CSBS_DF_AGG_COUNTY[(CSBS_DF_AGG_COUNTY['county'] == name) & (CSBS_DF_AGG_COUNTY['province'] == parent)].groupby(
-                    'Date').sum().reset_index()
+                    ['Date', 'forcast']).sum().reset_index()
             else:
                 raise Exception('You have messed up {}'.format(item))
 
@@ -164,23 +231,88 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
             hovert = '%{x}<br>Confirmed Deaths - %{y:,f}'
             y_axis_title = 'Total Deaths'
 
+        # First add the confidence interval
+        forcast = sub_df[sub_df['forcast'] == True]
+        dates = list(forcast['Date'])
+        xs = dates + dates[::-1]
+        uppers = list(forcast['{}_upper'.format(metric)])
+        lowers = list(forcast['{}_lower'.format(metric)])
+        ys = uppers + lowers[::-1]
+        data_traces.append(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                fill='toself',
+                hoverinfo='none',
+                showlegend=False,
+                line_color='rgba(255,255,255,0)'
+            ))
+
+        # Then add the full lineA
+        forcast = sub_df[sub_df['forcast'] == True]
+        dates = [forcast['Date'].iloc[0] - timedelta(days=1)] + list(forcast['Date'])
+        ys = sub_df[sub_df['Date'].isin(dates)][metric]
+        # print(ys)
+        data_traces.append(
+            go.Scatter(
+                x=dates,
+                y=ys,
+                showlegend=False,
+                mode='lines+markers',
+                hovertemplate=hovert.replace('Confirmed', 'Predicted'),
+                name=name,
+                marker=dict(
+                    size=9,
+                    symbol='circle-open',
+                ),
+                line=dict(
+                    color=color_,
+                    width=2,
+                    dash='dashdot'
+                )
+            ))
+
+        sub_df = sub_df[sub_df['forcast'] == False]
+        # Add full line without prediction:
         data_traces.append(
             go.Scatter(
                 x=sub_df['Date'],
                 y=sub_df[metric],
-                name=name,
                 showlegend=True,
                 mode='lines+markers',
+                name=name,
                 hovertemplate=hovert,
                 marker=dict(
                     color=color_,
-                    size=2,
-                    line=dict(
-                        width=5,
-                        color=color_),
+                    size=9,
+                ),
+                line=dict(
+                    color=color_,
+                    width=2,
+                    dash='solid'
                 )))
+    shapes = []
+    forcast_date = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['forcast'] == True]['Date'].iloc[0]
+    start_date = JHU_DF_AGG_COUNTRY['Date'].iloc[0]
+    end_date_range = JHU_DF_AGG_COUNTRY['Date'].iloc[-1]
+    end_date = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['forcast'] == True]['Date'].iloc[-1]
+    shapes.append(
+        dict(
+            type='rect',
+            xref="x",
+            yref='paper',
+            x0=forcast_date-timedelta(days=1),
+            y0=0,
+            x1=end_date+timedelta(days=1),
+            y1=1,
+            line=dict(
+                color='white', width=0),
+            fillcolor='rgba(255,255,255,0.05)'
+        ))
+
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
+        shapes=shapes,
         yaxis=dict(
             title=dict(text=y_axis_title, standoff=2),
             titlefont_size=12,
@@ -191,6 +323,7 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
         ),
         xaxis=dict(
             color='white',
+            range=[start_date-timedelta(days=1), end_date_range+timedelta(days=1)]
         ),
         autosize=True,
         showlegend=True,
@@ -208,14 +341,14 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         if item == 'worldwide':
-            sub_df = JHU_DF_AGG_COUNTRY.groupby('Date').sum().reset_index()
+            sub_df = JHU_DF_AGG_COUNTRY.groupby(['Date', 'forcast']).sum().reset_index()
             name = 'World'
         else:
             if item.split('_')[0] == 'COUNTRY':
                 parent = 'None'
                 name = item.split('_')[1].split(':')[0]
                 sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
-                    'Date').sum().reset_index()
+                    ['Date', 'forcast']).sum().reset_index()
 
             elif item.split('_')[0] == 'PROVINCE':
                 parent = item.split(':')[-1]
@@ -237,33 +370,69 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
             else:
                 raise Exception('You have messed up {}'.format(item))
 
-        xs = sub_df['Date']
         if metric == 'confirmed':
-            ys = sub_df['confirmed'].diff().fillna(0)
             hovert = '%{x}<br>New Cases - %{y:,f}'
             y_axis_title = 'Confirmed Cases Per Day'
         else:
-            ys = sub_df[metric].diff().fillna(0)
             hovert = '%{x}<br>New Deaths - %{y:,f}'
             y_axis_title = 'Deaths Per Day'
 
+        forcast = sub_df[sub_df['forcast'] == True]
+        dates = list(forcast['Date'])
+        ys = sub_df[metric].diff().fillna(0)[-len(dates):]
         data_traces.append(
             go.Bar(
-                x=xs,
+                x=dates,
                 y=ys,
+                showlegend=False,
+                hovertemplate=hovert.replace('New', 'Predicted'),
                 name=name,
-                showlegend=True,
-                hovertemplate=hovert,
-                textfont=dict(size=14, color='white'),
                 marker=dict(
                     color=color_,
                     line=dict(
-                        color='white', width=0.5)
-                )))
+                        color='white', width=0.5
+                    )
+                ),
+            ))
 
+        forcast = sub_df[sub_df['forcast'] == False]
+        dates = list(forcast['Date'])
+        ys = forcast[metric].diff().fillna(0)
+        data_traces.append(
+            go.Bar(
+                x=dates,
+                y=ys,
+                showlegend=True,
+                hovertemplate=hovert,
+                name=name,
+                marker=dict(
+                    color=color_,
+                    line=dict(
+                        color='white', width=0.5
+                    )
+                ),
+            ))
+    shapes = []
+    forcast_date = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['forcast'] == True]['Date'].iloc[0]
+    start_date = JHU_DF_AGG_COUNTRY['Date'].iloc[0]
+    end_date_range = JHU_DF_AGG_COUNTRY['Date'].iloc[-1]
+    end_date = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['forcast'] == True]['Date'].iloc[-1]
+    shapes.append(
+        dict(
+            type='rect',
+            xref="x",
+            yref='paper',
+            x0=forcast_date-timedelta(hours=12),
+            y0=0,
+            x1=end_date+timedelta(hours=12),
+            y1=1,
+            line=dict(
+                color='white', width=0),
+            fillcolor='rgba(255,255,255,0.2)'
+        ))
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
-
+        shapes=shapes,
         yaxis=dict(
             title=dict(text=y_axis_title, standoff=2),
             titlefont_size=12,
@@ -273,7 +442,8 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
             side='left',
         ),
         xaxis=dict(
-            color='white'
+            color='white',
+            range=[start_date+timedelta(days=1), end_date_range+timedelta(hours=12)]
         ),
         showlegend=True,
         legend=dict(x=0, y=1, font=dict(color='white')),
@@ -329,8 +499,7 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
-                y = plottable.loc[indexes[indexer-backtrack]
-                    : indexes[indexer]].sum()['confirmed_diff']
+                y = plottable.loc[indexes[indexer-backtrack]: indexes[indexer]].sum()['confirmed_diff']
             else:
                 y = plottable.loc[: indexes[indexer]].sum()['confirmed_diff']
             # if y < 100 or x < 100:
@@ -476,7 +645,7 @@ def per_gr(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, C
                 to_replace=0, method='ffill').pct_change()*100
             ys = s.replace(np.inf, 1)
             ys = ys.fillna(1)
-            #ys = s.diff()
+            # ys = s.diff()
             hovert = '%{x}<br>Growth Factor - %{y:.3f}%'
             y_axis_title = 'Confirmed Cases Growth Factor'
         else:
