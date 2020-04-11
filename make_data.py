@@ -314,27 +314,27 @@ CSBS_DF_AGG_COUNTY = csbs_new[csbs_new['county'] != ''].sort_values('confirmed')
     {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
 
 
-# predicitons_dfs = []
-# gb = JHU_DF_AGG_COUNTRY.groupby('country')
-# for country in gb.groups.keys():
-#     sub_df = gb.get_group(country)
-#     predictions_df = predict(sub_df, 7)
-#     predicitons_dfs.append(
-#         pd.concat([sub_df, predictions_df]).ffill().fillna(0))
-#     print('predicted {}'.format(country))
-# JHU_DF_AGG_COUNTRY = pd.concat(predicitons_dfs)
-# JHU_DF_AGG_COUNTRY.to_csv('Data/JHU_DF_AGG_COUNTRY.csv.gz', compression='gzip')
+predicitons_dfs = []
+gb = JHU_DF_AGG_COUNTRY.groupby('country')
+for country in gb.groups.keys():
+    sub_df = gb.get_group(country)
+    predictions_df = predict(sub_df, 7)
+    predicitons_dfs.append(
+        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
+    print('predicted {}'.format(country))
+JHU_DF_AGG_COUNTRY = pd.concat(predicitons_dfs)
+JHU_DF_AGG_COUNTRY.to_csv('Data/JHU_DF_AGG_COUNTRY.csv.gz', compression='gzip')
 
-# predicitons_dfs = []
-# gb = JHU_DF_AGG_PROVINCE.groupby(['country', 'province'])
-# for province in gb.groups.keys():
-#     sub_df = gb.get_group(province)
-#     predictions_df = predict(sub_df, 7)
-#     predicitons_dfs.append(
-#         pd.concat([sub_df, predictions_df]).ffill().fillna(0))
-#     print('predicted {}'.format(province))
-# province_df = pd.concat(predicitons_dfs)
-# province_df.to_csv('Data/JHU_DF_AGG_PROVINCE.csv.gz', compression='gzip')
+predicitons_dfs = []
+gb = JHU_DF_AGG_PROVINCE.groupby(['country', 'province'])
+for province in gb.groups.keys():
+    sub_df = gb.get_group(province)
+    predictions_df = predict(sub_df, 7)
+    predicitons_dfs.append(
+        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
+    print('predicted {}'.format(province))
+province_df = pd.concat(predicitons_dfs)
+province_df.to_csv('Data/JHU_DF_AGG_PROVINCE.csv.gz', compression='gzip')
 
 
 predicitons_dfs = []
