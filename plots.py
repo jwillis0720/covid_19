@@ -338,11 +338,13 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
 def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=True, metric='confirmed'):
 
     data_traces = []
+    offset_group = 0
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         if item == 'worldwide':
             sub_df = JHU_DF_AGG_COUNTRY.groupby(['Date', 'forcast']).sum().reset_index()
             name = 'World'
+            offset_group = 1
         else:
             if item.split('_')[0] == 'COUNTRY':
                 parent = 'None'
@@ -377,6 +379,7 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
             hovert = '%{x}<br>New Deaths - %{y:,f}'
             y_axis_title = 'Deaths Per Day'
 
+        # Add the forcast values
         forcast = sub_df[sub_df['forcast'] == True]
         dates = list(forcast['Date'])
         ys = sub_df[metric].diff().fillna(0)[-len(dates):]
@@ -385,12 +388,15 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
                 x=dates,
                 y=ys,
                 showlegend=False,
+                offsetgroup=offset_group,
                 hovertemplate=hovert.replace('New', 'Predicted'),
                 name=name,
+                # text='Prediction',
+                # textposition='auto',
                 marker=dict(
                     color=color_,
                     line=dict(
-                        color='white', width=0.5
+                        color='white', width=0.5,
                     )
                 ),
             ))
@@ -403,6 +409,7 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
                 x=dates,
                 y=ys,
                 showlegend=True,
+                offsetgroup=offset_group,
                 hovertemplate=hovert,
                 name=name,
                 marker=dict(
@@ -435,8 +442,8 @@ def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_A
         shapes=shapes,
         yaxis=dict(
             title=dict(text=y_axis_title, standoff=2),
-            titlefont_size=12,
-            tickfont_size=12,
+            titlefont_size=14,
+            tickfont_size=14,
             showgrid=True,
             color='white',
             side='left',
