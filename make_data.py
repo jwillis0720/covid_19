@@ -12,6 +12,7 @@ import sys
 import numpy as np
 from sklearn import preprocessing
 from pmdarima.arima import auto_arima
+import multiprocessing
 
 warnings.simplefilter(
     "ignore", UserWarning)
@@ -314,50 +315,34 @@ CSBS_DF_AGG_COUNTY = csbs_new[csbs_new['county'] != ''].sort_values('confirmed')
     {'lat': 'first', 'lon': 'first', 'confirmed': 'sum', 'deaths': 'sum'}).reset_index()
 
 
-predicitons_dfs = []
+def run_prediction(sub_df):
+    print('Running', sub_df['country'].iloc[0])
+    prediction_df = predict(sub_df, 7)
+    return pd.concat([sub_df, prediction_df]).ffill().fillna(0)
+
+
+pool = multiprocessing.Pool()
+
+
 gb = JHU_DF_AGG_COUNTRY.groupby('country')
-for country in gb.groups.keys():
-    sub_df = gb.get_group(country)
-    predictions_df = predict(sub_df, 7)
-    predicitons_dfs.append(
-        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
-    print('predicted {}'.format(country))
-JHU_DF_AGG_COUNTRY = pd.concat(predicitons_dfs)
+print("Running MP on countries")
+JHU_DF_AGG_COUNTRY = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 JHU_DF_AGG_COUNTRY.to_csv('Data/JHU_DF_AGG_COUNTRY.csv.gz', compression='gzip')
 
-predicitons_dfs = []
+
+print("Running MP on Provinces")
 gb = JHU_DF_AGG_PROVINCE.groupby(['country', 'province'])
-for province in gb.groups.keys():
-    sub_df = gb.get_group(province)
-    predictions_df = predict(sub_df, 7)
-    predicitons_dfs.append(
-        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
-    print('predicted {}'.format(province))
-province_df = pd.concat(predicitons_dfs)
+province_df = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 province_df.to_csv('Data/JHU_DF_AGG_PROVINCE.csv.gz', compression='gzip')
 
-
-predicitons_dfs = []
+print("Running MP on States")
 gb = CSBS_DF_AGG_STATE.groupby(['country', 'state'])
-for province in gb.groups.keys():
-    sub_df = gb.get_group(province)
-    predictions_df = predict(sub_df, 7)
-    predicitons_dfs.append(
-        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
-    print('predicted {}'.format(province))
-state_df = pd.concat(predicitons_dfs)
+state_df = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 state_df.to_csv('Data/CSBS_DF_AGG_STATE.csv.gz', compression='gzip')
 
 
-predicitons_dfs = []
 gb = CSBS_DF_AGG_COUNTY.groupby(['country', 'province', 'county'])
-for province in gb.groups.keys():
-    sub_df = gb.get_group(province)
-    predictions_df = predict(sub_df, 7)
-    predicitons_dfs.append(
-        pd.concat([sub_df, predictions_df]).ffill().fillna(0))
-    print('predicted {}'.format(province))
-county_df = pd.concat(predicitons_dfs)
+county_df = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 county_df.to_csv('Data/CSBS_DF_AGG_COUNTY.csv.gz', compression='gzip')
 
 print('Syncing Data')
