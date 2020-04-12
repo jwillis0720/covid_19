@@ -72,9 +72,9 @@ def encode_state(component_ids_zipped, values):
                  for i in range(len(values))
                  if values[i] is not None]
 
-    print(statelist)
+    # print(statelist)
     params = urlencode(statelist,  doseq=True)
-    print(params)
+    # print(params)
     return f'?{params}'
 
 
@@ -297,24 +297,23 @@ def layout_app(params):
                                     'zIndex': '3', 'font-size': '75%'}
                          )
                      ]),
-        ]),
-        #     html.Div(id='tabs-container',
-        #              children=[
-        #                  get_tabs_container(params)
-        #              ]),
-        #     html.Div(id='sub-options', children=[
-        #         apply_value_from_querystring(params)(dcc.RadioItems)(
-        #             id='log-check',
-        #             options=[{'label': 'Log', 'value': 'log'}, {
-        #                 'label': 'Linear', 'value': 'linear'}],
-        #             value='log'),
-        #         apply_value_from_querystring(params)(dcc.RadioItems)(
-        #             id='deaths-confirmed',
-        #             options=[{'label': 'Confirmed', 'value': 'confirmed'},
-        #                      {'label': 'Deaths', 'value': 'deaths'}],
-        #             value='confirmed')]),
-        #     dcc.Graph(id='content-readout')]),
-        # html.Div(id='table-container', className='container')
+            html.Div(id='tabs-container',
+                     children=[
+                         get_tabs_container(params)
+                     ]),
+            html.Div(id='sub-options', children=[
+                apply_value_from_querystring(params)(dcc.RadioItems)(
+                    id='log-check',
+                    options=[{'label': 'Log', 'value': 'log'}, {
+                        'label': 'Linear', 'value': 'linear'}],
+                    value='log'),
+                apply_value_from_querystring(params)(dcc.RadioItems)(
+                    id='deaths-confirmed',
+                    options=[{'label': 'Confirmed', 'value': 'confirmed'},
+                             {'label': 'Deaths', 'value': 'deaths'}],
+                    value='confirmed')]),
+            dcc.Graph(id='content-readout')]),
+        html.Div(id='table-container', className='container')
     ])
 
 
@@ -338,7 +337,7 @@ component_ids = [
     ('check-locations', 'value'),
     ('check-metrics', 'value'),
     ('dropdown_container', 'value'),
-    # ('tabs-values', 'value')
+    ('tabs-values', 'value')
 ]
 
 # Turn the list of 4 (id, param) tuples into a list of
@@ -377,12 +376,12 @@ def return_short(n_clicks, state):
     """
     Return a tinyurl whenever the `tinyurl-button` is clicked:
     """
-    print(state)
+    # print(state)
     if not state or not n_clicks:
         return ""
     elif n_clicks > 0 and state:
         shortener = Shortener()
-        print(state)
+        # print(state)
         # return "Get Link"
         return shortener.tinyurl.short(state)
 

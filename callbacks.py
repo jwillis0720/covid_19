@@ -140,6 +140,9 @@ def serve_data(ret=False, serve_local=False):
         MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
     KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
 
+    MASTER_ALL.to_pickle('Data/MASTER_ALL.pkl',compression='gzip')
+    MASTER_PID.to_pickle('Data/MASTER_PID.pkl',compression='gzip')
+
     if ret:
         return MASTER_ALL, MASTER_PID, DATE_MAPPER
 
@@ -167,30 +170,35 @@ def get_date_marks():
 
 
 def get_total_cases():
-    return ""
-    total_cases = "{:,}".format(JHU_RECENT['confirmed'].sum())
+    sub_df = MASTER_ALL.reset_index()
+    sub_df = sub_df[sub_df['country'] == 'worldwide']
+    sub_df = sub_df[sub_df['forcast'] == False]
+    total_cases = "{:,}".format(sub_df['confirmed'].iloc[-1])
     change_in_cases = "{:,}".format(
-        int(JHU_TIME.groupby('Date').sum().diff().iloc[-1]['confirmed']))
+        int(sub_df['confirmed'].diff().iloc[-1]))
     return [html.H3('Total Cases'),
             html.P(id='total-cases', children=total_cases),
             html.Div(className='change-card', children=[html.Span(className='up-triangle=', children=up_triangle), html.Span(change_in_cases)])]
 
 
 def get_total_deaths():
-    return ""
-    total_cases = "{:,}".format(JHU_RECENT['deaths'].sum())
-    change_in_cases = "{:,}".format(
-        int(JHU_TIME.groupby('Date').sum().diff().iloc[-1]['deaths']))
+    sub_df = MASTER_ALL.reset_index()
+    sub_df = sub_df[sub_df['country'] == 'worldwide']
+    sub_df = sub_df[sub_df['forcast'] == False]
+    total_deaths = "{:,}".format(sub_df['deaths'].iloc[-1])
+    change_in_deaths = "{:,}".format(
+        int(sub_df['deaths'].diff().iloc[-1]))
     return [html.H3('Total Deaths'),
-            html.P(id='total-deaths', children=total_cases),
-            html.Div(className='change-card', children=[html.Span(className='up-triangle=', children=up_triangle), html.Span(change_in_cases)])]
+            html.P(id='total-deaths', children=total_deaths),
+            html.Div(className='change-card', children=[html.Span(className='up-triangle=', children=up_triangle), html.Span(change_in_deaths)])]
 
 
 def get_mortality_rate():
-    return ""
-    gb = JHU_TIME.groupby('Date').sum()
-    mortality_rate_today = (gb['deaths']/gb['confirmed']).iloc[-1] * 100
-    mortality_rate_yesterday = (gb['deaths']/gb['confirmed']).iloc[-2] * 100
+    sub_df = MASTER_ALL.reset_index()
+    sub_df = sub_df[sub_df['country'] == 'worldwide']
+    sub_df = sub_df[sub_df['forcast'] == False]
+    mortality_rate_today = (sub_df['deaths']/sub_df['confirmed']).iloc[-1] * 100
+    mortality_rate_yesterday = (sub_df['deaths']/sub_df['confirmed']).iloc[-2] * 100
     change_in_mortality_rate = round(
         mortality_rate_today - mortality_rate_yesterday, 2)
     if change_in_mortality_rate > 0:
@@ -207,13 +215,12 @@ def get_mortality_rate():
                 children=[
                     html.Span(className=c_name, children=symbol),
                     html.Span("{}%".format(abs(change_in_mortality_rate)))])]
-
-
 def get_growth_rate():
-    return ""
-    gb = JHU_TIME.groupby('Date').sum()
-    todays_gf = gb.pct_change()['confirmed'].iloc[-1]*100
-    yesterrday_gf = gb.pct_change()['confirmed'].iloc[-2]*100
+    sub_df = MASTER_ALL.reset_index()
+    sub_df = sub_df[sub_df['country'] == 'worldwide']
+    sub_df = sub_df[sub_df['forcast'] == False]
+    todays_gf = sub_df['confirmed'].pct_change().iloc[-1]*100
+    yesterrday_gf = sub_df['confirmed'].pct_change().iloc[-2]*100
     change_in_gf = todays_gf - yesterrday_gf
     todays_gf = round(todays_gf, 2)
     change_in_gf = round(change_in_gf, 2)
@@ -275,7 +282,7 @@ def register_callbacks(app):
     )
     def update_click_output(button_click, close_click):
         ctx = dash.callback_context
-        print(ctx.triggered)
+        # print(ctx.triggered)
         prop_id = ""
         if ctx.triggered:
             prop_id = ctx.triggered[0]["prop_id"].split(".")[0]
@@ -297,7 +304,7 @@ def register_callbacks(app):
          State("map", "relayoutData")]
     )
     def render_map(date_value, locations_values, metrics_values, figure, relative_layout):
-        return get_dummy_map()
+        # return get_dummy_map()
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
@@ -330,19 +337,18 @@ def register_callbacks(app):
         # return get_dummy_map()
         return plots.plot_map(plotting_df, metrics_values, zoom, center)
 
-    # @app.callback(Output('content-readout', 'figure'),
-    #               [Input('dropdown_container', 'value'),
-    #                Input('tabs-values', 'value'),
-    #                Input('log-check', 'value'),
-    #                Input('deaths-confirmed', 'value')])
+    @app.callback(Output('content-readout', 'figure'),
+                  [Input('dropdown_container', 'value'),
+                   Input('tabs-values', 'value'),
+                   Input('log-check', 'value'),
+                   Input('deaths-confirmed', 'value')])
     def render_tab_content(values, tabs, log, metric):
         if log == 'log':
             log = True
         else:
             log = False
         if tabs == 'total_cases_graph':
-            # print(values, tabs)
-            return plots.total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
+            return plots.total_confirmed_graph(values, MASTER_ALL, KEY_VALUE, log, metric)
         elif tabs == 'per_day_cases':
             return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
         elif tabs == 'exponential':
@@ -350,113 +356,47 @@ def register_callbacks(app):
         elif tabs == 'gr':
             return plots.per_gr(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
 
-    # @app.callback(Output('table-container', 'children'),
-    #               [Input('dropdown_container', 'value')])
+    @app.callback(Output('table-container', 'children'),
+                  [Input('dropdown_container', 'value')])
     def render_table(values):
-        date = JHU_RECENT['Date_text'].iloc[0]
         data_entries = []
+        last_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[0]
+        forcast_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[-1]
         for value in values:
-            if value.split('_')[0] == 'worldwide':
-                # confirmed, deaths = JHU_RECENT.sum()[['confirmed', 'deaths']]
-                gb = JHU_TIME.groupby(['Date_text', 'Date']).sum()
-                # 0 index will be date text
-                date = gb.index[-1][0]
-                confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
-                confirmed_24, deaths_24 = gb.diff(
-                ).iloc[-1][['confirmed', 'deaths']]
-                print(confirmed_24, deaths_24)
-                data_entries.append(
-                    {'Date': date, 'Country': 'Worldwide',
-                     'Province/State': 'N/A',
-                     'County': 'N/A',
-                     'Total Confirmed': "{:,}".format(int(confirmed)),
-                     'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                     'Total Deaths': "{:,}".format(int(deaths)),
-                     'Deaths 24h': "+{:,}".format(int(deaths_24))})
-                continue
-            else:
-                sub_category = value.split('_')[0]
-                location = value.split('_')[1].split(':')[0]
-                parent = value.split('_')[1].split(':')[-1]
-                if sub_category == 'COUNTRY':
-                    sub_df = JHU_TIME[JHU_TIME['country'] == location]
-                    gb = sub_df.groupby(['Date_text', 'Date']).sum()
-                    date = gb.index[-1][0]
-                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
-                    confirmed_24, deaths_24 = gb.diff(
-                    ).iloc[-1][['confirmed', 'deaths']]
-                    print(confirmed_24, deaths_24)
-                    data_entries.append({
-                        'Date': date,
-                        'Country': location,
-                        'Province/State': 'N/A',
-                        'County': 'N/A',
-                        'Total Confirmed': "{:,}".format(int(confirmed)),
-                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                        'Total Deaths': "{:,}".format(int(deaths)),
-                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
-                    continue
-                elif sub_category == 'PROVINCE':
-                    gb = JHU_TIME[(JHU_TIME['province'] == location) & (JHU_TIME['country'] == parent)].groupby(
-                        ['Date_text', 'Date', 'country', 'province']).sum()
-                    date = gb.index[-1][0]
-                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
-                    confirmed_24, deaths_24 = gb.diff(
-                    ).iloc[-1][['confirmed', 'deaths']]
-                    # print(confirmed_24, deaths_24)
-                    data_entries.append({
-                        'Date': date,
-                        'Country': parent,
-                        'Province/State': location,
-                        'County': 'N/A',
-                        'Total Confirmed': "{:,}".format(int(confirmed)),
-                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                        'Total Deaths': "{:,}".format(int(deaths)),
-                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
-
-                    continue
-                elif sub_category == 'STATE':
-                    gb = CSBS[(CSBS['province'] == location) & (CSBS['country'] == parent)].groupby(
-                        ['Date_text', 'Date']).sum()
-                    date = gb.index[-1][0]
-                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
-                    confirmed_24, deaths_24 = gb.diff(
-                    ).iloc[-1][['confirmed', 'deaths']]
-                    # print(confirmed_24, deaths_24)
-                    data_entries.append({
-                        'Date': date,
-                        'Country': parent,
-                        'Province/State': location,
-                        'County': 'N/A',
-                        'Total Confirmed': "{:,}".format(int(confirmed)),
-                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                        'Total Deaths': "{:,}".format(int(deaths)),
-                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
-                elif sub_category == 'COUNTY':
-                    gb = CSBS[(CSBS['county'] == location) & (CSBS['province'] == parent)].groupby(
-                        ['Date_text', 'Date', 'country', 'province', 'county']).sum()
-                    date = gb.index[-1][0]
-                    country = gb.index[-1][2]
-                    province = gb.index[-1][3]
-                    confirmed, deaths = gb.iloc[-1][['confirmed', 'deaths']]
-                    confirmed_24, deaths_24 = gb.diff(
-                    ).iloc[-1][['confirmed', 'deaths']]
-                    # print(confirmed_24, deaths_24)
-                    data_entries.append({
-                        'Date': date,
-                        'Country': country,
-                        'Province/State': province,
-                        'County': location,
-                        'Total Confirmed': "{:,}".format(int(confirmed)),
-                        'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                        'Total Deaths': "{:,}".format(int(deaths)),
-                        'Deaths 24h': "+{:,}".format(int(deaths_24))})
-                else:
-                    raise Exception("YOu done fucked up")
+            # print(value)
+            sort_me = ['Date','Country']
+            sub_df = MASTER_ALL.reset_index()
+            sub_df = sub_df[sub_df['pid'] == value]
+            sub_df = sub_df.set_index('Date')
+            confirmed = sub_df.loc[last_date,'confirmed']
+            deaths = sub_df.loc[last_date,'deaths']
+            confirmed_24 =  sub_df['confirmed'].diff().loc[last_date]
+            deaths_24 =  sub_df['deaths'].diff().loc[last_date]
+            entry = {'Date': last_date.strftime('%D'), 
+                    'Country': sub_df['country'].iloc[0],
+                    'Total Confirmed': "{:,}".format(int(confirmed)),
+                    'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                    'Total Deaths': "{:,}".format(int(deaths)),
+                    'Deaths 24h': "+{:,}".format(int(deaths_24))}
+            if sub_df['granularity'].iloc[0] == 'province':
+                entry['province'] = sub_df['province'].iloc[0]
+                sort_me.append('Province')
+            if sub_df['granularity'].iloc[0] == 'state':
+                entry['State'] = sub_df['state'].iloc[0]
+                sort_me.append('State')
+            if sub_df['granularity'].iloc[0] == 'county':
+                entry['State'] = sub_df['province'].iloc[0]
+                entry['County'] = sub_df['county'].iloc[0]
+                sort_me.append('State')
+                sort_me.append('County')
+            # if s_.strip() != 'N/A'provincprovincee or s_ != np.nan:
+            #     entry['State'] = s_
+            # if p_.strip() != 'N/A' or p_ != np.nan:
+            #     entry['Province'] = p_
+            data_entries.append(entry)
         df = pd.DataFrame(data_entries)
-
-        # df = df[['Date', 'Country', 'Province/State',
-        #          'County', 'Confirmed', 'Confirmed 24h', 'Deaths']]
+        df = df[sort_me + [i for i in df.columns if i not in sort_me]]
+        df = df.fillna('-')
         return dash_table.DataTable(id='table',
                                     columns=[{'name': i, 'id': i}
                                              for i in df.columns],

@@ -59,7 +59,7 @@
 }
 
 .hovertext text {
-  font-size: 150% !important;
+  font-size: 75% !important;
 }
 
 /* The snackbar - position it at the bottom and in the middle of the screen */
@@ -499,9 +499,6 @@ body {
   #header #counters-container .card {
     font-size: 120%;
   }
-  #app-container #slider-container {
-    padding-bottom: 25px;
-  }
   #app-container #slider-container h4 {
     margin-bottom: 10px;
   }
@@ -601,9 +598,6 @@ body {
   }
   #header #counters-container .card .change-card {
     font-size: 75%;
-  }
-  #app-container #slider-container {
-    padding-bottom: 25px;
   }
   #app-container #slider-container h4 {
     font-size: 75%;

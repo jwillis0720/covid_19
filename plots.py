@@ -122,43 +122,17 @@ def plot_map(dataframe, metrics, zoom, center):
     return {'data': data_traces, 'layout': layout}
 
 
-def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=False, metric='confirmed'):
+def total_confirmed_graph(values, MASTER_DF, KEY_VALUE,log=False, metric='confirmed'):
     data_traces = []
+    MASTER_DF = MASTER_DF.reset_index()
+    forcast_date = MASTER_DF.reset_index().groupby('forcast').tail(1)['Date'].iloc[0]
+    start_date = MASTER_DF.reset_index()['Date'].iloc[0]
+    end_date = MASTER_DF.reset_index()['Date'].iloc[-1] 
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         color_rgba = get_rgb_with_opacity(color_, opacity=0.2)
-
-        if item == 'worldwide':
-            sub_df = JHU_DF_AGG_COUNTRY.groupby(
-                ['Date', 'forcast']).sum().reset_index()
-            name = 'World'
-        else:
-            if item.split('_')[0] == 'COUNTRY':
-                parent = 'None'
-                name = item.split('_')[1].split(':')[0]
-                sub_df = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['country'] == name].groupby(
-                    ['Date', 'forcast']).sum().reset_index()
-
-            elif item.split('_')[0] == 'PROVINCE':
-                parent = item.split(':')[-1]
-                name = item.split('_')[1].split(':')[0]
-                sub_df = JHU_DF_AGG_PROVINCE[(JHU_DF_AGG_PROVINCE['province'] == name) & (JHU_DF_AGG_PROVINCE['country'] == parent)].groupby(
-                    ['Date', 'forcast']).sum().reset_index()
-
-            elif item.split('_')[0] == 'STATE':
-                parent = item.split(':')[-1]
-                name = item.split('_')[1].split(':')[0]
-                sub_df = CSBS_DF_AGG_STATE[(CSBS_DF_AGG_STATE['state'] == name) & (CSBS_DF_AGG_STATE['country'] == parent)].groupby(
-                    ['Date', 'forcast']).sum().reset_index()
-
-            elif item.split('_')[0] == 'COUNTY':
-                parent = item.split(':')[-1]
-                name = item.split('_')[1].split(':')[0]
-                sub_df = CSBS_DF_AGG_COUNTY[(CSBS_DF_AGG_COUNTY['county'] == name) & (CSBS_DF_AGG_COUNTY['province'] == parent)].groupby(
-                    ['Date', 'forcast']).sum().reset_index()
-            else:
-                raise Exception('You have messed up {}'.format(item))
-
+        sub_df = MASTER_DF[MASTER_DF['pid'] == item].reset_index()
+        name = KEY_VALUE.loc[item,'name']
         if metric == 'confirmed':
             hovert = '%{x}<br>Confirmed Cases - %{y:,f}'
             y_axis_title = 'Total Cases'
@@ -214,7 +188,7 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
                 x=sub_df['Date'],
                 y=sub_df[metric],
                 showlegend=True,
-                mode='lines+markers',
+                mode='lines',
                 name=name,
                 hovertemplate=hovert,
                 marker=dict(
@@ -223,22 +197,18 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
                 ),
                 line=dict(
                     color=color_,
-                    width=2,
+                    width=5,
                     dash='solid'
                 )))
     shapes = []
-    forcast_date = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['forcast'] == True]['Date'].iloc[0]
-    start_date = JHU_DF_AGG_COUNTRY['Date'].iloc[0]
-    end_date_range = JHU_DF_AGG_COUNTRY['Date'].iloc[-1]
-    end_date = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['forcast'] == True]['Date'].iloc[-1]
     shapes.append(
         dict(
             type='rect',
             xref="x",
             yref='paper',
-            x0=forcast_date-timedelta(days=1),
+            x0=forcast_date,
             y0=0,
-            x1=end_date+timedelta(days=1),
+            x1=end_date+timedelta(days=400),
             y1=1,
             line=dict(
                 color='white', width=0),
@@ -250,15 +220,15 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
         shapes=shapes,
         yaxis=dict(
             title=dict(text=y_axis_title, standoff=2),
-            titlefont_size=12,
-            tickfont_size=12,
+            titlefont_size=14,
+            tickfont_size=14,
             showgrid=True,
             color='white',
             side='left',
         ),
         xaxis=dict(
             color='white',
-            range=[start_date-timedelta(days=1), end_date_range+timedelta(days=1)]
+            range=[start_date-timedelta(days=1), end_date+timedelta(days=1)]
         ),
         autosize=True,
         showlegend=True,
@@ -436,7 +406,7 @@ def plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AG
         ys = []
         dates = []
         indexes = plottable.index
-        print(plottable)
+        # print(plottable)
         for indexer in range(1, len(indexes)):
             x = plottable.loc[indexes[indexer]]['confirmed_cum']
             if indexer > backtrack:
