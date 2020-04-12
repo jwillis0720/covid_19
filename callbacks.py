@@ -27,130 +27,125 @@ down_tirangle = "▼"
 '''All the functions in the callback need access to the GLOBAL DATA served in callbacks.serveData'''
 
 
-def serve_data(ret=False):
-    global JHU_RECENT
+def serve_data(ret=False, serve_local=False):
+    global MASTER_ALL
+    global MASTER_PID
     global DATE_MAPPER
-    global JHU_TIME
-    global CSBS
-    global CENTROID_MAPPER
-    global MERGED_CSBS_JHU
-    global JHU_DF_AGG_COUNTRY
-    global JHU_DF_AGG_PROVINCE
-    global CSBS_DF_AGG_STATE
-    global CSBS_DF_AGG_COUNTY
-    global MAX_CONFIRMED
+    global KEY_VALUE
 
-    jhu_df = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df.csv.gz', index_col=0)
-    jhu_df_time = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/jhu_df_time.csv.gz', index_col=0)
-    csbs_df = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/csbs_df.csv.gz', index_col=0)
+    if serve_local:
+        MASTER_ALL = pd.read_pickle('Data/MASTER_ALL.pkl', compression='gzip')
+        MASTER_PID = pd.read_pickle('Data/MASTER_PID.pkl', compression='gzip')
+        DATE_MAPPER = pd.DataFrame(MASTER_ALL.index.get_level_values('Date').unique())
+        KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
+            MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
+        KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
 
-    jhu_df_time['Date'] = pd.to_datetime(jhu_df_time['Date'])
-    jhu_df['Date'] = pd.to_datetime(jhu_df['Date'])
-    csbs_df['Date'] = pd.to_datetime(csbs_df['Date'])
+        if ret:
+            return MASTER_ALL, MASTER_PID, DATE_MAPPER
+        else:
+            return
 
-    # JHU and CSBS are out of sync, so we should use the latest date from JHU
-    latest_date = jhu_df_time.sort_values('Date')['Date'].iloc[-1]
-    merge = pd.concat([jhu_df, csbs_df[csbs_df['Date'] == latest_date]])
-    merge = merge.fillna('')
-
-    # Countries without a code may be a problem
-    problem_countries = merge[merge['country_code'] == '']['country'].tolist()
-
-    # I know for a fact Namibia has no coud
-    merge.loc[merge['country'] == 'Namibia', 'country_code'] = ''
-
-    # Lets grab the centroids from this great spread sheet
-    centroid_mapper = pd.read_csv('./country_centroids_az8.csv')
-    problem_states = merge[~merge['country_code'].isin(
-        centroid_mapper['iso_a2'])]
-    new_merge = merge.merge(
-        centroid_mapper, left_on='country_code', right_on='iso_a2')
-
-    # If something is has the same name for continent and subregion, lets just add the word _subregion
-    new_merge.loc[new_merge['continent'] == new_merge['subregion'],
-                  'subregion'] = new_merge['subregion'] + ' Subregion'
-
-    # # Lets remove the US Data since we are doubel counting htis by merging CSBSS
-    new_merge_no_us = new_merge[~((new_merge['country'] == 'US') & (
-        new_merge['province'] == ''))]
-    MERGED_CSBS_JHU = new_merge
-    JHU_TIME = jhu_df_time
-    JHU_RECENT = jhu_df
-    CSBS = csbs_df
-    CENTROID_MAPPER = centroid_mapper
-
+    # COUNTRY
     JHU_DF_AGG_COUNTRY = pd.read_csv(
         'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/JHU_DF_AGG_COUNTRY.csv.gz', index_col=0, parse_dates=['Date'])
+    JHU_DF_AGG_COUNTRY['granularity'] = 'country'
+    JHU_DF_AGG_COUNTRY['Text_Confirmed'] = JHU_DF_AGG_COUNTRY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_COUNTRY['country'] + "<br> Total Cases: " + JHU_DF_AGG_COUNTRY['confirmed'].apply(
+        lambda x: "{:,}".format(int(x)))
+    JHU_DF_AGG_COUNTRY['Text_Deaths'] = JHU_DF_AGG_COUNTRY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_COUNTRY['country'] + "<br> Total Deaths: " + JHU_DF_AGG_COUNTRY['deaths'].apply(
+        lambda x: "{:,}".format(int(x)))
 
+    # Province
     JHU_DF_AGG_PROVINCE = pd.read_csv(
         'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/JHU_DF_AGG_PROVINCE.csv.gz', index_col=0, parse_dates=['Date'])
+    JHU_DF_AGG_PROVINCE['granularity'] = 'province'
+    JHU_DF_AGG_PROVINCE['Text_Confirmed'] = JHU_DF_AGG_PROVINCE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_PROVINCE['province'] + ", " + JHU_DF_AGG_PROVINCE['country'] + "<br> Total Cases: " + JHU_DF_AGG_PROVINCE['confirmed'].apply(
+        lambda x: "{:,}".format(int(x)))
+    JHU_DF_AGG_PROVINCE['Text_Deaths'] = JHU_DF_AGG_PROVINCE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_PROVINCE['province'] + ", " + JHU_DF_AGG_PROVINCE['country'] + "<br> Total Deaths: " + JHU_DF_AGG_PROVINCE['deaths'].apply(
+        lambda x: "{:,}".format(int(x)))
 
+    # State
     CSBS_DF_AGG_STATE = pd.read_csv(
         'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/CSBS_DF_AGG_STATE.csv.gz', index_col=0, parse_dates=['Date'])
+    # CSBS_DF_AGG_STATE.rename({'state':'province'},axis=1 ,inplace=True)
+    CSBS_DF_AGG_STATE['granularity'] = 'state'
+    CSBS_DF_AGG_STATE['Text_Confirmed'] = CSBS_DF_AGG_STATE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_STATE['state'] + ", " + CSBS_DF_AGG_STATE['country'] + "<br> Total Cases: " + CSBS_DF_AGG_STATE['confirmed'].apply(
+        lambda x: "{:,}".format(int(x)))
+    CSBS_DF_AGG_STATE['Text_Deaths'] = CSBS_DF_AGG_STATE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_STATE['state'] + ", " + CSBS_DF_AGG_STATE['country'] + "<br> Total Deaths: " + CSBS_DF_AGG_STATE['deaths'].apply(
+        lambda x: "{:,}".format(int(x)))
 
+    # County
     CSBS_DF_AGG_COUNTY = pd.read_csv(
         'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/CSBS_DF_AGG_COUNTY.csv.gz', index_col=0, parse_dates=['Date'])
+    CSBS_DF_AGG_COUNTY['granularity'] = 'county'
+    CSBS_DF_AGG_COUNTY['Text_Confirmed'] = CSBS_DF_AGG_COUNTY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_COUNTY['county'] + ", " + CSBS_DF_AGG_COUNTY['province'] + "<br> Total Cases: " + CSBS_DF_AGG_COUNTY['confirmed'].apply(
+        lambda x: "{:,}".format(int(x)))
+    CSBS_DF_AGG_COUNTY['Text_Deaths'] = CSBS_DF_AGG_COUNTY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_COUNTY['county'] + ", " + CSBS_DF_AGG_COUNTY['province'] + "<br> Total Deaths: " + CSBS_DF_AGG_COUNTY['deaths'].apply(
+        lambda x: "{:,}".format(int(x)))
 
-    # Bin Data right here based on the confirmed cases including predictions
-    bin_me = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['confirmed']
-                                >= 1]['confirmed']
-    bins, ret_bins = pd.qcut(bin_me, q=[
-                             0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
+    # Master df has all our entries with
+    master_df = pd.concat([JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY])
+
+    columns = ['Date', 'country', 'province', 'state', 'county', 'granularity']
+    master_df = master_df[columns+[i for i in master_df.columns if i not in columns]
+                          ].reset_index(drop=True).fillna('N/A')
+
+    worldwide_df = master_df[master_df['granularity'] == 'country'].groupby(['Date', 'forcast']).sum().reset_index()
+    worldwide_df['country'] = 'worldwide'
+    worldwide_df['Text_Confirmed'] = 'Worldwide <br>'
+    master_df = master_df.append(worldwide_df).reset_index(drop=True)
+    # For latest date, the dataframes we merged each have a different last reported date (CSBS is faster than JHU), so we have to groupby and ask the minmal date from each gruop
+    latest_date = master_df[master_df['forcast'] == False].groupby('granularity').tail(1)['Date'].min()
+
+    # Master_latest has all our entries in it and thus should be used by everything.
+    master_latest = master_df[master_df['Date'] == latest_date].reset_index(drop=True)
+
+    pid = ['country', 'province', 'state', 'county', 'granularity']
+    assert(len(master_latest) == len(master_df[master_df['Date'] == latest_date].groupby(pid)))
+
+    # Now join the master df with the pID number from the latest
+    master_pid = master_latest.reset_index().set_index(pid).rename({'index': 'pid'}, axis=1)
+    master_df = master_df.set_index(pid).join(master_pid['pid']).reset_index().set_index(['pid', 'Date']).sort_index()
+
+    # Finally, set the pid back as the index
+    master_latest = master_pid.reset_index().set_index('pid')
+
+    # Master Latest has all the entries at the latest non forcast date. The index is the pID
+    # Master DF has all the entries with all dates. The index is the pID and Date
+    MASTER_PID = master_latest
+    MASTER_ALL = master_df
+
+    # Those predictions which are less than 0
+    MASTER_ALL.loc[MASTER_ALL['confirmed'] < 0, 'confirmed'] = 0.0
+    MASTER_ALL.loc[MASTER_ALL['deaths'] < 0, 'deaths'] = 0.0
+
+    max_size = 1500
+
+    bins, ret_bins = pd.qcut(MASTER_ALL[(MASTER_ALL['confirmed'] >= 1) & (MASTER_ALL['country'] != 'worldwide')]['confirmed'], q=[
+        0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
     yellows = ["#606056", "#6e6e56", "#7b7c55", "#898a54", "#979953",
                "#a5a850", "#b4b74d", "#c3c649", "#d2d643", "#e2e53c"]
     reds = ["#5a4f4f", "#704d4d", "#854b4a", "#994746", "#ac4340",
             "#be3c3a", "#cf3531", "#e02a27", "#f01c19", "#ff0000"]
+    labels = np.geomspace(1, max_size, num=len(ret_bins)-1)
+    MASTER_ALL['CSize'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
+    MASTER_ALL['DSize'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
+    MASTER_ALL['CColor'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins,
+                                  labels=yellows).astype(str).replace({'nan': 'white'})
+    MASTER_ALL['DColor'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins,
+                                  labels=reds).astype(str).replace({'nan': 'white'})
+    DATE_MAPPER = pd.DataFrame(MASTER_ALL.index.get_level_values('Date').unique())
 
-    max_size = 500
-    labels = np.geomspace(1, 5000, num=len(ret_bins)-1)
-    JHU_DF_AGG_COUNTRY['CSize'] = pd.cut(
-        JHU_DF_AGG_COUNTRY['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    JHU_DF_AGG_PROVINCE['CSize'] = pd.cut(
-        JHU_DF_AGG_PROVINCE['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    CSBS_DF_AGG_STATE['CSize'] = pd.cut(
-        CSBS_DF_AGG_STATE['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    CSBS_DF_AGG_COUNTY['CSize'] = pd.cut(
-        CSBS_DF_AGG_COUNTY['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-
-    JHU_DF_AGG_COUNTRY['CColor'] = pd.cut(
-        JHU_DF_AGG_COUNTRY['confirmed'], bins=ret_bins, labels=yellows).astype(str).replace({'nan': 'white'})
-    JHU_DF_AGG_PROVINCE['CColor'] = pd.cut(
-        JHU_DF_AGG_PROVINCE['confirmed'], bins=ret_bins, labels=yellows).astype(str).replace({'nan': 'white'})
-    CSBS_DF_AGG_STATE['CColor'] = pd.cut(
-        CSBS_DF_AGG_STATE['confirmed'], bins=ret_bins, labels=yellows).astype(str).replace({'nan': 'white'})
-    CSBS_DF_AGG_COUNTY['CColor'] = pd.cut(
-        CSBS_DF_AGG_COUNTY['confirmed'], bins=ret_bins, labels=yellows).astype(str).replace({'nan': 'white'})
-
-    JHU_DF_AGG_COUNTRY['DSize'] = pd.cut(
-        JHU_DF_AGG_COUNTRY['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    JHU_DF_AGG_PROVINCE['DSize'] = pd.cut(
-        JHU_DF_AGG_PROVINCE['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    CSBS_DF_AGG_STATE['DSize'] = pd.cut(
-        CSBS_DF_AGG_STATE['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    CSBS_DF_AGG_COUNTY['DSize'] = pd.cut(
-        CSBS_DF_AGG_COUNTY['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-
-    JHU_DF_AGG_COUNTRY['DColor'] = pd.cut(
-        JHU_DF_AGG_COUNTRY['deaths'], bins=ret_bins, labels=reds).astype(str).replace({'nan': 'white'})
-    JHU_DF_AGG_PROVINCE['DColor'] = pd.cut(
-        JHU_DF_AGG_PROVINCE['deaths'], bins=ret_bins, labels=reds).astype(str).replace({'nan': 'white'})
-    CSBS_DF_AGG_STATE['DColor'] = pd.cut(
-        CSBS_DF_AGG_STATE['deaths'], bins=ret_bins, labels=reds).astype(str).replace({'nan': 'white'})
-    CSBS_DF_AGG_COUNTY['DColor'] = pd.cut(
-        CSBS_DF_AGG_COUNTY['deaths'], bins=ret_bins, labels=reds).astype(str).replace({'nan': 'white'})
-
-    date_mapper = pd.DataFrame(
-        JHU_DF_AGG_COUNTRY['Date'].unique(), columns=['Date'])
-    date_mapper['Date_text'] = date_mapper['Date'].dt.strftime('%m/%d/%y')
-
-    DATE_MAPPER = date_mapper
-    MAX_CONFIRMED = max(JHU_DF_AGG_COUNTRY['confirmed'])
+    KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
+        MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
+    KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
 
     if ret:
-        return JHU_RECENT, JHU_TIME, CSBS, DATE_MAPPER
+        return MASTER_ALL, MASTER_PID, DATE_MAPPER
+
+
+def get_default_dropdown():
+    return KEY_VALUE[KEY_VALUE['name'].str.strip().isin(['Worldwide', 'United States'])].index
 
 
 def get_min_date():
@@ -172,6 +167,7 @@ def get_date_marks():
 
 
 def get_total_cases():
+    return ""
     total_cases = "{:,}".format(JHU_RECENT['confirmed'].sum())
     change_in_cases = "{:,}".format(
         int(JHU_TIME.groupby('Date').sum().diff().iloc[-1]['confirmed']))
@@ -181,6 +177,7 @@ def get_total_cases():
 
 
 def get_total_deaths():
+    return ""
     total_cases = "{:,}".format(JHU_RECENT['deaths'].sum())
     change_in_cases = "{:,}".format(
         int(JHU_TIME.groupby('Date').sum().diff().iloc[-1]['deaths']))
@@ -190,6 +187,7 @@ def get_total_deaths():
 
 
 def get_mortality_rate():
+    return ""
     gb = JHU_TIME.groupby('Date').sum()
     mortality_rate_today = (gb['deaths']/gb['confirmed']).iloc[-1] * 100
     mortality_rate_yesterday = (gb['deaths']/gb['confirmed']).iloc[-2] * 100
@@ -212,6 +210,7 @@ def get_mortality_rate():
 
 
 def get_growth_rate():
+    return ""
     gb = JHU_TIME.groupby('Date').sum()
     todays_gf = gb.pct_change()['confirmed'].iloc[-1]*100
     yesterrday_gf = gb.pct_change()['confirmed'].iloc[-2]*100
@@ -235,21 +234,8 @@ def get_growth_rate():
 
 
 def get_dropdown_options():
-    countries = [{'label': x, 'value': "COUNTRY_{0}:NONE".format(
-        x)} for x in JHU_DF_AGG_COUNTRY['country'].unique()]
-    countries.append({'label': 'Worldwide', 'value': 'worldwide'})
-    provinces = [{'label': x, 'value': "PROVINCE_{0}:{1}".format(
-        x, y)} for x, y in JHU_DF_AGG_PROVINCE.groupby(['province', 'country']).groups.keys()]
-    state = [{'label': x, 'value': "STATE_{0}:{1}".format(
-        x, y)} for x, y in CSBS_DF_AGG_STATE.groupby(['state', 'country']).groups.keys()]
-    counties = [{'label': x+" County, "+y, 'value': "COUNTY_{0}:{1}".format(
-        x, y)} for x, y in CSBS_DF_AGG_COUNTY.groupby(['county', 'province']).groups.keys()]
-    # Post HOc Correciton
-    for index in countries:
-        if index['label'] == 'US':
-            index['label'] = 'United States'
-
-    return countries+provinces+state+counties
+    key_values = dict(zip(list(MASTER_PID.index), list(MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0))))
+    return [{'label': key_values[x].replace('US', 'United States'), 'value':x} for x in key_values]
 
 
 def get_dummy_graph(id_):
@@ -268,14 +254,14 @@ def get_dummy_graph(id_):
     )
 
 
-def get_dummy_map(id_):
+def get_dummy_map():
     us_cities = pd.read_csv(
         "https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv")
     fig = px.scatter_mapbox(us_cities, lat="lat", lon="lon", hover_name="City", hover_data=["State", "Population"],
                             color_discrete_sequence=["fuchsia"], zoom=3, height=300)
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    return dcc.Graph(id=id_, figure=fig)
+    return fig
 
 
 '''Now for the magic of the callback functions which we serve app too'''
@@ -311,27 +297,13 @@ def register_callbacks(app):
          State("map", "relayoutData")]
     )
     def render_map(date_value, locations_values, metrics_values, figure, relative_layout):
+        return get_dummy_map()
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
 
-        JHU_COUNTRY = JHU_DF_AGG_COUNTRY[JHU_DF_AGG_COUNTRY['Date']
-                                         == official_date]
-        JHU_PROVINCE = JHU_DF_AGG_PROVINCE[JHU_DF_AGG_PROVINCE['Date']
-                                           == official_date]
-        CSBS_STATE = CSBS_DF_AGG_STATE[CSBS_DF_AGG_STATE['Date']
-                                       == official_date]
-        CSBS_COUNTY = CSBS_DF_AGG_COUNTY[CSBS_DF_AGG_COUNTY['Date']
-                                         == official_date]
-
-        prediction = False
-        if (JHU_COUNTRY['forcast'] == True).all():
-            prediction = True
-        # Initialize empty
-        plot_data_frame = pd.DataFrame()
-        SUB_DF_COUNTRY = pd.DataFrame()
-        SUB_DF_PROVINCE = pd.DataFrame()
-        SUB_DF_COUNTY = pd.DataFrame()
+        plotting_df = MASTER_ALL.reset_index()[MASTER_ALL.reset_index()['Date'] == official_date]
+        plotting_df = plotting_df[plotting_df['country'] != 'worldwide']
 
         if relative_layout:
             if 'mapbox.center' in relative_layout.keys():
@@ -345,82 +317,24 @@ def register_callbacks(app):
             zoom = 0.5,
             center = dict(lat=19.75, lon=-34.2)
 
-        if 'country' in locations_values:
-            SUB_DF_COUNTRY = JHU_COUNTRY.rename(
-                {'country': 'location'}, axis=1)
-            SUB_DF_COUNTRY['Text_Cases'] = 'Country: '+SUB_DF_COUNTRY['location'] + \
-                '<br>Total Cases:' + \
-                SUB_DF_COUNTRY['confirmed'].apply(
-                    lambda x: "{:,}".format(int(x)))
-            SUB_DF_COUNTRY['Text_Deaths'] = 'Country: '+SUB_DF_COUNTRY['location'] + \
-                '<br>Total Deaths:' + \
-                SUB_DF_COUNTRY['deaths'].apply(lambda x: "{:,}".format(int(x)))
-            SUB_DF_COUNTRY['type'] = 'country'
-            SUB_DF_COUNTRY['source'] = 'JHU'
-            SUB_DF_COUNTRY['lookup'] = 'COUNTRY' + \
-                "_"+SUB_DF_COUNTRY['location']+':NONE'
+        if 'country' not in locations_values:
+            plotting_df = plotting_df[~plotting_df['granularity'] == 'country']
 
         if 'province' in locations_values:
-            SUB_DF_PROVINCE = JHU_PROVINCE.rename(
-                {'province': 'location'}, axis=1)
-            SUB_DF_PROVINCE['Text_Cases'] = 'Province: '+SUB_DF_PROVINCE['location'] +\
-                '<br>Total Cases:' +\
-                SUB_DF_PROVINCE['confirmed'].apply(
-                lambda x: "{:,}".format(int(x)))
-            SUB_DF_PROVINCE['Text_Deaths'] = 'Province: '+SUB_DF_PROVINCE['location'] +\
-                '<br>Total Deaths:' +\
-                SUB_DF_PROVINCE['deaths'].apply(
-                lambda x: "{:,}".format(int(x)))
-            SUB_DF_PROVINCE['source'] = 'JHU'
-            SUB_DF_PROVINCE['type'] = 'province'
-            SUB_DF_PROVINCE['lookup'] = "PROVINCE"+"_" +\
-                SUB_DF_PROVINCE['location']+':'+SUB_DF_PROVINCE['country']
-
-            temp_df = CSBS_STATE.rename({'state': 'location'}, axis=1)
-            temp_df['Text_Cases'] = 'State: '+temp_df['location']+'<br>Total Cases:' +\
-                temp_df['confirmed'].apply(lambda x: "{:,}".format(int(x)))
-            temp_df['Text_Deaths'] = 'State: '+temp_df['location'] +\
-                '<br>Total Deaths:' +\
-                temp_df['deaths'].apply(lambda x: "{:,}".format(int(x)))
-            temp_df['source'] = 'CSBS'
-            temp_df['type'] = 'state'
-            temp_df['lookup'] = "STATE"+"_" +\
-                temp_df['location']+':'+temp_df['country']
-            SUB_DF_PROVINCE = SUB_DF_PROVINCE.append(temp_df)
-            print(SUB_DF_PROVINCE.columns)
+            plotting_df = plotting_df[~plotting_df['granularity'].isin(['state', 'province'])]
 
         if 'county' in locations_values:
-            SUB_DF_COUNTY = CSBS_COUNTY.rename({'county': 'location'}, axis=1)
-            SUB_DF_COUNTY['Text_Cases'] = 'County: '+SUB_DF_COUNTY['location'] +\
-                '<br>Total Cases:' +\
-                SUB_DF_COUNTY['confirmed'].apply(
-                lambda x: "{:,}".format(int(x)))
-            SUB_DF_COUNTY['Text_Deaths'] = 'County: '+SUB_DF_COUNTY['location'] +\
-                '<br>Total Deaths:' +\
-                SUB_DF_COUNTY['deaths'].apply(lambda x: "{:,}".format(int(x)))
-            SUB_DF_COUNTY['source'] = 'CSBS'
-            SUB_DF_COUNTY['type'] = 'county'
-            SUB_DF_COUNTY['lookup'] = "COUNTY"+"_" +\
-                SUB_DF_COUNTY['location']+':' + SUB_DF_COUNTY['province']
+            plotting_df = plotting_df[~plotting_df['granularity'] == 'county']
 
-        plot_data_frame = pd.concat(
-            [SUB_DF_COUNTRY, SUB_DF_PROVINCE, SUB_DF_COUNTY])
-        plot_data_frame['Text_Cases'] = "Date - {}<br>".format(
-            official_date.strftime('%B %d, %Y')) + plot_data_frame['Text_Cases']
-        plot_data_frame['Text_Deaths'] = "Date - {}<br>".format(
-            official_date.strftime('%B %d, %Y')) + plot_data_frame['Text_Deaths']
+        # print(plotting_df)
+        # return get_dummy_map()
+        return plots.plot_map(plotting_df, metrics_values, zoom, center)
 
-        if prediction:
-            plot_data_frame['Text_Cases'] = plot_data_frame['Text_Cases'].str.replace(
-                'Total', 'Predicted')
-        # print('plot_dataframe', plot_data_frame)
-        return plots.plot_map(plot_data_frame, metrics_values, zoom, center)
-
-    @app.callback(Output('content-readout', 'figure'),
-                  [Input('dropdown_container', 'value'),
-                   Input('tabs-values', 'value'),
-                   Input('log-check', 'value'),
-                   Input('deaths-confirmed', 'value')])
+    # @app.callback(Output('content-readout', 'figure'),
+    #               [Input('dropdown_container', 'value'),
+    #                Input('tabs-values', 'value'),
+    #                Input('log-check', 'value'),
+    #                Input('deaths-confirmed', 'value')])
     def render_tab_content(values, tabs, log, metric):
         if log == 'log':
             log = True
@@ -436,8 +350,8 @@ def register_callbacks(app):
         elif tabs == 'gr':
             return plots.per_gr(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
 
-    @app.callback(Output('table-container', 'children'),
-                  [Input('dropdown_container', 'value')])
+    # @app.callback(Output('table-container', 'children'),
+    #               [Input('dropdown_container', 'value')])
     def render_table(values):
         date = JHU_RECENT['Date_text'].iloc[0]
         data_entries = []
@@ -561,20 +475,23 @@ def register_callbacks(app):
     def display_click_data(clickData, dropdown_selected, dropdown_options):
         if not clickData:
             return dropdown_selected
-
-        options = pd.DataFrame(dropdown_options)
-
-        # print(options)
-        new_loc = clickData['points'][0]['customdata']
-        if new_loc not in dropdown_selected:
-            if new_loc not in list(options['value']):
-                raise Exception(
-                    'new location {} does not exists in dropdown'.format(new_loc))
-            dropdown_selected.append(new_loc)
-        else:
-            print('already here {}'.format(new_loc))
-
+        pid = clickData['points'][0]['customdata']
+        if int(pid) not in dropdown_selected:
+            dropdown_selected.append(int(pid))
         return dropdown_selected
+        # options = pd.DataFrame(dropdown_options)
+
+        # # print(options)
+        # new_loc = clickData['points'][0]['customdata']
+        # if new_loc not in dropdown_selected:
+        #     if new_loc not in list(options['value']):
+        #         raise Exception(
+        #             'new location {} does not exists in dropdown'.format(new_loc))
+        #     dropdown_selected.append(new_loc)
+        # else:
+        #     print('already here {}'.format(new_loc))
+
+        # return dropdown_selected
 
     @app.callback(Output('map-title', 'children'),
                   [Input('date_slider', 'value')])

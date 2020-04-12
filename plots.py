@@ -14,6 +14,15 @@ colors.remove(colors[5])
 colors = colors * 10
 
 
+def get_closest_inerval(n, s='max'):
+    import math
+    d = math.floor(math.log(abs(n)) / math.log(10))
+    scale = 10**d
+    if s == 'max':
+        return math.ceil(n/scale) * scale
+    return math.floor(n/scale) * scale
+
+
 def get_rgb_with_opacity(hex_color, opacity=0.5):
     h = hex_color.lstrip('#')
     return 'rgba'+'{}'.format(tuple(list(int(h[i:i+2], 16) for i in (0, 2, 4))+[opacity]))
@@ -21,143 +30,71 @@ def get_rgb_with_opacity(hex_color, opacity=0.5):
 
 def plot_map(dataframe, metrics, zoom, center):
     data_traces = []
-
-    # sizeref_confirmed = 2. * max(max_confirmed) / (120 ** 2)
-    # sizeref_death = 2. * max(dataframe['deaths']) / (120 ** 2)
     if not metrics or dataframe.empty:
         data_traces.append(go.Scattermapbox(
             lon=[],
             lat=[]
         ))
-
-    dataframe = dataframe[dataframe['CSize'] > 0]
     if 'confirmed' in metrics and not dataframe.empty:
         # First Do Confirmed
         gb_confirmed = dataframe.groupby('CSize')
-        gb_groups = sorted(gb_confirmed.groups)
-        for indexer in range(len(gb_groups)):
-            try:
-                plotting_df = gb_confirmed.get_group(gb_groups[indexer])
-            except KeyError:
-                print('No group in gb_cases{}'.format(gb_groups[indexer]))
-                continue
-            #  if indexer+1 == len(cases_bins)-1:
-            max_scale = 100000
-            if plotting_df['confirmed'].max() < 100000:
-                max_scale = 10000
-            if plotting_df['confirmed'].max() < 10000:
-                max_scale = 1000
-            if plotting_df['confirmed'].max() < 1000:
-                max_scale = 100
-            if plotting_df['confirmed'].max() < 100:
-                max_scale = 10
-            if plotting_df['confirmed'].max() < 10:
-                max_scale = 1
 
-            min_scale = 10000
-            if plotting_df['confirmed'].min() < 10000:
-                min_scale = 1000
-            if plotting_df['confirmed'].min() < 1000:
-                min_scale = 100
-            if plotting_df['confirmed'].min() < 100:
-                min_scale = 10
-            if plotting_df['confirmed'].min() < 10:
-                min_scale = 1
-            max_ = int(
-                math.ceil(plotting_df['confirmed'].max()/max_scale)) * max_scale
-            if max_ == 1:
-                max_ += 1
-            min_ = int(
-                math.ceil(plotting_df['confirmed'].min()/min_scale)) * min_scale
-            name = "{0:,}-{1:,}".format(min_, max_)
+        # Do this so we can sort them if need be
+        for group in gb_confirmed:
+            plotting_df = group[1]
             sizes = plotting_df['confirmed']
+            # This should be so, but okay
             sizes[sizes < 1] = 1
+            name = "{}-{}".format(get_closest_inerval(int(plotting_df['confirmed'].min()), 'min'),
+                                  get_closest_inerval(int(plotting_df['confirmed'].max()), 'max'))
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
-                customdata=plotting_df['lookup'],
-                textposition='top right',
-                text=plotting_df['Text_Cases'],
+                customdata=plotting_df['pid'],
+                text=plotting_df['Text_Confirmed'],
                 hoverinfo='text',
-                mode='markers',
                 name=name,
+                mode='markers',
                 marker=dict(
-                    opacity=0.8,
+                    opacity=0.85,
                     sizemin=3,
                     size=plotting_df['CSize'],
-                    # colorscale=[[0, 'rgb(0,0,255)'], [1, 'rgb(255,0,0)']],
                     color=plotting_df['CColor'],
                     sizemode='area'
                 )
             )
             data_traces.append(data)
-
     if 'deaths' in metrics and not dataframe.empty:
-          # First Do Confirmed
-        dataframe = dataframe[dataframe['DSize'] > 0]
+        # Second Do Confirmed
+        dataframe = dataframe[dataframe['deaths'] > 1]
         gb_deaths = dataframe.groupby('DSize')
-        gb_groups = sorted(gb_deaths.groups)
-        for indexer in range(len(gb_groups)):
-            try:
-                plotting_df = gb_deaths.get_group(gb_groups[indexer])
-            except KeyError:
-                print('No group in gb_cases{}'.format(gb_groups[indexer]))
-                continue
-            max_scale = 100000
-            if plotting_df['deaths'].max() < 100000:
-                max_scale = 10000
-            if plotting_df['deaths'].max() < 10000:
-                max_scale = 1000
-            if plotting_df['deaths'].max() < 1000:
-                max_scale = 100
-            if plotting_df['deaths'].max() < 100:
-                max_scale = 10
-            if plotting_df['deaths'].max() < 10:
-                max_scale = 1
 
-            min_scale = 10000
-            if plotting_df['deaths'].min() < 10000:
-                min_scale = 1000
-            if plotting_df['deaths'].min() < 1000:
-                min_scale = 100
-            if plotting_df['deaths'].min() < 100:
-                min_scale = 10
-            if plotting_df['deaths'].min() < 10:
-                min_scale = 1
-            max_ = int(
-                math.ceil(plotting_df['deaths'].max()/max_scale)) * max_scale
-            if max_ == 1:
-                max_ += 1
-            min_ = int(
-                math.ceil(plotting_df['deaths'].min()/min_scale)) * min_scale
-            name = "{0:,}-{1:,}".format(min_, max_)
-            sizes = plotting_df['deaths']
-            sizes[sizes < 1] = 1
+        # Do this so we can sort them if need be
+        for group in gb_deaths:
+            plotting_df = group[1]
+            # This should be so, but okay
+            name = "{}-{}".format(get_closest_inerval(int(plotting_df['deaths'].min()), 'min'),
+                                  get_closest_inerval(int(plotting_df['deaths'].max()), 'max'))
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
-                customdata=plotting_df['lookup'],
-                textposition='top right',
+                customdata=plotting_df['pid'],
                 text=plotting_df['Text_Deaths'],
                 hoverinfo='text',
-                mode='markers',
                 name=name,
+                mode='markers',
                 marker=dict(
-                    opacity=0.8,
+                    opacity=0.85,
                     sizemin=3,
                     size=plotting_df['DSize'],
-                    # colorscale=[[0, 'rgb(0,0,255)'], [1, 'rgb(255,0,0)']],
                     color=plotting_df['DColor'],
                     sizemode='area'
                 )
             )
             data_traces.append(data)
-
-    annotations = []
     layout = dict(
         autosize=True,
         showlegend=True,
-        annotations=annotations,
         mapbox=dict(
             accesstoken=mapbox_access_token,
             style=mapbox_style,
@@ -168,18 +105,16 @@ def plot_map(dataframe, metrics, zoom, center):
         margin=dict(r=0, l=0, t=0, b=0),
         dragmode="pan",
         legend=dict(
-            x_anchor='left',
             x=0.00,
             y=0.00,
             orientation='v',
             traceorder="normal",
             font=dict(
-                family="sans-serif",
+                family="Montserrat",
                 color="white",
-                size=12
+                size=14
             ),
-            bgcolor='rgba(0,0,0,0.4)'
-            #
+            bgcolor='rgba(0,0,0,0.6)'
         ),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
@@ -336,7 +271,6 @@ def total_confirmed_graph(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_
 
 
 def per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log=True, metric='confirmed'):
-
     data_traces = []
     offset_group = 0
     for enum_, item in enumerate(values):

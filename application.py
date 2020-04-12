@@ -7,7 +7,6 @@ import dash_core_components as dcc
 import callbacks
 
 # to generate the tinyurl:
-from pyshorteners import Shortener
 
 
 def get_meta():
@@ -46,7 +45,7 @@ app.index_string = open('assets/customIndex.html').read()
 
 
 def serve_layout():
-    callbacks.serve_data()
+    callbacks.serve_data(serve_local=True)
     return html.Div([
         dcc.Location(id='url', refresh=False),
         html.Div(id='page-layout')])
@@ -292,29 +291,30 @@ def layout_app(params):
                          apply_value_from_querystring(params)(dcc.Dropdown)(
                              id='dropdown_container',
                              options=callbacks.get_dropdown_options(),
-                             value=['worldwide'],
+                             value=callbacks.get_default_dropdown(),
                              multi=True,
                              style={'position': 'relative',
                                     'zIndex': '3', 'font-size': '75%'}
                          )
                      ]),
-            html.Div(id='tabs-container',
-                     children=[
-                         get_tabs_container(params)
-                     ]),
-            html.Div(id='sub-options', children=[
-                apply_value_from_querystring(params)(dcc.RadioItems)(
-                    id='log-check',
-                    options=[{'label': 'Log', 'value': 'log'}, {
-                        'label': 'Linear', 'value': 'linear'}],
-                    value='log'),
-                apply_value_from_querystring(params)(dcc.RadioItems)(
-                    id='deaths-confirmed',
-                    options=[{'label': 'Confirmed', 'value': 'confirmed'},
-                             {'label': 'Deaths', 'value': 'deaths'}],
-                    value='confirmed')]),
-            dcc.Graph(id='content-readout')]),
-        html.Div(id='table-container', className='container')
+        ]),
+        #     html.Div(id='tabs-container',
+        #              children=[
+        #                  get_tabs_container(params)
+        #              ]),
+        #     html.Div(id='sub-options', children=[
+        #         apply_value_from_querystring(params)(dcc.RadioItems)(
+        #             id='log-check',
+        #             options=[{'label': 'Log', 'value': 'log'}, {
+        #                 'label': 'Linear', 'value': 'linear'}],
+        #             value='log'),
+        #         apply_value_from_querystring(params)(dcc.RadioItems)(
+        #             id='deaths-confirmed',
+        #             options=[{'label': 'Confirmed', 'value': 'confirmed'},
+        #                      {'label': 'Deaths', 'value': 'deaths'}],
+        #             value='confirmed')]),
+        #     dcc.Graph(id='content-readout')]),
+        # html.Div(id='table-container', className='container')
     ])
 
 
@@ -338,7 +338,7 @@ component_ids = [
     ('check-locations', 'value'),
     ('check-metrics', 'value'),
     ('dropdown_container', 'value'),
-    ('tabs-values', 'value')
+    # ('tabs-values', 'value')
 ]
 
 # Turn the list of 4 (id, param) tuples into a list of
