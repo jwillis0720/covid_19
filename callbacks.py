@@ -350,11 +350,11 @@ def register_callbacks(app):
         if tabs == 'total_cases_graph':
             return plots.total_confirmed_graph(values, MASTER_ALL, KEY_VALUE, log, metric)
         elif tabs == 'per_day_cases':
-            return plots.per_day_confirmed(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
+            return plots.per_day_confirmed(values, MASTER_ALL, KEY_VALUE, log, metric)
         elif tabs == 'exponential':
-            return plots.plot_exponential(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log)
+            return plots.plot_exponential(values, MASTER_ALL, KEY_VALUE, log)
         elif tabs == 'gr':
-            return plots.per_gr(values, JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY, log, metric)
+            return plots.per_gr(values, MASTER_ALL, KEY_VALUE, log, metric)
 
     @app.callback(Output('table-container', 'children'),
                   [Input('dropdown_container', 'value')])
@@ -374,9 +374,9 @@ def register_callbacks(app):
             deaths_24 =  sub_df['deaths'].diff().loc[last_date]
             entry = {'Date': last_date.strftime('%D'), 
                     'Country': sub_df['country'].iloc[0],
-                    'Total Confirmed': "{:,}".format(int(confirmed)),
+                    'Total Confirmed': int(confirmed),
                     'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                    'Total Deaths': "{:,}".format(int(deaths)),
+                    'Total Deaths': "+{:,}".format(int(deaths)),
                     'Deaths 24h': "+{:,}".format(int(deaths_24))}
             if sub_df['granularity'].iloc[0] == 'province':
                 entry['province'] = sub_df['province'].iloc[0]
@@ -389,14 +389,12 @@ def register_callbacks(app):
                 entry['County'] = sub_df['county'].iloc[0]
                 sort_me.append('State')
                 sort_me.append('County')
-            # if s_.strip() != 'N/A'provincprovincee or s_ != np.nan:
-            #     entry['State'] = s_
-            # if p_.strip() != 'N/A' or p_ != np.nan:
-            #     entry['Province'] = p_
             data_entries.append(entry)
         df = pd.DataFrame(data_entries)
         df = df[sort_me + [i for i in df.columns if i not in sort_me]]
         df = df.fillna('-')
+        df = df.sort_values('Total Confirmed')[::-1]
+        df['Total Confirmed'] = df.apply(lambda x: "{:,}".format(x['Total Confirmed']), axis=1)
         return dash_table.DataTable(id='table',
                                     columns=[{'name': i, 'id': i}
                                              for i in df.columns],
@@ -405,6 +403,7 @@ def register_callbacks(app):
                                         'color': 'white'},
                                     style_cell={
                                         'color': 'black'},
+                                    style_as_list_view=True,
                                     data=df.to_dict('records'))
 
     @app.callback(
@@ -419,19 +418,7 @@ def register_callbacks(app):
         if int(pid) not in dropdown_selected:
             dropdown_selected.append(int(pid))
         return dropdown_selected
-        # options = pd.DataFrame(dropdown_options)
 
-        # # print(options)
-        # new_loc = clickData['points'][0]['customdata']
-        # if new_loc not in dropdown_selected:
-        #     if new_loc not in list(options['value']):
-        #         raise Exception(
-        #             'new location {} does not exists in dropdown'.format(new_loc))
-        #     dropdown_selected.append(new_loc)
-        # else:
-        #     print('already here {}'.format(new_loc))
-
-        # return dropdown_selected
 
     @app.callback(Output('map-title', 'children'),
                   [Input('date_slider', 'value')])
