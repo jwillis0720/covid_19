@@ -293,7 +293,7 @@ def per_day_confirmed(values,MASTER_DF, KEY_VALUE, log=True, metric='confirmed')
     end_date = MASTER_DF.reset_index()['Date'].iloc[-1] 
     sorted_values = list(MASTER_DF[(MASTER_DF['pid'].isin(values)) & (MASTER_DF['Date']==end_date)].sort_values('confirmed')[::-1]['pid'])
     
-    print(sorted_values)
+    # t(sorted_values)
     offset_group = 0
 
     for enum_, item in enumerate(sorted_values):
@@ -417,7 +417,7 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
             date = indexes[indexer]
             x = plottable.loc[date]['confirmed_cum']
             forcast_bool = plottable.loc[date]['forcast']
-            print(forcast_bool)
+            # print(forcast_bool)
             if indexer > backtrack:
                 y = plottable.loc[date - timedelta(days=backtrack): date].sum()['confirmed_diff']
             else:
@@ -537,34 +537,14 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
         plot_bgcolor='rgb(52,51,50)',
         legend=dict(x=0.01, y=0.99, font=dict(color='white')))
 
-    if log:
-        x_ref = 5
-        y_ref = 5.4
-    else:
-        x_ref = 8 * 10 ** 5
-        y_ref = 8 * 10 ** 5
-    # annotations.append(dict(xref='x', x=x_ref, yref='y', y=y_ref,
-    #                         text="Exponential Growth",
-    #                         font=dict(family='Montserrat',
-    #                                   color='white',size=12),
-    #                         showarrow=True,
-    #                         startarrowsize=10,
-    #                         arrowwidth=2,
-    #                         arrowcolor='white',
-    #                         arrowhead=2,
-    #                         ))
-
-    # fig.update_layout(legend=dict(title='Click to Toggle'),
-    #                   annotations=[])
 
     fig.update_layout(
         margin=dict(t=50, b=20, r=30, l=20, pad=0))
-    print(fig.layout)
     return fig
 
 
 def per_gr(values, MASTER_DF, KEY_VALUE, log=False, metric='confirmed'):
-
+    shapes = []
     data_traces = []
     MASTER_DF = MASTER_DF.reset_index()
     for enum_, item in enumerate(values):
@@ -609,20 +589,45 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log=False, metric='confirmed'):
                 )))
         data_traces.append(
             go.Scatter(
-                x=xs_predict,
-                y=ys_predict,
+                x=[xs[-1],xs_predict[0]],
+                y=[ys.iloc[-1],ys_predict.iloc[0]],
                 name=name,
                 showlegend=False,
-                hovertemplate=hovert,
+                hoverinfo='skip',
+                hovertemplate="",
                 mode='lines+markers',
                 textfont=dict(size=14, color='white'),
                 marker=dict(color=color_, symbol='circle-open'),
                 line=dict(dash='dashdot')
                 ))
-
+        data_traces.append(
+            go.Scatter(
+                x=xs_predict,
+                y=ys_predict,
+                name=name,
+                showlegend=False,
+                hovertemplate=hovert.replace("<br>","<br> Predicted "),
+                mode='lines+markers',
+                textfont=dict(size=14, color='white'),
+                marker=dict(color=color_, symbol='circle-open'),
+                line=dict(dash='dashdot')
+                ))
+    shapes.append(
+        dict(
+            type='rect',
+            xref="x",
+            yref='paper',
+            x0=xs_predict[0],
+            y0=0,
+            x1=xs_predict[-1],
+            y1=1,
+            line=dict(
+                color='white', width=0),
+            fillcolor='rgba(255,255,255,0.2)'
+        ))
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
-
+        shapes=shapes,
         yaxis=dict(
             title=dict(text=y_axis_title, standoff=2),
             titlefont_size=12,
@@ -632,7 +637,8 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log=False, metric='confirmed'):
             side='left',
         ),
         xaxis=dict(
-            color='white'
+            color='white',
+            range=[xs[0],xs_predict[-1]],
         ),
         showlegend=True,
         legend=dict(x=0, y=1, font=dict(color='white')),

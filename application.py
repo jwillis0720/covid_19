@@ -45,7 +45,7 @@ app.index_string = open('assets/customIndex.html').read()
 
 
 def serve_layout():
-    callbacks.serve_data(serve_local=True)
+    callbacks.serve_data(serve_local=False)
     return html.Div([
         dcc.Location(id='url', refresh=False),
         html.Div(id='page-layout')])
