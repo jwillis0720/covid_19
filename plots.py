@@ -392,6 +392,7 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
     backtrack = 7
     fig = go.Figure()
     max_number = 0
+    annotations = []
     MASTER_DF = MASTER_DF.reset_index()
     for enum_, item in enumerate(values):
         name = KEY_VALUE.loc[item,'name']
@@ -493,16 +494,26 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
                 hovertemplate="On %{text} <br> Predicted Total Cases: %{x}<br> Predicted Cummulative Cases Last Week %{y}"
             )
         )
+        if not log:
+            annotations.append(
+                dict(xref='x',yref='y',x=xs_predict[-1],yanchor='top',yshift=-35, xanchor='left',valign='bottom', y=ys_predict[-1],showarrow=True, align='right',text=name,font=dict(size=12,color='white'))
+            )
+        else:
+             annotations.append(
+                dict(xref='x',yref='y',x=np.log10(xs_predict[-1]),yanchor='top',yshift=-35, xanchor='left',valign='bottom', y=np.log10(ys_predict[-1]),showarrow=True, align='right',text=name,font=dict(size=12,color='white'))
+              )
     fig.add_trace(
         go.Scatter(
             x=[0, max_number],
             y=[0, max_number],
+            hoverinfo='none',
             mode='lines',
             name='Exponential',
             showlegend=True,
             line=dict(color='white', width=3, dash='dash')
         )
     )
+    fig.update_layout(annotations=annotations)
     if log:
         fig.update_xaxes(type="log", dtick=1)
         fig.update_yaxes(type="log", dtick=1)
@@ -526,29 +537,29 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
         plot_bgcolor='rgb(52,51,50)',
         legend=dict(x=0.01, y=0.99, font=dict(color='white')))
 
-    annotations = []
     if log:
         x_ref = 5
         y_ref = 5.4
     else:
         x_ref = 8 * 10 ** 5
         y_ref = 8 * 10 ** 5
-    annotations.append(dict(xref='x', x=x_ref, yref='y', y=y_ref,
-                            text="Exponential Growth",
-                            font=dict(family='Montserrat',
-                                      color='white',size=12),
-                            showarrow=True,
-                            startarrowsize=10,
-                            arrowwidth=2,
-                            arrowcolor='white',
-                            arrowhead=2,
-                            ))
+    # annotations.append(dict(xref='x', x=x_ref, yref='y', y=y_ref,
+    #                         text="Exponential Growth",
+    #                         font=dict(family='Montserrat',
+    #                                   color='white',size=12),
+    #                         showarrow=True,
+    #                         startarrowsize=10,
+    #                         arrowwidth=2,
+    #                         arrowcolor='white',
+    #                         arrowhead=2,
+    #                         ))
 
     # fig.update_layout(legend=dict(title='Click to Toggle'),
     #                   annotations=[])
 
     fig.update_layout(
         margin=dict(t=50, b=20, r=30, l=20, pad=0))
+    print(fig.layout)
     return fig
 
 
