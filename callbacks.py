@@ -140,8 +140,9 @@ def serve_data(ret=False, serve_local=False):
         MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
     KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
 
-    MASTER_ALL.to_pickle('Data/MASTER_ALL.pkl', compression='gzip')
-    MASTER_PID.to_pickle('Data/MASTER_PID.pkl', compression='gzip')
+    if serve_local:
+        MASTER_ALL.to_pickle('Data/MASTER_ALL.pkl', compression='gzip')
+        MASTER_PID.to_pickle('Data/MASTER_PID.pkl', compression='gzip')
 
     if ret:
         return MASTER_ALL, MASTER_PID, DATE_MAPPER
