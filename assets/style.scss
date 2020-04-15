@@ -577,6 +577,16 @@ body {
         justify-content: center;
         overflow: hidden;
       }
+     #app-container{
+         #map-container{
+             #map{
+                .legend {
+                    display: block;
+                }
+             }
+         }
+    
+    }
 
 
     #tiny-url{

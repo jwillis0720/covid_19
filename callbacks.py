@@ -248,7 +248,7 @@ def get_growth_rate():
     todays_gf = sub_df.loc[False].iloc[-1]['confirmed']
     change_in_gf = sub_df_diff.loc[False].iloc[-1]['confirmed']
     change_to_tomorrow = sub_df_diff.loc[True].iloc[0]['confirmed']
-    print(change_to_tomorrow)
+    # print(change_to_tomorrow)
     if change_in_gf > 0:
         symbol = up_triangle
         c_name = 'up-triangle'
