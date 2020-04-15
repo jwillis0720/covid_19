@@ -1,65 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,200;0,300;0,400;1,100;1,300;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,900;1,400;1,500&display=swap");
 ._dash-undo-redo {
   display: none;
-}
-
-.modal {
-  display: block;
-  /*Hidden by default */
-  position: fixed;
-  /* Stay in place */
-  z-index: 1000;
-  /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100vw;
-  /* Full width */
-  height: 100vh;
-  /* Full height */
-  overflow: auto;
-  /* Enable scroll if needed */
-  background-color: black;
-  /* Fallback color */
-  background-color: rgba(0, 0, 0, 0.4);
-  /* Black w/ opacity */
-}
-
-.markdown-container {
-  width: 70vw;
-  margin: 2% auto;
-  padding: 10px 15px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  color: black;
-}
-
-.close-container {
-  display: inline-block;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.markdown-text {
-  padding: 10px 10px;
-  text-align: justify;
-}
-
-.closeButton {
-  padding: 0 15px;
-  font-weight: normal;
-  float: right;
-  font-size: 112%;
-  border: 1px black solid;
-  height: 100%;
-}
-
-.closeButton:hover {
-  background-color: red !important;
-}
-
-.hovertext text {
-  font-size: 75% !important;
 }
 
 /* The snackbar - position it at the bottom and in the middle of the screen */
@@ -150,7 +92,7 @@ body {
   margin: 0;
   color: #BFC0C0;
   font-size: 16px;
-  font-family: "Montserrat", sans-serif;
+  font-family: "Fira Sans", sans-serif;
   height: 100vh;
 }
 
@@ -179,14 +121,35 @@ body {
   border: 2px solid rgba(0, 0, 0, 0.125);
 }
 
-.button {
-  height: 35px;
+#header #description {
+  text-align: center;
+}
+
+#header #description h1 {
+  font-family: "Fira Sans", cursive;
+  font-size: 150%;
+  margin-bottom: 2px;
+  color: #EF8354;
+}
+
+#header #description h2 {
+  font-size: 100%;
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+#header #description h2 a {
+  color: #BFC0C0;
+  font-family: "Fira Sans", cursive;
+  text-underline-offset: 2px;
+}
+
+#header #description .button {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;
   display: inline-flex;
-  width: 110px;
   border: 2px solid #BFC0C0;
-  margin: 10px 20px 20px 20px;
+  padding: 5px;
   border-radius: 4px;
   color: #BFC0C0;
   background-color: #2D3142;
@@ -199,33 +162,6 @@ body {
       -ms-flex-pack: center;
           justify-content: center;
   overflow: hidden;
-}
-
-#header #description {
-  text-align: center;
-}
-
-#header #description h1 {
-  font-family: "Baloo 2", cursive;
-  font-size: 150%;
-  margin-bottom: 2px;
-  color: #EF8354;
-}
-
-#header #description h1 span {
-  display: inline;
-}
-
-#header #description h2 {
-  margin-top: 0;
-  margin-bottom: 5px;
-  font-size: 16px;
-}
-
-#header #description h2 a {
-  color: #BFC0C0;
-  font-family: "Baloo 2", cursive;
-  text-underline-offset: 2px;
 }
 
 #header #counters-container {
@@ -244,19 +180,16 @@ body {
           align-items: center;
   -ms-flex-wrap: wrap;
       flex-wrap: wrap;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin: 10px 0px;
 }
 
 #header #counters-container .card {
   -webkit-box-shadow: 0 10px 8px 0 black;
           box-shadow: 0 10px 8px 0 black;
-  -webkit-transition: 0.3s;
-  transition: 0.3s;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
-  margin: 5px;
+  padding: 2.5px;
   min-width: 155px;
   margin-top: 5px;
   padding: 10px;
@@ -269,16 +202,15 @@ body {
 }
 
 #header #counters-container .card h3 {
-  margin-top: 4px;
+  margin-top: 1px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   margin-bottom: 0px;
+  font-weight: lighter;
 }
 
 #header #counters-container .card p {
-  font-size: 140%;
-  -webkit-margin-before: 0.5em;
-          margin-block-start: 0.5em;
-  margin-bottom: 0;
+  margin: 5px 0;
+  font-size: 125%;
 }
 
 #header #counters-container .card .change-card {
@@ -312,7 +244,7 @@ body {
   margin: 0;
   margin-bottom: 5px;
   color: #EF8354;
-  font-family: "Baloo 2", cursive;
+  font-family: "Fira Sans", cursive;
 }
 
 #app-container #slider-container #date_slider {
@@ -351,10 +283,6 @@ body {
   border: 3px solid #EF8354 !important;
 }
 
-#app-container #map-container {
-  margin: 10px;
-}
-
 #app-container #map-container #map-dials {
   margin-top: 10px;
   display: -ms-grid;
@@ -387,10 +315,13 @@ body {
   -ms-grid-row: 3;
   -ms-grid-column: 1;
   grid-area: title;
-  margin-top: 10px;
-  margin-bottom: 0px;
-  font-family: "Baloo 2", cursive;
+  margin: 10px 0 0 0;
+  font-family: "Fira Sans", cursive;
   color: #EF8354;
+}
+
+#app-container #map-container #map .legend {
+  display: none;
 }
 
 #app-container #right-container {
@@ -401,10 +332,12 @@ body {
 #app-container #right-container h4 {
   margin: 0;
   margin-bottom: 2px;
+  font-size: 80%;
+  font-weight: lighter;
 }
 
 #app-container #right-container #location-dropdown {
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 #app-container #right-container .Select-control {
@@ -419,13 +352,13 @@ body {
 }
 
 #app-container #right-container #tabs-container {
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 #app-container #right-container .tab--selected {
   border-color: #EF8354;
-  border-top-width: 4px;
-  font: "Baloo 2", cursive;
+  border-top-width: 2px;
+  font: "Fira Sans", cursive;
   font-weight: bolder;
 }
 
@@ -436,8 +369,8 @@ body {
 #app-container #right-container #sub-options {
   display: -ms-grid;
   display: grid;
-  -ms-grid-columns: 1fr 1fr;
-      grid-template-columns: 1fr 1fr;
+  -ms-grid-columns: 1fr 1.5fr 1fr;
+      grid-template-columns: 1fr 1.5fr 1fr;
   -ms-grid-rows: auto;
       grid-template-rows: auto;
   font-size: 60%;
@@ -448,9 +381,9 @@ body {
 }
 
 #app-container #right-container #log-check {
-  -ms-grid-column-align: left;
-      justify-self: left;
-  padding-left: 20px;
+  -ms-grid-column-align: center;
+      justify-self: center;
+  padding-left: 5px;
   text-align: center;
 }
 
@@ -459,28 +392,84 @@ body {
 }
 
 #app-container #right-container #deaths-confirmed {
-  -ms-grid-column-align: left;
-      justify-self: left;
+  -ms-grid-column-align: center;
+      justify-self: center;
 }
 
 #app-container #right-container #deaths-confirmed label {
-  padding-right: 5px;
+  padding-right: 1px;
 }
 
 #app-container #table {
   overflow-x: scroll;
 }
 
+#app-container .plotlyjsicon {
+  display: none;
+}
+
+.modal {
+  display: block;
+  /*Hidden by default */
+  position: fixed;
+  /* Stay in place */
+  z-index: 1000;
+  /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100vw;
+  /* Full width */
+  height: 100vh;
+  /* Full height */
+  overflow: auto;
+  /* Enable scroll if needed */
+  background-color: black;
+  /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4);
+  /* Black w/ opacity */
+}
+
+#markdown .markdown-container {
+  width: 95vw;
+  margin: 2% auto;
+  padding: 5px 5px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  color: black;
+}
+
+#markdown .close-container {
+  display: inline-block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#markdown .markdown-text {
+  padding: 5px 5px;
+  text-align: justify;
+}
+
+#markdown .closeButton {
+  padding: 0 15px;
+  font-weight: normal;
+  float: right;
+  font-size: 112%;
+  border: 1px black solid;
+  height: 100%;
+}
+
+#markdown .closeButton:hover {
+  background-color: red !important;
+}
+
+.hovertext text {
+  font-size: 75% !important;
+}
+
 @media only screen and (min-width: 768px) {
-  .markdown-container {
-    width: 60vw;
-    margin: 2% auto;
-    padding: 10px 15px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-  }
   .container {
-    margin: 10px;
+    margin: 5px;
   }
   #header #description {
     text-align: center;
@@ -489,15 +478,16 @@ body {
     font-size: 200%;
   }
   #header #description h2 {
-    font-size: 150%;
+    font-size: 100%;
   }
   #header #description .button {
-    height: 45px;
-    width: 120px;
     border-radius: 4px;
   }
   #header #counters-container .card {
     font-size: 120%;
+  }
+  #app-container #slider-container {
+    padding-bottom: 24px;
   }
   #app-container #slider-container h4 {
     margin-bottom: 10px;
@@ -509,9 +499,11 @@ body {
   #app-container #slider-container .rc-slider-mark-text {
     display: inline;
     padding-left: 1px;
+    color: white;
+    font-size: 110%;
   }
   #app-container #map-container #map-dials {
-    font-size: 200%;
+    font-size: 125%;
   }
   #app-container #map-container #map-dials .map-list {
     padding: 15px;
@@ -527,18 +519,53 @@ body {
     margin: 10px;
     margin-bottom: 0;
   }
+  #app-container #right-container h4 {
+    font-size: 120%;
+  }
+  #app-container #right-container #location-dropdown {
+    padding: 0 15px;
+    font-size: 150%;
+    text-align: left;
+  }
+  #app-container #right-container #tabs-container {
+    padding: 0 15px;
+  }
+  #app-container #right-container #sub-options {
+    font-size: 125%;
+  }
 }
 
 @media only screen and (min-width: 1000px) {
+  body {
+    font-size: 120%;
+  }
+  .button {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    border: 2px solid #BFC0C0;
+    padding: 5px;
+    border-radius: 4px;
+    color: #BFC0C0;
+    background-color: #2D3142;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+    overflow: hidden;
+  }
   #tiny-url {
     display: inline;
     position: fixed;
-    width: auto;
     font-size: 67%;
     min-height: 40px;
     min-width: 110px;
-    bottom: -10px;
-    left: -16px;
+    bottom: 5px;
+    left: 5px;
     z-index: 2;
     color: #EF8354;
     border-color: #EF8354;
@@ -559,17 +586,16 @@ body {
 
 @media only screen and (min-width: 1224px) {
   body {
-    font-size: 200%;
+    font-size: 125%;
+  }
+  .container {
+    margin: 10px;
   }
   .mapboxgl-ctrl-logo {
     display: none !important;
   }
   #header #description h2 {
     font-size: 100%;
-  }
-  #header #description .button {
-    height: 55px;
-    width: 140px;
   }
   #header #counters-container {
     -webkit-box-pack: space-evenly;
@@ -578,11 +604,9 @@ body {
     -webkit-box-align: center;
         -ms-flex-align: center;
             align-items: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
   }
   #header #counters-container .card {
-    min-width: 241px;
+    min-width: 198px;
     -webkit-box-shadow: 0 10px 8px 0 black;
             box-shadow: 0 10px 8px 0 black;
     border-radius: 4px;
@@ -590,28 +614,33 @@ body {
             perspective: 1000;
   }
   #header #counters-container .card h3 {
-    font-size: 80%;
     margin: 0 20p;
   }
   #header #counters-container .card p {
-    font-size: 100%;
+    font-size: 115%;
   }
   #header #counters-container .card .change-card {
-    font-size: 75%;
+    font-size: 100%;
   }
-  #app-container #slider-container h4 {
-    font-size: 75%;
+  #app-container #slider-container {
+    padding: 25px;
+    padding-bottom: 45px;
   }
   #app-container #slider-container #date_slider {
     padding-left: 15px;
     padding-right: 15px;
   }
   #app-container #slider-container .rc-slider-mark-text {
-    padding-left: 5px;
-    font-size: 120%;
+    font-size: 150%;
+    padding: 10px;
   }
   #app-container #map-container #map-dials {
-    font-size: 100%;
+    display: -ms-grid;
+    display: grid;
+    -ms-grid-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-areas: "metrics title location";
+    font-size: 125%;
   }
   #app-container #map-container #map-dials .map-list {
     padding: 15px;
@@ -679,26 +708,7 @@ body {
     grid-column: 1/2;
   }
   #header #description h1 {
-    font-size: 150%;
-    -webkit-margin-before: 0.5em;
-            margin-block-start: 0.5em;
-    line-height: 1;
-    position: relative;
-  }
-  #header #description h1 span {
-    display: block;
-  }
-  #header #description .bottom-div {
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: center;
-        -ms-flex-pack: center;
-            justify-content: center;
-  }
-  #header #description .button {
-    height: 35px;
-    width: 120px;
+    font-size: 125%;
   }
   #header #counters-container {
     -ms-grid-column: 2;
@@ -827,6 +837,9 @@ body {
     -ms-grid-row-span: 1;
     grid-row: 1/2;
     font-size: 100%;
+    -ms-flex-item-align: stretch;
+        -ms-grid-row-align: stretch;
+        align-self: stretch;
   }
   #app-container #right-container h4 {
     font-size: 80%;
@@ -834,17 +847,21 @@ body {
   #app-container #right-container #location-dropdown {
     margin-top: 5px;
     margin-bottom: 5px;
+    font-size: 80%;
   }
   #app-container #right-container #dropdown_container {
     font-size: 60%;
   }
   #app-container #right-container #tabs-container {
     margin-top: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     font-size: 65%;
   }
   #app-container #right-container #tabs-container .custom-tab {
     padding: 5px;
+  }
+  #app-container #right-container #sub-options {
+    font-size: 60%;
   }
   #app-container #table-container {
     -ms-grid-column: 1;

@@ -14,6 +14,12 @@ colors.remove(colors[5])
 colors = colors * 10
 
 
+AXIS_FONT_SIZE = 18
+AXIS_TITLE_FONT_SIZE = 18
+LEGEND_FONT_SIZE = 18
+FONT_FAMILY = 'Fira Sans'
+
+
 def get_closest_inerval(n, s='max'):
     import math
     d = math.floor(math.log(abs(n)) / math.log(10))
@@ -122,18 +128,31 @@ def plot_map(dataframe, metrics, zoom, center):
     return {'data': data_traces, 'layout': layout}
 
 
-def total_confirmed_graph(values, MASTER_DF, KEY_VALUE,log=False, metric='confirmed'):
+def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
+
     data_traces = []
     MASTER_DF = MASTER_DF.reset_index()
     forcast_date = MASTER_DF.groupby('forcast').tail(1)['Date'].iloc[0]
     start_date = MASTER_DF['Date'].iloc[0]
     end_date = MASTER_DF['Date'].iloc[-1]
+    if gs:
+        x_axis_range = [gs['xaxis.range[0]'], gs['xaxis.range[1]']]
+        if 'yaxis.range[1]' in gs:
+            y_axis_range = [gs['yaxis.range[0]'], gs['yaxis.range[1]']]
+        else:
+            y_axis_range = 'auto'
+    else:
+        if predict:
+            x_axis_range = [start_date-timedelta(days=1), end_date+timedelta(days=1)]
+        else:
+            x_axis_range = [start_date-timedelta(days=1), forcast_date + timedelta(days=1)]
+        y_axis_range = 'auto'
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         color_rgba = get_rgb_with_opacity(color_, opacity=0.2)
         sub_df = MASTER_DF[MASTER_DF['pid'] == item]
         sub_df = sub_df.set_index('Date')
-        name = KEY_VALUE.loc[item,'name']
+        name = KEY_VALUE.loc[item, 'name']
         if metric == 'confirmed':
             hovert = '%{x}<br>Confirmed Cases - %{y:,f}'
             y_axis_title = 'Total Cases'
@@ -141,46 +160,46 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE,log=False, metric='confir
             hovert = '%{x}<br>Confirmed Deaths - %{y:,f}'
             y_axis_title = 'Total Deaths'
 
-        # First add the confidence interval
-        forcast = sub_df.loc[:forcast_date]
-        dates = list(forcast.reset_index()['Date'])
-        xs = dates + dates[::-1]
-        uppers = list(forcast['{}_upper'.format(metric)])
-        lowers = list(forcast['{}_lower'.format(metric)])
-        ys = uppers + lowers[::-1]
-        data_traces.append(
-            go.Scatter(
-                x=xs,
-                y=ys,
-                fill='toself',
-                hoverinfo='none',
-                showlegend=False,
-                line_color='rgba(255,255,255,0)'
-            ))
+        if predict:
+            # First add the confidence interval
+            forcast = sub_df.loc[:forcast_date]
+            dates = list(forcast.reset_index()['Date'])
+            xs = dates + dates[::-1]
+            uppers = list(forcast['{}_upper'.format(metric)])
+            lowers = list(forcast['{}_lower'.format(metric)])
+            ys = uppers + lowers[::-1]
+            data_traces.append(
+                go.Scatter(
+                    x=xs,
+                    y=ys,
+                    fill='toself',
+                    hoverinfo='none',
+                    showlegend=False,
+                    line_color='rgba(255,255,255,0)'
+                ))
 
-        # Then add the prediction lineA
-        forcast = sub_df.loc[forcast_date+timedelta(days=1):].reset_index()
-        dates = list(forcast['Date'])
-        ys = forcast[metric]
-        data_traces.append(
-            go.Scatter(
-                x=dates,
-                y=ys,
-                showlegend=False,
-                mode='lines+markers',
-                hovertemplate=hovert.replace('Confirmed', 'Predicted'),
-                name=name,
-                marker=dict(
-                    size=9,
-                    symbol='circle-open',
-                ),
-                line=dict(
-                    color=color_,
-                    width=2,
-                    dash='dashdot'
-                )
-            ))
-
+            # Then add the prediction lineA
+            forcast = sub_df.loc[forcast_date+timedelta(days=1):].reset_index()
+            dates = list(forcast['Date'])
+            ys = forcast[metric]
+            data_traces.append(
+                go.Scatter(
+                    x=dates,
+                    y=ys,
+                    showlegend=False,
+                    mode='lines+markers',
+                    hovertemplate=hovert.replace('Confirmed', 'Predicted'),
+                    name=name,
+                    marker=dict(
+                        size=9,
+                        symbol='circle-open',
+                    ),
+                    line=dict(
+                        color=color_,
+                        width=2,
+                        dash='dashdot'
+                    )
+                ))
 
         # Add the confirmed line
         forcast = sub_df.loc[:forcast_date].reset_index()
@@ -203,9 +222,11 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE,log=False, metric='confir
                     width=5,
                     dash='solid'
                 )))
-
-
-        #Add solid marker at end of confirmed
+        # Add solid marker at end of confirmed
+        if predict:
+            hoverinfo = 'none'
+        else:
+            hoverinfo = 'all'
         forcast = sub_df.loc[forcast_date]
         ys = [forcast[metric]]
         data_traces.append(
@@ -214,67 +235,85 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE,log=False, metric='confir
                 y=ys,
                 showlegend=False,
                 mode='markers',
-                hoverinfo='none',
+                name=name,
+                hovertemplate=hovert,
+                hoverinfo=hoverinfo,
                 marker=dict(
                     color=color_,
                     size=12,
                 ),
-                ))
+            ))
         # Add a connecting line between prediction and confirmed
-        forcast = sub_df.loc[forcast_date:forcast_date+timedelta(days=1)].reset_index()
-        dates = list(forcast['Date'])
-        ys = forcast[metric]
-        data_traces.append(
-            go.Scatter(
-                x=dates,
-                y=ys,
-                showlegend=False,
-                mode='lines',
-                name=name,
-                hoverinfo='none',
-                marker=dict(
-                    color=color_,
-                    size=9,
-                ),
-                line=dict(
-                    color=color_,
-                    width=2,
-                    dash='dashdot'
-                )))
+        if predict:
+            forcast = sub_df.loc[forcast_date:forcast_date+timedelta(days=1)].reset_index()
+            dates = list(forcast['Date'])
+            ys = forcast[metric]
+            data_traces.append(
+                go.Scatter(
+                    x=dates,
+                    y=ys,
+                    showlegend=False,
+                    mode='lines',
+                    name=name,
+                    hoverinfo='none',
+                    marker=dict(
+                        color=color_,
+                        size=9,
+                    ),
+                    line=dict(
+                        color=color_,
+                        width=2,
+                        dash='dashdot'
+                    )))
     shapes = []
-    shapes.append(
-        dict(
-            type='rect',
-            xref="x",
-            yref='paper',
-            x0=forcast_date+timedelta(days=1),
-            y0=0,
-            x1=end_date+timedelta(days=1),
-            y1=1,
-            line=dict(
-                color='white', width=0),
-            fillcolor='rgba(255,255,255,0.05)'
-        ))
+    if predict:
+        shapes.append(
+            dict(
+                type='rect',
+                xref="x",
+                yref='paper',
+                x0=forcast_date+timedelta(days=1),
+                y0=0,
+                x1=end_date+timedelta(days=1),
+                y1=1,
+                line=dict(
+                    color='white', width=0),
+                fillcolor='rgba(255,255,255,0.05)'
+            ))
 
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
         shapes=shapes,
         yaxis=dict(
-            title=dict(text=y_axis_title, standoff=2),
-            titlefont_size=16,
-            tickfont_size=16,
+            title=dict(
+                text=y_axis_title,
+                standoff=2,
+                font=dict(
+                    size=AXIS_TITLE_FONT_SIZE,
+                    family=FONT_FAMILY,
+                )),
+            tickfont=dict(
+                family=FONT_FAMILY,
+                size=AXIS_FONT_SIZE),
             showgrid=True,
             color='white',
             side='left',
+            range=y_axis_range
         ),
         xaxis=dict(
             color='white',
-            tickfont_size=16,
-            range=[start_date-timedelta(days=1), end_date+timedelta(days=1)]
+            tickfont=dict(
+                size=AXIS_FONT_SIZE,
+                family=FONT_FAMILY,
+            ),
+            range=x_axis_range
         ),
         autosize=True,
         showlegend=True,
-        legend=dict(x=0, y=1, font=dict(color='white')),
+        hovermode='closest',
+        legend=dict(x=0, y=1, font=dict(
+            color='white',
+            size=LEGEND_FONT_SIZE)),
         paper_bgcolor='#1f2630',
         plot_bgcolor='rgb(52,51,50)')
     if log:
@@ -282,17 +321,33 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE,log=False, metric='confir
     return {'data': data_traces, 'layout': layout}
 
 
-def per_day_confirmed(values,MASTER_DF, KEY_VALUE, log=True, metric='confirmed'):
+def per_day_confirmed(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
     data_traces = []
     if not values:
-        data_traces.append(go.Bar(x=[],y=[]))
+        data_traces.append(go.Bar(x=[], y=[]))
         y_axis_title = "Select a value"
     MASTER_DF = MASTER_DF.reset_index()
     forcast_date = MASTER_DF.reset_index().groupby('forcast').tail(1)['Date'].iloc[0]
     start_date = MASTER_DF.reset_index()['Date'].iloc[0]
-    end_date = MASTER_DF.reset_index()['Date'].iloc[-1] 
-    sorted_values = list(MASTER_DF[(MASTER_DF['pid'].isin(values)) & (MASTER_DF['Date']==end_date)].sort_values('confirmed')[::-1]['pid'])
-    
+    end_date = MASTER_DF.reset_index()['Date'].iloc[-1]
+    sorted_values = list(MASTER_DF[(MASTER_DF['pid'].isin(values)) & (
+        MASTER_DF['Date'] == end_date)].sort_values('confirmed')[::-1]['pid'])
+
+    x_axis_range = 'auto'
+    y_axis_range = 'auto'
+    if gs:
+        if 'xaxis.range[0]' in gs:
+            x_axis_range = [gs['xaxis.range[0]'], gs['xaxis.range[1]']]
+        if 'yaxis.range[0]' in gs:
+            y_axis_range = [gs['yaxis.range[0]'], gs['yaxis.range[1]']]
+
+    else:
+        if predict:
+            x_axis_range = [start_date-timedelta(days=1), end_date+timedelta(days=1)]
+        else:
+            x_axis_range = [start_date-timedelta(days=1), forcast_date+timedelta(days=1)]
+
+        y_axis_range = 'auto'
     # t(sorted_values)
     offset_group = 0
 
@@ -300,34 +355,35 @@ def per_day_confirmed(values,MASTER_DF, KEY_VALUE, log=True, metric='confirmed')
         color_ = colors[enum_]
         color_rgba = get_rgb_with_opacity(color_, opacity=0.2)
         sub_df = MASTER_DF[MASTER_DF['pid'] == item].reset_index()
-        sub_df = sub_df.set_index('Date')[['confirmed','deaths']].diff().fillna(0)
-        name = KEY_VALUE.loc[item,'name']
+        sub_df = sub_df.set_index('Date')[['confirmed', 'deaths']].diff().fillna(0)
+        name = KEY_VALUE.loc[item, 'name']
         if metric == 'confirmed':
             hovert = '%{x}<br>Confirmed Cases - %{y:,f}'
             y_axis_title = 'Total Cases'
         else:
             hovert = '%{x}<br>Confirmed Deaths - %{y:,f}'
-            y_axis_title = 'Total Deaths' 
+            y_axis_title = 'Total Deaths'
         # Add the forcast values
         # forcast = sub_df[sub_df['forcast'] == True]
-        forcast = sub_df.loc[forcast_date+timedelta(days=1):]
-        dates = list(forcast.reset_index()['Date'])
-        ys = forcast[metric]
-        data_traces.append(
-            go.Bar(
-                x=dates,
-                y=ys,
-                showlegend=False,
-                offsetgroup=offset_group,
-                hovertemplate=hovert.replace('Confirmed', 'Predicted'),
-                name=name,
-                marker=dict(
-                    color=color_,
-                    line=dict(
-                        color='white', width=0.5,
-                    )
-                ),
-            ))
+        if predict:
+            forcast = sub_df.loc[forcast_date+timedelta(days=1):]
+            dates = list(forcast.reset_index()['Date'])
+            ys = forcast[metric]
+            data_traces.append(
+                go.Bar(
+                    x=dates,
+                    y=ys,
+                    showlegend=False,
+                    offsetgroup=offset_group,
+                    hovertemplate=hovert.replace('Confirmed', 'Predicted'),
+                    name=name,
+                    marker=dict(
+                        color=color_,
+                        line=dict(
+                            color='white', width=0.5,
+                        )
+                    ),
+                ))
 
         forcast = sub_df.loc[:forcast_date]
         dates = list(forcast.reset_index()['Date'])
@@ -348,36 +404,54 @@ def per_day_confirmed(values,MASTER_DF, KEY_VALUE, log=True, metric='confirmed')
                 ),
             ))
     shapes = []
-    shapes.append(
-        dict(
-            type='rect',
-            xref="x",
-            yref='paper',
-            x0=forcast_date+timedelta(hours=12),
-            y0=0,
-            x1=end_date+timedelta(days=365),
-            y1=1,
-            line=dict(
-                color='white', width=0),
-            fillcolor='rgba(255,255,255,0.2)'
-        ))
+    if predict:
+        shapes.append(
+            dict(
+                type='rect',
+                xref="x",
+                yref='paper',
+                x0=forcast_date+timedelta(hours=12),
+                y0=0,
+                x1=end_date+timedelta(days=1),
+                y1=1,
+                line=dict(
+                    color='white', width=0),
+                fillcolor='rgba(255,255,255,0.2)'
+            ))
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
         shapes=shapes,
         yaxis=dict(
-            title=dict(text=y_axis_title, standoff=2),
-            titlefont_size=14,
-            tickfont_size=14,
+            title=dict(
+                text=y_axis_title,
+                standoff=2,
+                font=dict(
+                    size=AXIS_TITLE_FONT_SIZE,
+                    family=FONT_FAMILY,
+                )),
+            tickfont=dict(
+                family=FONT_FAMILY,
+                size=AXIS_FONT_SIZE),
             showgrid=True,
             color='white',
             side='left',
+            y_axis_title=y_axis_range,
         ),
         xaxis=dict(
             color='white',
-            range=[start_date+timedelta(days=1), end_date+timedelta(hours=12)]
+            tickfont=dict(
+                size=AXIS_FONT_SIZE,
+                family=FONT_FAMILY,
+            ),
+            range=x_axis_range
         ),
         showlegend=True,
-        legend=dict(x=0, y=1, font=dict(color='white')),
+        legend=dict(
+            x=0,
+            y=1,
+            font=dict(color='white',
+                      family=FONT_FAMILY,
+                      size=LEGEND_FONT_SIZE)),
         paper_bgcolor='#1f2630',
         plot_bgcolor='rgb(52,51,50)',
         barmode='grouped',
@@ -388,15 +462,25 @@ def per_day_confirmed(values,MASTER_DF, KEY_VALUE, log=True, metric='confirmed')
     return {'data': data_traces, 'layout': layout}
 
 
-def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
+def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
     backtrack = 7
     fig = go.Figure()
     max_number = 0
     annotations = []
     MASTER_DF = MASTER_DF.reset_index()
+    if gs:
+        x_axis_range = [gs['xaxis.range[0]'], gs['xaxis.range[1]']]
+        if 'yaxis.range[0]' in gs:
+            y_axis_range = [gs['yaxis.range[0]'], gs['yaxis.range[1]']]
+        else:
+            y_axis_range = ['auto', 'auto']
+    else:
+        x_axis_range = ['auto', 'auto']
+        y_axis_range = ['auto', 'auto']
+
     for enum_, item in enumerate(values):
-        name = KEY_VALUE.loc[item,'name']
-        full_report = MASTER_DF[MASTER_DF['pid'] == item].set_index(['Date','forcast'])[['confirmed','deaths']]
+        name = KEY_VALUE.loc[item, 'name']
+        full_report = MASTER_DF[MASTER_DF['pid'] == item].set_index(['Date', 'forcast'])[['confirmed', 'deaths']]
         per_day = full_report.diff()
         plottable = full_report.join(
             per_day, lsuffix='_cum', rsuffix='_diff')
@@ -434,6 +518,13 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
                 xs.append(x)
                 ys.append(y)
                 dates.append(date.strftime('%m/%d/%Y'))
+        if not predict:
+            sl = True
+            circle = 'circle'
+        else:
+            sl = False
+            circle = 'circle-open'
+
         fig.add_trace(
             go.Scatter(
                 x=xs,
@@ -454,54 +545,75 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
                 mode='markers',
                 name=name,
                 text=[dates[-1]],
-                showlegend=False,
+                showlegend=sl,
                 legendgroup=name,
                 hoverlabel=dict(align='left'),
                 marker=dict(
-                    symbol='circle-open',
+                    symbol=circle,
                     size=8,
                     color=colors[enum_]
                 ),
                 hovertemplate="On %{text} <br> Total Cases: %{x}<br> Cummulative Cases Last Week %{y}"
             )
-       )
-        fig.add_trace(
-            go.Scatter(
-                x=xs_predict,
-                y=ys_predict,
-                mode='lines',
-                name=name,
-                text=dates_predict,
-                showlegend=False,
-                legendgroup=item,
-                line=dict(dash='dash', shape='linear',color=colors[enum_], width=4),
-                hovertemplate="On %{text} <br> Predicted Total Cases: %{x}<br> Predicted Cummulative Cases Last Week %{y}"
-            )
         )
-        fig.add_trace(
-            go.Scatter(
-                x=[xs_predict[-1]],
-                y=[ys_predict[-1]],
-                mode='markers',
-                name=name,
-                text=[dates_predict[-1]],
-                hoverlabel=dict(align='left'),
-                marker=dict(
-                    symbol='circle',
-                    size=8,
-                    color=colors[enum_]
-                ),
-                hovertemplate="On %{text} <br> Predicted Total Cases: %{x}<br> Predicted Cummulative Cases Last Week %{y}"
+        if predict:
+            fig.add_trace(
+                go.Scatter(
+                    x=xs_predict,
+                    y=ys_predict,
+                    mode='lines',
+                    name=name,
+                    text=dates_predict,
+                    showlegend=False,
+                    legendgroup=item,
+                    line=dict(dash='dash', shape='linear', color=colors[enum_], width=4),
+                    hovertemplate="On %{text} <br> Predicted Total Cases: %{x}<br> Predicted Cummulative Cases Last Week %{y}"
+                )
             )
-        )
-        if not log:
-            annotations.append(
-                dict(xref='x',yref='y',x=xs_predict[-1],yanchor='top',yshift=-35, xanchor='left',valign='bottom', y=ys_predict[-1],showarrow=True, align='right',text=name,font=dict(size=12,color='white'))
+            fig.add_trace(
+                go.Scatter(
+                    x=[xs_predict[-1]],
+                    y=[ys_predict[-1]],
+                    mode='markers',
+                    name=name,
+                    text=[dates_predict[-1]],
+                    hoverlabel=dict(align='left'),
+                    marker=dict(
+                        symbol='circle',
+                        size=8,
+                        color=colors[enum_]
+                    ),
+                    hovertemplate="On %{text} <br> Predicted Total Cases: %{x}<br> Predicted Cummulative Cases Last Week %{y}"
+                )
             )
+        if not predict:
+            x_annt = xs[-1]
+            y_annt = ys[-1]
         else:
-             annotations.append(
-                dict(xref='x',yref='y',x=np.log10(xs_predict[-1]),yanchor='top',yshift=-35, xanchor='left',valign='bottom', y=np.log10(ys_predict[-1]),showarrow=True, align='right',text=name,font=dict(size=12,color='white'))
-              )
+            x_annt = xs_predict[-1]
+            y_annt = ys_predict[-1]
+
+        annotation = dict(
+            xref='x',
+            yref='y',
+            x=x_annt,
+            yanchor='top',
+            yshift=-35,
+            xanchor='left',
+            valign='bottom',
+            y=y_annt,
+            showarrow=True,
+            align='right',
+            text=name,
+            bgcolor='rgb(52,52,50)',
+            font=dict(
+                size=12, color='white'))
+
+        if log:
+            annotation['x'] = np.log10(annotation['x'])
+            annotation['y'] = np.log10(annotation['y'])
+
+        annotations.append(annotation)
     fig.add_trace(
         go.Scatter(
             x=[0, max_number],
@@ -520,58 +632,97 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log):
 
     fig.update_layout(
         yaxis=dict(
-            title=dict(text='New Cases Previous {} Days'.format(
-                backtrack), standoff=2),
+            title=dict(
+                text='New Cases Previous {} Days'.format(backtrack),
+                standoff=2,
+                font=dict(
+                    size=AXIS_TITLE_FONT_SIZE,
+                    family=FONT_FAMILY,
+                )),
+            tickfont=dict(
+                family=FONT_FAMILY,
+                size=AXIS_FONT_SIZE),
             showgrid=True,
             color='white',
+            side='left',
+            range=y_axis_range,
         ),
-        margin=dict(t=20),
+        margin=dict(t=70, r=40, l=80, b=80),
         xaxis=dict(
+            title=dict(
+                text='Total Cases',
+                standoff=2,
+                font=dict(
+                    size=AXIS_TITLE_FONT_SIZE,
+                    family=FONT_FAMILY,
+                )),
             color='white',
-            showgrid=False,
-            title=dict(text='Total Cases', standoff=1)
+            tickfont=dict(
+                size=AXIS_FONT_SIZE,
+                family=FONT_FAMILY,
+            ),
+            range=x_axis_range,
+            showgrid=False
         ),
         autosize=True,
         showlegend=True,
         paper_bgcolor='#1f2630',
         plot_bgcolor='rgb(52,51,50)',
-        legend=dict(x=0.01, y=0.99, font=dict(color='white')))
-
-
-    fig.update_layout(
-        margin=dict(t=50, b=20, r=30, l=20, pad=0))
+        legend=dict(x=0.01,
+                      y=0.99,
+                      font=dict(
+                          color='white',
+                          family=FONT_FAMILY,
+                          size=LEGEND_FONT_SIZE)))
     return fig
 
 
-def per_gr(values, MASTER_DF, KEY_VALUE, log=False, metric='confirmed'):
+def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
     shapes = []
     data_traces = []
     MASTER_DF = MASTER_DF.reset_index()
+    if gs:
+        x_axis_range = [gs['xaxis.range[0]'], gs['xaxis.range[1]']]
+        if 'yaxis.range[0]' in gs:
+            y_axis_range = [gs['yaxis.range[0]'], gs['yaxis.range[1]']]
+        else:
+            y_axis_range = ['auto', 'auto']
+    else:
+        if predict:
+            x_axis_range = [MASTER_DF['Date'].iloc[0], MASTER_DF['Date'].iloc[-1]]
+        else:
+            x_axis_range = [MASTER_DF['Date'].iloc[0], MASTER_DF.set_index('forcast').loc[False].iloc[-1]['Date']]
+
+        y_axis_range = ['auto', 'auto']
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         sub_df = MASTER_DF[MASTER_DF['pid'] == item]
         sub_df = sub_df.set_index('Date')
         xs = sub_df[sub_df['forcast'] == False].index
         xs_predict = sub_df[sub_df['forcast'] == True].index
-        name = KEY_VALUE.loc[item,'name']
+        name = KEY_VALUE.loc[item, 'name']
         if metric == 'confirmed':
-            sub_df = sub_df.reset_index().set_index(['Date','forcast'])
+            sub_df = sub_df.reset_index().set_index(['Date', 'forcast'])
             sub_df['gr'] = sub_df['confirmed'].replace(
                 to_replace=0, method='ffill').pct_change()*100
-            sub_df['gr'] = sub_df['gr'].replace(np.inf,1)
+            sub_df['gr'] = sub_df['gr'].replace(np.inf, 1)
             sub_df['gr'] = sub_df['gr'].fillna(1)
             sub_df = sub_df.reset_index()
             ys = sub_df[sub_df['forcast'] == False]['gr']
             ys_predict = sub_df[sub_df['forcast'] == True]['gr']
             hovert = '%{x}<br>Growth Rate - %{y:.3f}%'
-            y_axis_title = 'Confirmed Cases Growth Factor'
+            y_axis_title = 'Confirmed Cases Growth Rate'
         else:
-            s = sub_df['deaths'].replace(
+            sub_df = sub_df.reset_index().set_index(['Date', 'forcast'])
+            sub_df['gr'] = sub_df['deaths'].replace(
                 to_replace=0, method='ffill').pct_change()*100
-            ys = s.replace(np.inf, 1)
-            ys = ys.fillna(1)
-            hovert = '%{x}<br>Death Growth - %{y:.3f}%'
-            y_axis_title = 'Deaths Growth Rate'
+            sub_df['gr'] = sub_df['gr'].replace(np.inf, 1)
+            sub_df['gr'] = sub_df['gr'].fillna(1)
+            sub_df = sub_df.reset_index()
+            ys = sub_df[sub_df['forcast'] == False]['gr']
+            ys_predict = sub_df[sub_df['forcast'] == True]['gr']
+            hovert = '%{x}<br>Death Rate - %{y:.3f}%'
+            y_axis_title = 'Confirmed Deaths Growth Rate'
 
         data_traces.append(
             go.Scatter(
@@ -587,62 +738,83 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log=False, metric='confirmed'):
                     line=dict(
                         color=color_, width=0.5)
                 )))
-        data_traces.append(
-            go.Scatter(
-                x=[xs[-1],xs_predict[0]],
-                y=[ys.iloc[-1],ys_predict.iloc[0]],
-                name=name,
-                showlegend=False,
-                hoverinfo='skip',
-                hovertemplate="",
-                mode='lines+markers',
-                textfont=dict(size=14, color='white'),
-                marker=dict(color=color_, symbol='circle-open'),
-                line=dict(dash='dashdot')
+        if predict:
+            data_traces.append(
+                go.Scatter(
+                    x=[xs[-1], xs_predict[0]],
+                    y=[ys.iloc[-1], ys_predict.iloc[0]],
+                    name=name,
+                    showlegend=False,
+                    hoverinfo='skip',
+                    hovertemplate="",
+                    mode='lines+markers',
+                    textfont=dict(size=14, color='white'),
+                    marker=dict(color=color_, symbol='circle-open'),
+                    line=dict(dash='dashdot')
                 ))
-        data_traces.append(
-            go.Scatter(
-                x=xs_predict,
-                y=ys_predict,
-                name=name,
-                showlegend=False,
-                hovertemplate=hovert.replace("<br>","<br> Predicted "),
-                mode='lines+markers',
-                textfont=dict(size=14, color='white'),
-                marker=dict(color=color_, symbol='circle-open'),
-                line=dict(dash='dashdot')
+            data_traces.append(
+                go.Scatter(
+                    x=xs_predict,
+                    y=ys_predict,
+                    name=name,
+                    showlegend=False,
+                    hovertemplate=hovert.replace("<br>", "<br> Predicted "),
+                    mode='lines+markers',
+                    textfont=dict(size=14, color='white'),
+                    marker=dict(color=color_, symbol='circle-open'),
+                    line=dict(dash='dashdot')
                 ))
-    shapes.append(
-        dict(
-            type='rect',
-            xref="x",
-            yref='paper',
-            x0=xs_predict[0],
-            y0=0,
-            x1=xs_predict[-1],
-            y1=1,
-            line=dict(
-                color='white', width=0),
-            fillcolor='rgba(255,255,255,0.2)'
-        ))
+    if predict:
+        shapes.append(
+            dict(
+                type='rect',
+                xref="x",
+                yref='paper',
+                x0=xs_predict[0],
+                y0=0,
+                x1=xs_predict[-1],
+                y1=1,
+                line=dict(
+                    color='white', width=0),
+                fillcolor='rgba(255,255,255,0.2)'
+            ))
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
         shapes=shapes,
         yaxis=dict(
-            title=dict(text=y_axis_title, standoff=2),
-            titlefont_size=12,
-            tickfont_size=12,
+            title=dict(
+                text=y_axis_title,
+                standoff=2,
+                font=dict(
+                    size=AXIS_TITLE_FONT_SIZE,
+                    family=FONT_FAMILY,
+                )),
+            tickfont=dict(
+                family=FONT_FAMILY,
+                size=AXIS_FONT_SIZE),
             showgrid=True,
             color='white',
             side='left',
+            range=y_axis_range,
+            y_axis_title=y_axis_range,
         ),
         xaxis=dict(
             color='white',
-            range=[xs[0],xs_predict[-1]],
+            tickfont=dict(
+                size=AXIS_FONT_SIZE,
+                family=FONT_FAMILY,
+            ),
+            range=x_axis_range
         ),
         showlegend=True,
-        legend=dict(x=0, y=1, font=dict(color='white')),
+        legend=dict(x=0.01,
+                    y=0.99,
+                    font=dict(
+                        color='white',
+                        family=FONT_FAMILY,
+                        size=LEGEND_FONT_SIZE)),
         paper_bgcolor='#1f2630',
+        hovermode='closest',
         plot_bgcolor='rgb(52,51,50)')
     if log:
         layout['yaxis']['type'] = 'log'

@@ -140,8 +140,8 @@ def serve_data(ret=False, serve_local=False):
         MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
     KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
 
-    MASTER_ALL.to_pickle('Data/MASTER_ALL.pkl',compression='gzip')
-    MASTER_PID.to_pickle('Data/MASTER_PID.pkl',compression='gzip')
+    MASTER_ALL.to_pickle('Data/MASTER_ALL.pkl', compression='gzip')
+    MASTER_PID.to_pickle('Data/MASTER_PID.pkl', compression='gzip')
 
     if ret:
         return MASTER_ALL, MASTER_PID, DATE_MAPPER
@@ -170,79 +170,112 @@ def get_date_marks():
 
 
 def get_total_cases():
-    sub_df = MASTER_ALL.reset_index()
+    sub_df = MASTER_ALL.reset_index().set_index(['forcast'])
     sub_df = sub_df[sub_df['country'] == 'worldwide']
-    sub_df = sub_df[sub_df['forcast'] == False]
-    total_cases = "{:,}".format(sub_df['confirmed'].iloc[-1])
-    change_in_cases = "{:,}".format(
-        int(sub_df['confirmed'].diff().iloc[-1]))
+    sub_diff = sub_df[['confirmed', 'deaths']].diff()
+    total_confirmed = sub_diff.loc[False].sum()
+    twenty_four_confirmed = sub_diff.loc[False].iloc[-1]
+    forcast_seven_days = sub_diff.loc[True].iloc[0]  # .sum()
+    total_cases = "{:,}".format(int(total_confirmed['confirmed']))
+    change_in_cases = "{:,} ".format(int(twenty_four_confirmed['confirmed']))
+    forcast_seven = "{:,}".format(int(forcast_seven_days['confirmed']))
     return [html.H3('Total Cases'),
             html.P(id='total-cases', children=total_cases),
-            html.Div(className='change-card', children=[html.Span(className='up-triangle=', children=up_triangle), html.Span(change_in_cases)])]
+            html.Div(className='change-card', children=[
+                html.Span(children=[
+                    up_triangle]),
+                html.Span(change_in_cases),
+                html.Span(html.I(className="wi wi-wind wi-towards-nne")),
+                html.Span(forcast_seven)])]
 
 
 def get_total_deaths():
-    sub_df = MASTER_ALL.reset_index()
+    sub_df = MASTER_ALL.reset_index().set_index(['forcast'])
     sub_df = sub_df[sub_df['country'] == 'worldwide']
-    sub_df = sub_df[sub_df['forcast'] == False]
-    total_deaths = "{:,}".format(sub_df['deaths'].iloc[-1])
-    change_in_deaths = "{:,}".format(
-        int(sub_df['deaths'].diff().iloc[-1]))
+    sub_diff = sub_df[['confirmed', 'deaths']].diff()
+    total_confirmed = sub_diff.loc[False].sum()
+    twenty_four_confirmed = sub_diff.loc[False].iloc[-1]
+    forcast_seven_days = sub_diff.loc[True].iloc[0]  # .sum()
+    total_cases = "{:,}".format(int(total_confirmed['deaths']))
+    change_in_cases = "{:,} ".format(int(twenty_four_confirmed['deaths']))
+    forcast_seven = "{:,}".format(int(forcast_seven_days['deaths']))
     return [html.H3('Total Deaths'),
-            html.P(id='total-deaths', children=total_deaths),
-            html.Div(className='change-card', children=[html.Span(className='up-triangle=', children=up_triangle), html.Span(change_in_deaths)])]
+            html.P(id='total-deaths', children=total_cases),
+            html.Div(className='change-card', children=[
+                html.Span(children=[
+                    up_triangle]),
+                html.Span(change_in_cases),
+                html.Span(html.I(className="wi wi-wind wi-towards-nne")),
+                html.Span(forcast_seven)])]
 
 
 def get_mortality_rate():
-    sub_df = MASTER_ALL.reset_index()
+    sub_df = MASTER_ALL.reset_index().set_index(['forcast'])
     sub_df = sub_df[sub_df['country'] == 'worldwide']
-    sub_df = sub_df[sub_df['forcast'] == False]
-    mortality_rate_today = (sub_df['deaths']/sub_df['confirmed']).iloc[-1] * 100
-    mortality_rate_yesterday = (sub_df['deaths']/sub_df['confirmed']).iloc[-2] * 100
-    change_in_mortality_rate = round(
-        mortality_rate_today - mortality_rate_yesterday, 2)
+    sub_df = sub_df[['confirmed', 'deaths']]
+    sub_df['mr'] = sub_df['deaths']/sub_df['confirmed'] * 100
+    mortality_rate_today = sub_df.loc[False].iloc[-1]['mr']
+    change_in_mortality_rate = round(mortality_rate_today - sub_df.loc[False].iloc[-2]['mr'], 2)
+    seven_day = round(mortality_rate_today-sub_df.loc[True].iloc[0]['mr'], 2)
     if change_in_mortality_rate > 0:
         symbol = up_triangle
-        c_name = 'up-triangle'
     else:
         symbol = down_tirangle
-        c_name = 'down-triangle'
+    if seven_day < 0:
+        class_name = "wi wi-wind wi-towards-nne"
+    else:
+        class_name = "wi wi-wind wi-towards-sse"
+    change_in_mortality_rate = abs(change_in_mortality_rate)
+    seven_day = abs(seven_day)
+    # print(mortality_rate_today, sub_df.loc[True].iloc[-1]['mr'], sub_df.loc[False].iloc[0]['mr'])
     return [html.H3('Mortality Rate'),
             html.P(id='mortality-rate',
                    children="{}%".format(round(mortality_rate_today, 2))),
-            html.Div(
-                className='change-card',
-                children=[
-                    html.Span(className=c_name, children=symbol),
-                    html.Span("{}%".format(abs(change_in_mortality_rate)))])]
+            html.Div(className='change-card', children=[
+                html.Span(children=[
+                     symbol]),
+                html.Span("{} ".format(change_in_mortality_rate)),
+                html.Span(html.I(className=class_name)),
+                html.Span(seven_day)])]
+
+
 def get_growth_rate():
-    sub_df = MASTER_ALL.reset_index()
+    sub_df = MASTER_ALL.reset_index().set_index(['forcast'])
     sub_df = sub_df[sub_df['country'] == 'worldwide']
-    sub_df = sub_df[sub_df['forcast'] == False]
-    todays_gf = sub_df['confirmed'].pct_change().iloc[-1]*100
-    yesterrday_gf = sub_df['confirmed'].pct_change().iloc[-2]*100
-    change_in_gf = todays_gf - yesterrday_gf
-    todays_gf = round(todays_gf, 2)
-    change_in_gf = round(change_in_gf, 2)
+    sub_df = sub_df[['confirmed', 'deaths']].pct_change() * 100
+    sub_df_diff = sub_df.diff()
+    todays_gf = sub_df.loc[False].iloc[-1]['confirmed']
+    change_in_gf = sub_df_diff.loc[False].iloc[-1]['confirmed']
+    change_to_tomorrow = sub_df_diff.loc[True].iloc[0]['confirmed']
+    print(change_to_tomorrow)
     if change_in_gf > 0:
         symbol = up_triangle
         c_name = 'up-triangle'
     else:
         symbol = down_tirangle
         c_name = 'down-triangle'
+    if change_to_tomorrow > 0:
+        class_name = "wi wi-wind wi-towards-nne"
+    else:
+        class_name = "wi wi-wind wi-towards-sse"
     return [html.H3('Growth Rate'),
             html.P(id='growth-rate',
-                   children="{}%".format(todays_gf)),
-            html.Div(
-            className='change-card',
-            children=[
-                html.Span(className=c_name, children=symbol),
-                html.Span("{}%".format(abs(change_in_gf)))])]
+                   children="{}%".format(round(abs(todays_gf), 2))),
+            html.Div(className='change-card', children=[
+                html.Span(children=[
+                     symbol]),
+                html.Span("{} ".format(round(abs(change_in_gf), 2))),
+                html.Span(html.I(className=class_name)),
+                html.Span(round(abs(change_to_tomorrow), 2))])]
 
 
 def get_dropdown_options():
-    key_values = dict(zip(list(MASTER_PID.index), list(MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0))))
-    return [{'label': key_values[x].replace('US', 'United States'), 'value':x} for x in key_values]
+    sorted_index = list(MASTER_PID.sort_values('confirmed')[:: -1].index)
+    sorted_txt = list(MASTER_PID.sort_values('confirmed')[:: -1]['Text_Confirmed'].str.split('<br>').str.get(0))
+    key_values = dict(zip(sorted_index, sorted_txt))
+    options = [{'label': key_values[x].replace('US', 'United States'), 'value': x} for x in key_values]
+    # print(options)
+    return options
 
 
 def get_dummy_graph(id_):
@@ -324,37 +357,37 @@ def register_callbacks(app):
             zoom = 0.5,
             center = dict(lat=19.75, lon=-34.2)
 
-        if 'country' not in locations_values:
-            plotting_df = plotting_df[~plotting_df['granularity'] == 'country']
-
         if 'province' in locations_values:
-            plotting_df = plotting_df[~plotting_df['granularity'].isin(['state', 'province'])]
-
-        if 'county' in locations_values:
-            plotting_df = plotting_df[~plotting_df['granularity'] == 'county']
-
-        # print(plotting_df)
-        # return get_dummy_map()
+            locations_values.append('state')
+        plotting_df = plotting_df[plotting_df['granularity'].isin(locations_values)]
         return plots.plot_map(plotting_df, metrics_values, zoom, center)
 
     @app.callback(Output('content-readout', 'figure'),
                   [Input('dropdown_container', 'value'),
                    Input('tabs-values', 'value'),
                    Input('log-check', 'value'),
-                   Input('deaths-confirmed', 'value')])
-    def render_tab_content(values, tabs, log, metric):
+                   Input('deaths-confirmed', 'value'),
+                   Input('prediction', 'value')],
+                  [State('content-readout', 'relayoutData')])
+    def render_tab_content(values, tabs, log, metric, predict, graph_state):
+        gs = None
         if log == 'log':
             log = True
         else:
             log = False
+        if graph_state:
+            if 'xaxis.range[0]' in graph_state:
+                gs = graph_state
+        else:
+            gs = None
         if tabs == 'total_cases_graph':
-            return plots.total_confirmed_graph(values, MASTER_ALL, KEY_VALUE, log, metric)
+            return plots.total_confirmed_graph(values, MASTER_ALL, KEY_VALUE, log, metric, predict, gs)
         elif tabs == 'per_day_cases':
-            return plots.per_day_confirmed(values, MASTER_ALL, KEY_VALUE, log, metric)
+            return plots.per_day_confirmed(values, MASTER_ALL, KEY_VALUE, log, metric, predict, gs)
         elif tabs == 'exponential':
-            return plots.plot_exponential(values, MASTER_ALL, KEY_VALUE, log)
+            return plots.plot_exponential(values, MASTER_ALL, KEY_VALUE, log, predict, gs)
         elif tabs == 'gr':
-            return plots.per_gr(values, MASTER_ALL, KEY_VALUE, log, metric)
+            return plots.per_gr(values, MASTER_ALL, KEY_VALUE, log, metric, predict, gs)
 
     @app.callback(Output('table-container', 'children'),
                   [Input('dropdown_container', 'value')])
@@ -364,31 +397,20 @@ def register_callbacks(app):
         forcast_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[-1]
         for value in values:
             # print(value)
-            sort_me = ['Date','Country']
+            sort_me = ['Date', 'Location']
             sub_df = MASTER_ALL.reset_index()
             sub_df = sub_df[sub_df['pid'] == value]
             sub_df = sub_df.set_index('Date')
-            confirmed = sub_df.loc[last_date,'confirmed']
-            deaths = sub_df.loc[last_date,'deaths']
-            confirmed_24 =  sub_df['confirmed'].diff().loc[last_date]
-            deaths_24 =  sub_df['deaths'].diff().loc[last_date]
-            entry = {'Date': last_date.strftime('%D'), 
-                    'Country': sub_df['country'].iloc[0],
-                    'Total Confirmed': int(confirmed),
-                    'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                    'Total Deaths': "+{:,}".format(int(deaths)),
-                    'Deaths 24h': "+{:,}".format(int(deaths_24))}
-            if sub_df['granularity'].iloc[0] == 'province':
-                entry['province'] = sub_df['province'].iloc[0]
-                sort_me.append('Province')
-            if sub_df['granularity'].iloc[0] == 'state':
-                entry['State'] = sub_df['state'].iloc[0]
-                sort_me.append('State')
-            if sub_df['granularity'].iloc[0] == 'county':
-                entry['State'] = sub_df['province'].iloc[0]
-                entry['County'] = sub_df['county'].iloc[0]
-                sort_me.append('State')
-                sort_me.append('County')
+            confirmed = sub_df.loc[last_date, 'confirmed']
+            deaths = sub_df.loc[last_date, 'deaths']
+            confirmed_24 = sub_df['confirmed'].diff().loc[last_date]
+            deaths_24 = sub_df['deaths'].diff().loc[last_date]
+            entry = {'Date': last_date.strftime('%D'),
+                     'Location': sub_df['Text_Confirmed'].str.split('<br>').str.get(0).iloc[0],
+                     'Total Confirmed': int(confirmed),
+                     'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
+                     'Total Deaths': "+{:,}".format(int(deaths)),
+                     'Deaths 24h': "+{:,}".format(int(deaths_24))}
             data_entries.append(entry)
         df = pd.DataFrame(data_entries)
         df = df[sort_me + [i for i in df.columns if i not in sort_me]]
@@ -418,7 +440,6 @@ def register_callbacks(app):
         if int(pid) not in dropdown_selected:
             dropdown_selected.append(int(pid))
         return dropdown_selected
-
 
     @app.callback(Output('map-title', 'children'),
                   [Input('date_slider', 'value')])

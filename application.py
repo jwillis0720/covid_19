@@ -5,7 +5,7 @@ from dash.dependencies import Input, Output, State
 import dash_html_components as html
 import dash_core_components as dcc
 import callbacks
-
+# /
 # to generate the tinyurl:
 
 
@@ -201,8 +201,7 @@ def layout_header(params):
                 children=[
                     html.Div(className='title-div', children=[
                         html.H1(children=[
-                            "COVID-19 ",
-                            html.Span('Infection Dashboard')])]
+                            "COVID-19 Board"])]
                     ),
                     html.Div(className='bottom-div', children=[
                         html.H2(html.A('Jordan R. Willis PhD',
@@ -282,7 +281,7 @@ def layout_app(params):
 
             html.Div(id='map-container', className='container', children=[
                 html.Div(id='map-dials', children=get_map_dials(params)),
-                dcc.Graph(id='map')
+                dcc.Graph(id='map'),
             ])]),
         html.Div(id='right-container', className='container', children=[
             html.H4('Select For Comparisons'),
@@ -294,7 +293,8 @@ def layout_app(params):
                              value=callbacks.get_default_dropdown(),
                              multi=True,
                              style={'position': 'relative',
-                                    'zIndex': '3', 'font-size': '75%'}
+                                    'zIndex': '3', 'font-size': '75%'},
+                             placeholder='Select a location..'
                          )
                      ]),
             html.Div(id='tabs-container',
@@ -311,7 +311,12 @@ def layout_app(params):
                     id='deaths-confirmed',
                     options=[{'label': 'Confirmed', 'value': 'confirmed'},
                              {'label': 'Deaths', 'value': 'deaths'}],
-                    value='confirmed')]),
+                    value='confirmed'),
+                apply_value_from_querystring(params)(dcc.Checklist)(
+                    id='prediction',
+                    options=[{'label': 'Show Predictions', 'value': 'prediction'}],
+                    value=['prediction']
+                )]),
             dcc.Graph(id='content-readout')]),
         html.Div(id='table-container', className='container')
     ])
@@ -337,7 +342,10 @@ component_ids = [
     ('check-locations', 'value'),
     ('check-metrics', 'value'),
     ('dropdown_container', 'value'),
-    ('tabs-values', 'value')
+    ('tabs-values', 'value'),
+    ('log-check', 'value'),
+    ('deaths-confirmed', 'value'),
+    ('prediction', 'value')
 ]
 
 # Turn the list of 4 (id, param) tuples into a list of
@@ -367,23 +375,6 @@ def update_url_state(*values):
     and return a properly formed querystring.
     """
     return encode_state(component_ids_zipped, values)
-
-
-@app.callback(Output('url-container', 'children'),
-              [Input('tiny-url', 'n_clicks')],
-              [State('url', 'href')])
-def return_short(n_clicks, state):
-    """
-    Return a tinyurl whenever the `tinyurl-button` is clicked:
-    """
-    # print(state)
-    if not state or not n_clicks:
-        return ""
-    elif n_clicks > 0 and state:
-        shortener = Shortener()
-        # print(state)
-        # return "Get Link"
-        return shortener.tinyurl.short(state)
 
 
 callbacks.register_callbacks(app)

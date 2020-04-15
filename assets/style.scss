@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,200;0,300;0,400;1,100;1,300;1,400&display=swap');
-$TITLEFONT: "Baloo 2", cursive;
-$FONT: "Montserrat", sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,900;1,400;1,500&display=swap');
+$TITLEFONT: "Fira Sans", cursive;
+// $TITLEFONT: "Baloo 2", cursive;
+$FONT: 'Fira Sans', sans-serif;
+// $FONT: "Montserrat", sans-serif;
 
  $COLORS:(
     primary: #2D3142,
@@ -32,59 +35,14 @@ $FONT: "Montserrat", sans-serif;
   transition: all .6s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+
+// All stuff for the popup window
 ._dash-undo-redo {
     display: none;
   }
-  .modal {
-    display: block; /*Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100vw; /* Full width */
-    height: 100vh; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0); /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-  }
+
   
-  .markdown-container {
-    width: 70vw;
-    margin: 2% auto;
-    padding: 10px 15px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    color: black;
-  }
-  
-  .close-container {
-    display: inline-block;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .markdown-text {
-    padding: 10px 10px;
-    text-align: justify;
-  }
-  
-  .closeButton {
-    padding: 0 15px;
-    font-weight: normal;
-    float: right;
-    font-size:112%;
-    border: 1px black solid;
-    height: 100%;
-  }
-  
-  .closeButton:hover {
-    // color: red !important;
-    background-color: red !important;
-  }
-  .hovertext text {
-    font-size: 75% !important;
-}
+
 
 
 
@@ -172,21 +130,7 @@ body {
 
 }
 
-.button {
-    height: 35px;
-    display: inline-flex;
-    width: 110px;
-    border: 2px solid color(text);
-    margin: 10px 20px 20px 20px;
-    border-radius: 4px;
-    color: color(text);
-    background-color: color(primary);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
+
 
 
 
@@ -198,20 +142,34 @@ body {
             font-size: 150%;
             margin-bottom: 2px;
             color:color(accent);
-            span{
-                display:inline;
-            }
+
         }
         h2{
+            font-size: 100%;
             margin-top: 0;
             margin-bottom: 5px;
-            font-size: 16px;
             a{
               color: color(text);
               font-family: $TITLEFONT;
               text-underline-offset: 2px;
             }
         }
+
+        .button {
+            // height: 35px;
+            display: inline-flex;
+            // width: 110px;
+            border: 2px solid color(text);
+            padding: 5px;                    
+            border-radius: 4px;
+            color: color(text);
+            background-color: color(primary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+          }
 
     }
 
@@ -223,15 +181,11 @@ body {
         justify-content: space-evenly;
         align-items: center;
         flex-wrap: wrap;
-        margin-top: 20px;
-        margin-bottom: 20px;
+        margin: 10px 0px;
         .card{
-            // width: 150px;
-            // height: 130px;
             box-shadow: 0 10px 8px 0 black;
-            transition: 0.3s;
             align-items: center;
-            margin: 5px;
+            padding: 2.5px;                    
             min-width: 155px;
             margin-top: 5px;
             padding: 10px;
@@ -241,18 +195,14 @@ body {
             perspective: 1000;
             color: white;
             h3{
-                margin-top: 4px;
-                // margin-right: 20px;
-                // margin-left: 10px;
-                // margin: 0 10px;
+                margin-top: 1px;
                 border-bottom:1px solid rgba(0,0,0,.125);
                 margin-bottom: 0px;
+                font-weight: lighter;
             }
             p{
-                // padding-top: 10px;
-                font-size: 140%;
-                margin-block-start: 0.5em;
-                margin-bottom: 0;
+                margin: 5px 0;
+                font-size: 125%;
             }
             .change-card{
                 padding: 0;
@@ -331,7 +281,6 @@ body {
     }
 
     #map-container{
-        margin: 10px;
         #map-dials{
             margin-top: 10px;
             display:grid;
@@ -340,7 +289,7 @@ body {
             grid-template-areas:
                 "metrics"
                 "location"
-                    "title";
+                 "title";
             justify-content: center;
             text-align: center;
             #check-metrics{
@@ -356,13 +305,20 @@ body {
 
             #map-title{
                 grid-area: title;
-                margin-top: 10px;
-                margin-bottom: 0px;
+                margin: 10px 0 0 0;
                 font-family: $TITLEFONT;
                 color: color(accent);
             }
 
+
         }
+        #map{
+            .legend {
+                display: none;
+            }
+        
+        }
+        
     }
 
     #right-container{
@@ -372,10 +328,12 @@ body {
         h4{
             margin: 0;
             margin-bottom: 2px;
+            font-size: 80%;
+            font-weight: lighter;
             
         }
         #location-dropdown{
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
 
         .Select-control{
@@ -389,12 +347,12 @@ body {
             border-color: color(primary);
         }
         #tabs-container{
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
 
         .tab--selected{
             border-color:color(accent);
-            border-top-width: 4px;
+            border-top-width: 2px;
             font: $TITLEFONT;
             font-weight: bolder;
         }
@@ -405,7 +363,7 @@ body {
 
         #sub-options{
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1.5fr 1fr;
             grid-template-rows: auto;
             font-size: 60%;
             position: absolute;
@@ -414,24 +372,17 @@ body {
         }
 
         #log-check{
-            justify-self: left;
-            padding-left:20px;
+            justify-self: center;
+            padding-left:5px;
             text-align: center;
             label{
                 padding-right: 5px;
             }
-            // font-size: 60%;
-            // position: absolute;
-            // z-index: 100;
-            // margin-bottom: -20px; 
-            // margin-left:20px;
-            // text-align: left;
-            //;
         }
         #deaths-confirmed{
-            justify-self: left;
+            justify-self: center;
             label{
-                padding-right: 5px;
+                padding-right: 1px;
             }
         }
       
@@ -439,20 +390,79 @@ body {
     #table{
         overflow-x: scroll;
     }
+
+    .plotlyjsicon{  
+        display: none;
+    }
 }
 
-@media only screen and (min-width: 768px){
+.modal {
+    display: block; /*Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100vw; /* Full width */
+    height: 100vh; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+  }
+
+#markdown {
 
     .markdown-container {
-        width: 60vw;
+        width: 95vw;
         margin: 2% auto;
-        padding: 10px 15px;
+        padding: 5px 5px;
         background-color: #f9f9f9;
         border-radius: 10px;
+        color: black;
       }
       
+      .close-container {
+        display: inline-block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .markdown-text {
+        padding: 5px 5px;
+        text-align: justify;
+      }
+      
+      .closeButton {
+        padding: 0 15px;
+        font-weight: normal;
+        float: right;
+        font-size:112%;
+        border: 1px black solid;
+        height: 100%;
+      }
+      
+      .closeButton:hover {
+        // color: red !important;
+        background-color: red !important;
+      }
+
+
+}
+.hovertext text {
+    font-size: 75% !important;
+}
+@media only screen and (min-width: 768px){
+
+    // .markdown-container {
+    //     width: 60vw;
+    //     margin: 2% auto;
+    //     padding: 10px 15px;
+    //     background-color: #f9f9f9;
+    //     border-radius: 10px;
+    //   }
+      
     .container{
-        margin: 10px;
+        margin: 5px;
     }
     #header{
         #description {
@@ -461,11 +471,9 @@ body {
                 font-size: 200%;
             }
             h2{
-                font-size:150%
+                font-size:100%
             }
             .button {
-                height: 45px;
-                width: 120px;
                 border-radius: 4px;
               }
     
@@ -474,17 +482,6 @@ body {
         #counters-container{
             .card{
                 font-size: 120%;
-                // width: 150px;
-                // height: 130px;
-                // h3{
-                //     margin-top: 4px;
-                //     border-bottom:1px solid rgba(0,0,0,.125);
-                // }
-                // p{
-                //     padding-top: 10px;
-                //     font-size: 120%;
-                // }
-               
                 
             }
     
@@ -494,7 +491,7 @@ body {
     #app-container{
     
         #slider-container{
-            // padding-bottom: 25px;
+            padding-bottom: 24px;
             h4{
                 margin-bottom: 10px;
                 
@@ -507,13 +504,15 @@ body {
             .rc-slider-mark-text{
                 display: inline;
                 padding-left: 1px;
+                color: white;
+                font-size: 110%;
             }
     
         }
     
         #map-container{
             #map-dials{
-                font-size: 200%;
+                font-size: 125%;
                 .map-list{
                     padding:15px;
                     input{
@@ -532,7 +531,27 @@ body {
     
             }
         }
-    
+        #right-container{
+            h4{
+                font-size: 120%;
+            }
+
+            #location-dropdown{
+                padding: 0 15px;
+                font-size: 150%;
+                text-align: left;
+
+            }
+            #tabs-container{
+
+                padding: 0 15px;
+
+            }
+            #sub-options{
+                font-size: 125%;
+            }
+        }
+        
   
     
     }
@@ -540,16 +559,34 @@ body {
 
 
 @media only screen and (min-width: 1000px){
+    body{
+        font-size: 120%;
+    }
+    .button {
+        // height: 35px;
+        display: inline-flex;
+        // width: 110px;
+        border: 2px solid color(text);
+        padding: 5px;                    
+        border-radius: 4px;
+        color: color(text);
+        background-color: color(primary);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
 
     #tiny-url{
         display: inline;
         position: fixed;
-        width: auto;
         font-size:67%;
         min-height: 40px;
         min-width: 110px;
-        bottom: -10px;
-        left: -16px;
+        bottom: 5px;
+        left: 5px;
         z-index: 2;
         color: color(accent);
         border-color: color(accent);
@@ -570,7 +607,11 @@ body {
 @media only screen and (min-width: 1224px){
 
     body{
-        font-size:200%;
+        font-size: 125%;
+    }
+
+    .container{
+        margin: 10px;
     }
    
     .mapboxgl-ctrl-logo{
@@ -582,34 +623,25 @@ body {
             h2{
                 font-size:100%;
             }
-            .button {
-                height: 55px;
-                width: 140px;
-            }
-
         }
 
         #counters-container{
             justify-content: space-evenly;
             align-items: center;
-            margin-top: 20px;
-            margin-bottom: 20px;
             .card{
-                // width: 200px;
-                // height: 170px;
-                min-width: 241px;
+                min-width: 198px;
                 box-shadow: 0 10px 8px 0 black;
                 border-radius: 4px;
                 perspective: 1000;
                 h3{
-                    font-size: 80%;
+                    // font-size: 80%;
                     margin: 0 20p;
                 }
                 p{
-                    font-size: 100%;
+                    font-size: 115%;
                 }
                 .change-card{
-                    font-size: 75%;
+                    font-size: 100%;
                 }
 
             
@@ -620,26 +652,27 @@ body {
 
     #app-container{
         #slider-container{
-            // padding-bottom: 25px;
-            h4{
-                font-size: 75%;
-                
-            }
+            padding: 25px;
+            padding-bottom: 45px;
             #date_slider{
                 padding-left: 15px;
                 padding-right: 15px;
             }
     
             .rc-slider-mark-text{
-                padding-left: 5px;
-                font-size: 120%;
+                font-size: 150%;
+                padding: 10px;
             }
     
         }
 
         #map-container{
             #map-dials{
-                font-size: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                // grid-template-rows: auto;
+                grid-template-areas: "metrics title location";
+                font-size: 125%;
                 .map-list{
                     padding:15px;
                     input{
@@ -658,9 +691,6 @@ body {
     
             }
             #map{
-                a{
-
-                }
             }
         }
 
@@ -705,7 +735,7 @@ body {
 
 @media only screen and (min-width: 1550px){
     body{
-        font-size:200%;
+      font-size:200%;
     }
     #root-container{
         height: 100vh;
@@ -719,27 +749,20 @@ body {
             display: block;
             grid-column: 1/2;
             h1{
-                font-size: 150%;
-                margin-block-start: 0.5em;
-                line-height: 1;
-                span{
-                    display: block;
-                }
-                position: relative;
-                
+               font-size: 125%; 
             }
             .bottom-div{
-                display: flex;
-                justify-content: center;
+                // display: flex;
+                // justify-content: center;
             }
 
     
 
             .button {
-                // position: absolute;
-                // top: -5%;
-                height: 35px;
-                width: 120px;
+                // // position: absolute;
+                // // top: -5%;
+                // height: 35px;
+                // width: 120px;
             }
         }
 
@@ -838,6 +861,7 @@ body {
         grid-column: 2/3;
         grid-row: 1/2;
         font-size: 100%;
+        align-self: stretch;
 
         h4{
             font-size: 80%;
@@ -845,6 +869,7 @@ body {
         #location-dropdown{
             margin-top: 5px;
             margin-bottom: 5px;
+            font-size: 80%;
         }
         #dropdown_container{
             font-size: 60%;
@@ -852,16 +877,22 @@ body {
 
         #tabs-container{
             margin-top: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-size: 65%;
         .custom-tab{
             padding: 5px;
         }
+
+
+        }
+        #sub-options{
+            font-size: 60%;
         }
     }
     #table-container{
         grid-column: 1/3;
     }
+
 }
 }
 
