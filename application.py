@@ -33,8 +33,14 @@ def get_meta():
 
     return meta_tags
 
+# external CSS stylesheets
+external_stylesheets = [
+  'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css']
 
-app = dash.Dash(__name__, meta_tags=get_meta())
+
+
+app = dash.Dash(__name__, meta_tags=get_meta(),external_stylesheets=external_stylesheets)
 app.title = "COVID-19 Infection Dashboard"
 
 app.config['suppress_callback_exceptions'] = True
