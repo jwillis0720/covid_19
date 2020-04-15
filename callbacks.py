@@ -450,6 +450,6 @@ def register_callbacks(app):
         if official_date.date() == date.today() - timedelta(days=1):
             return "Yesterday"
         if official_date.date() >= date.today():
-            return "{} Prediciton**".format(official_date.strftime('%B %d, %Y'))
+            return "{}¹".format(official_date.strftime('%B %d, %Y'))
 
         return "{}".format(official_date.strftime('%B %d, %Y'))
