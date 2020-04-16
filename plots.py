@@ -34,7 +34,7 @@ def get_rgb_with_opacity(hex_color, opacity=0.5):
     return 'rgba'+'{}'.format(tuple(list(int(h[i:i+2], 16) for i in (0, 2, 4))+[opacity]))
 
 
-def plot_map(dataframe, metrics, zoom, center):
+def plot_map(dataframe, metrics, zoom, center, relative_check):
     data_traces = []
     if not metrics or dataframe.empty:
         data_traces.append(go.Scattermapbox(
@@ -43,29 +43,45 @@ def plot_map(dataframe, metrics, zoom, center):
         ))
     if 'confirmed' in metrics and not dataframe.empty:
         # First Do Confirmed
-        gb_confirmed = dataframe.groupby('CSize')
+        dataframe = dataframe[dataframe['CSize'] > 0]
+        if relative_check:
+            gb_confirmed = dataframe.groupby('per_capita_CSize')
+
+        else:
+            gb_confirmed = dataframe.groupby('CSize')
 
         # Do this so we can sort them if need be
         for group in gb_confirmed:
             plotting_df = group[1]
-            sizes = plotting_df['confirmed']
-            # This should be so, but okay
-            sizes[sizes < 1] = 1
-            name = "{}-{}".format(get_closest_inerval(int(plotting_df['confirmed'].min()), 'min'),
-                                  get_closest_inerval(int(plotting_df['confirmed'].max()), 'max'))
+            print(group[0])
+            if relative_check:
+                sizes = plotting_df['per_capita_CSize']
+                name = "1 in {} to {}".format(
+                    "{:,}".format(int(1/plotting_df['per_capita_confirmed'].max())),
+                    "{:,}".format(int(1/plotting_df['per_capita_confirmed'].min())))
+                text = plotting_df['Text_Confirmed'].str.split(':').str.get(
+                    0).str.replace('Total Cases', 'Relative Cases') + ": 1 in " + (1/plotting_df['per_capita_confirmed']).replace(
+                        np.inf, 0).astype(int).apply(lambda x: "{:,}".format(x))
+                colors = plotting_df['per_capita_CColor']
+            else:
+                sizes = plotting_df['CSize']
+                name = "{}-{}".format(get_closest_inerval(int(plotting_df['confirmed'].min()), 'min'),
+                                      get_closest_inerval(int(plotting_df['confirmed'].max()), 'max'))
+                text = plotting_df['Text_Confirmed']
+                colors = plotting_df['CColor']
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
                 customdata=plotting_df['PID'],
-                text=plotting_df['Text_Confirmed'],
+                text=text,
                 hoverinfo='text',
                 name=name,
                 mode='markers',
                 marker=dict(
                     opacity=0.85,
                     sizemin=3,
-                    size=plotting_df['CSize'],
-                    color=plotting_df['CColor'],
+                    size=sizes,
+                    color=colors,
                     sizemode='area'
                 )
             )
@@ -73,27 +89,44 @@ def plot_map(dataframe, metrics, zoom, center):
     if 'deaths' in metrics and not dataframe.empty:
         # Second Do Confirmed
         dataframe = dataframe[dataframe['deaths'] > 1]
-        gb_deaths = dataframe.groupby('DSize')
+        if relative_check:
+            gb_deaths = dataframe.groupby('per_capita_DSize')
+
+        else:
+            gb_deaths = dataframe.groupby('DSize')
 
         # Do this so we can sort them if need be
         for group in gb_deaths:
             plotting_df = group[1]
-            # This should be so, but okay
-            name = "{}-{}".format(get_closest_inerval(int(plotting_df['deaths'].min()), 'min'),
-                                  get_closest_inerval(int(plotting_df['deaths'].max()), 'max'))
+            if relative_check:
+                sizes = plotting_df['per_capita_DSize']
+                name = "1 in {} to {}".format(
+                    "{:,}".format(int(1/plotting_df['per_capita_deaths'].max())),
+                    "{:,}".format(int(1/plotting_df['per_capita_deaths'].min())))
+                text = plotting_df['Text_Deaths'].str.split(':').str.get(
+                    0).str.replace('Total Deaths', 'Relative Deaths') + ": 1 in " + (1/plotting_df['per_capita_deaths']).replace(
+                        np.inf, 0).astype(int).apply(lambda x: "{:,}".format(x))
+                colors = plotting_df['per_capita_DColor']
+            else:
+                sizes = plotting_df['DSize']
+                name = "{}-{}".format(get_closest_inerval(int(plotting_df['deaths'].min()), 'min'),
+                                      get_closest_inerval(int(plotting_df['deaths'].max()), 'max'))
+                text = plotting_df['Text_Deaths']
+                colors = plotting_df['DColor']
+
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
                 customdata=plotting_df['PID'],
-                text=plotting_df['Text_Deaths'],
+                text=text,
                 hoverinfo='text',
                 name=name,
                 mode='markers',
                 marker=dict(
                     opacity=0.85,
                     sizemin=3,
-                    size=plotting_df['DSize'],
-                    color=plotting_df['DColor'],
+                    size=sizes,
+                    color=colors,
                     sizemode='area'
                 )
             )

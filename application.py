@@ -234,11 +234,11 @@ def get_map_dials(params):
                                                             labelClassName='map-list',
                                                             options=[{'label': 'Country',
                                                                       'value': 'country'},
-                                                                     {'label': 'Province/State',
+                                                                     {'label': 'State',
                                                                       'value': 'province'},
                                                                      {'label': 'County',
                                                                       'value': 'county'}],
-                                                            value=['country', 'province']),
+                                                            value=['country']),
         html.H3(id="map-title"),
         apply_value_from_querystring(params)(dcc.Checklist)(id='check-metrics',
                                                             labelClassName='map-list',
@@ -294,6 +294,11 @@ def layout_app(params):
             html.Div(id='map-container', className='container', children=[
                 html.Div(id='map-dials', children=get_map_dials(params)),
                 dcc.Graph(id='map'),
+                apply_value_from_querystring(params)(dcc.Checklist)(
+                    id='relative_rate_check',
+                    options=[{'label': 'Show Relative Rate', 'value': 'relative'}],
+                    value=['relative']
+                )
             ])]),
         html.Div(id='right-container', className='container', children=[
             html.H4('Select For Comparisons'),
@@ -357,7 +362,8 @@ component_ids = [
     ('tabs-values', 'value'),
     ('log-check', 'value'),
     ('deaths-confirmed', 'value'),
-    ('prediction', 'value')
+    ('prediction', 'value'),
+    ('relative_rate_check', 'value')
 ]
 
 # Turn the list of 4 (id, param) tuples into a list of

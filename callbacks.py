@@ -46,14 +46,31 @@ def serve_data(ret=False, serve_local=False):
             'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_PID_NEW.pkl', compression='gzip')
         DATE_MAPPER = pd.DataFrame(MASTER_ALL['Date'].unique(), columns=['Date'])
         KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
-            MASTER_PID['location'].str.replace('US','United States'))))
+            MASTER_PID['location'].str.replace('US', 'United States'))))
         KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
         #MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
+        # eventually
+        if 'per_capita_confirmed' not in MASTER_ALL.columns:
+            MASTER_ALL['per_capita_confirmed'] = MASTER_ALL['confirmed']/MASTER_ALL['pop']
+            MASTER_ALL['per_capita_deaths'] = MASTER_ALL['deaths']/MASTER_ALL['pop']
+            max_size = 1500
 
-        # This should be temporary
-        MASTER_ALL['forcast'] = False
-        MASTER_ALL.loc[MASTER_ALL['Date'] > pd.to_datetime(
-            datetime.date.today() - datetime.timedelta(days=1)), 'forcast'] = True
+            bins, ret_bins = pd.qcut(MASTER_ALL[(MASTER_ALL['per_capita_confirmed'] >= 0) & (MASTER_ALL['country'] != 'worldwide')]['per_capita_confirmed'], q=[
+                0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
+            yellows = ["#606056", "#6e6e56", "#7b7c55", "#898a54", "#979953",
+                       "#a5a850", "#b4b74d", "#c3c649", "#d2d643", "#e2e53c"]
+            reds = ["#5a4f4f", "#704d4d", "#854b4a", "#994746", "#ac4340",
+                    "#be3c3a", "#cf3531", "#e02a27", "#f01c19", "#ff0000"]
+            labels = np.geomspace(1, max_size, num=len(ret_bins)-1)
+            MASTER_ALL['per_capita_CSize'] = pd.cut(MASTER_ALL['per_capita_confirmed'],
+                                                    bins=ret_bins, labels=labels).astype(float).fillna(0)
+            MASTER_ALL['per_capita_DSize'] = pd.cut(MASTER_ALL['per_capita_deaths'],
+                                                    bins=ret_bins, labels=labels).astype(float).fillna(0)
+            MASTER_ALL['per_capita_CColor'] = pd.cut(MASTER_ALL['per_capita_confirmed'], bins=ret_bins,
+                                                     labels=yellows[2:]).astype(str).replace({'nan': 'white'})
+            MASTER_ALL['per_capita_DColor'] = pd.cut(MASTER_ALL['per_capita_deaths'], bins=ret_bins,
+                                                     labels=reds[2:]).astype(str).replace({'nan': 'white'})
+
         MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
     if ret:
         return MASTER_ALL, MASTER_PID, DATE_MAPPER, KEY_VALUE
@@ -246,11 +263,14 @@ def register_callbacks(app):
         Output("map", "figure"),
         [Input("date_slider", "value"),
          Input("check-locations", "value"),
-         Input("check-metrics", "value")],
+         Input("check-metrics", "value"),
+         Input('relative_rate_check', 'value')],
         [State("map", 'figure'),
          State("map", "relayoutData")]
     )
-    def render_map(date_value, locations_values, metrics_values, figure, relative_layout):
+    def render_map(date_value, locations_values, metrics_values, relative_check, figure, relative_layout):
+
+        print(relative_check)
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
@@ -273,7 +293,7 @@ def register_callbacks(app):
         if 'province' in locations_values:
             locations_values.append('state')
         plotting_df = plotting_df[plotting_df['granularity'].isin(locations_values)]
-        return plots.plot_map(plotting_df, metrics_values, zoom, center)
+        return plots.plot_map(plotting_df, metrics_values, zoom, center, relative_check)
 
     @app.callback(Output('content-readout', 'figure'),
                   [Input('dropdown_container', 'value'),

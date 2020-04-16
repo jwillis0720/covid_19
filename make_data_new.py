@@ -290,9 +290,9 @@ manual_update = [
         'lat': '43.2437', 'lon': '102.6216', 'pop': 46855},
     {'country': 'United States', 'state': 'Guam', 'county': 'Unknown', 'lat': '13.4443', 'lon': '144.7937', 'pop': 165768},
     {'country': 'United States', 'state': 'Puerto Rico', 'county': 'Unknown',
-        'lat': '18.2208', 'lon': '66.5901', 'pop': 3.194*10**6},
+        'lat': '18.2208', 'lon': '-66.5901', 'pop': 3.194*10**6},
     {'country': 'United States', 'state': 'Virgin Islands',
-        'county': 'Unknown', 'lat': '18.3358', 'lon': '64.8963', 'pop': 106977},
+        'county': 'Unknown', 'lat': '18.3358', 'lon': '-64.8963', 'pop': 106977},
     {'country': 'United States', 'state': 'Northern Mariana Islands',
         'county': 'Unknown', 'lat': '15.0979', 'lon': '145.6739', 'pop': 56882}
 ]
@@ -324,11 +324,11 @@ key = ['country', 'state', 'county']
 manual_update = [
     {'country': 'United States', 'state': 'Guam', 'county': '', 'lat': '13.4443', 'lon': '144.7937', 'pop': 165768},
     {'country': 'United States', 'state': 'Puerto Rico', 'county': '',
-        'lat': '18.2208', 'lon': '66.5901', 'pop': 3.194*10**6},
-    {'country': 'United States', 'state': 'Virgin Islands', 'county': '', 'lat': '18.3358', 'lon': '64.8963', 'pop': 106977},
+        'lat': '18.2208', 'lon': '-66.5901', 'pop': 3.194*10**6},
+    {'country': 'United States', 'state': 'Virgin Islands', 'county': '', 'lat': '18.3358', 'lon': '-64.8963', 'pop': 106977},
     {'country': 'United States', 'state': 'Northern Mariana Islands',
         'county': '', 'lat': '15.0979', 'lon': '145.6739', 'pop': 56882},
-    {'country': 'United States', 'state': 'American Samoa', 'county': '', 'lat': '14.2710', 'lon': '170.1322', 'pop': 55465}
+    {'country': 'United States', 'state': 'American Samoa', 'county': '', 'lat': '-14.2710', 'lon': '-170.1322', 'pop': 55465}
 ]
 
 merged_states_update = merged_states.set_index(key)
@@ -385,6 +385,28 @@ MASTER_ALL['CColor'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins,
                               labels=yellows).astype(str).replace({'nan': 'white'})
 MASTER_ALL['DColor'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins,
                               labels=reds).astype(str).replace({'nan': 'white'})
+
+
+MASTER_ALL['per_capita_confirmed'] = MASTER_ALL['confirmed']/MASTER_ALL['pop']
+MASTER_ALL['per_capita_deaths'] = MASTER_ALL['deaths']/MASTER_ALL['pop']
+max_size = 1500
+
+bins, ret_bins = pd.qcut(MASTER_ALL[(MASTER_ALL['per_capita_confirmed'] >= 0) & (MASTER_ALL['country'] != 'worldwide')]['per_capita_confirmed'], q=[
+    0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
+yellows = ["#606056", "#6e6e56", "#7b7c55", "#898a54", "#979953",
+           "#a5a850", "#b4b74d", "#c3c649", "#d2d643", "#e2e53c"]
+reds = ["#5a4f4f", "#704d4d", "#854b4a", "#994746", "#ac4340",
+        "#be3c3a", "#cf3531", "#e02a27", "#f01c19", "#ff0000"]
+labels = np.geomspace(1, max_size, num=len(ret_bins)-1)
+MASTER_ALL['per_capita_CSize'] = pd.cut(MASTER_ALL['per_capita_confirmed'],
+                                        bins=ret_bins, labels=labels).astype(float).fillna(0)
+MASTER_ALL['per_capita_DSize'] = pd.cut(MASTER_ALL['per_capita_deaths'],
+                                        bins=ret_bins, labels=labels).astype(float).fillna(0)
+MASTER_ALL['per_capita_CColor'] = pd.cut(MASTER_ALL['per_capita_confirmed'], bins=ret_bins,
+                                         labels=yellows[2:]).astype(str).replace({'nan': 'white'})
+MASTER_ALL['per_capita_DColor'] = pd.cut(MASTER_ALL['per_capita_deaths'], bins=ret_bins,
+                                         labels=reds[2:]).astype(str).replace({'nan': 'white'})
+
 print('writing')
 MASTER_ALL.to_pickle('Data/MASTER_ALL_NEW.pkl', compression='gzip')
 MASTER_PID.to_pickle('Data/MASTER_PID_NEW.pkl', compression='gzip')
