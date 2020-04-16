@@ -287,7 +287,7 @@ def layout_app(params):
                            min=callbacks.get_min_date(),
                            max=callbacks.get_max_date(),
                            step=1,
-                           value=callbacks.get_max_date()-7,
+                           value=callbacks.get_max_date()-14,
                            marks=callbacks.get_date_marks()
                        )]),
 

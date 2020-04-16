@@ -46,7 +46,7 @@ def serve_data(ret=False, serve_local=False):
             'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_PID_NEW.pkl', compression='gzip')
         DATE_MAPPER = pd.DataFrame(MASTER_ALL['Date'].unique(), columns=['Date'])
         KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
-            MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0))))  # .str.replace('US', 'United States'))))
+            MASTER_PID['location'].str.replace('US','United States'))))
         KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
         #MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
 
