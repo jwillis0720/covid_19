@@ -273,6 +273,7 @@ merged_counties = merged_counties[['Date', 'country', 'state', 'county', 'Latitu
 merged_counties['granularity'] = 'county'
 merged_counties['location'] = merged_counties['county'] + ", " + merged_counties['state']
 # Manual Update!!!
+key = ['country', 'state', 'county']
 updater = merged_counties.loc[(merged_counties['lat'].isna()) & (merged_counties['county'] == 'Unknown')][key].drop_duplicates().merge(state_info, left_on='state', right_on='State')[
     key+['Latitude', 'Longitude', 'Population(2010)']].rename({'Longitude': 'lon', 'Latitude': 'lat', 'Population(2010)': 'pop'}, axis=1)
 manual_update = [
@@ -319,6 +320,7 @@ merged_states['granularity'] = 'state'
 merged_states['location'] = merged_states['state'] + ", " + merged_states['country']
 
 # manual updater
+key = ['country', 'state', 'county']
 manual_update = [
     {'country': 'United States', 'state': 'Guam', 'county': '', 'lat': '13.4443', 'lon': '144.7937', 'pop': 165768},
     {'country': 'United States', 'state': 'Puerto Rico', 'county': '',
