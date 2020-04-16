@@ -272,6 +272,29 @@ merged_counties = merged_counties[['Date', 'country', 'state', 'county', 'Latitu
     {'Latitude': 'lat', 'Longitude': 'lon', 'Population(2010)': 'pop'}, axis=1)
 merged_counties['granularity'] = 'county'
 merged_counties['location'] = merged_counties['county'] + ", " + merged_counties['state']
+# Manual Update!!!
+updater = merged_counties.loc[(merged_counties['lat'].isna()) & (merged_counties['county'] == 'Unknown')][key].drop_duplicates().merge(state_info, left_on='state', right_on='State')[
+    key+['Latitude', 'Longitude', 'Population(2010)']].rename({'Longitude': 'lon', 'Latitude': 'lat', 'Population(2010)': 'pop'}, axis=1)
+manual_update = [
+    {'country': 'United States', 'state': 'New York', 'county': 'New York City',
+        'lat': '40.6976637', 'lon': '-74.1197639', 'pop': 8.399*10**6},
+    {'country': 'United States', 'state': 'Missouri', 'county': 'Kansas City',
+        'lat': '39.0921167', 'lon': '-94.8555', 'pop': 491918},
+    {'country': 'United States', 'state': 'South Dakota', 'county': 'Oglala Lakota',
+        'lat': '43.2437', 'lon': '102.6216', 'pop': 46855},
+    {'country': 'United States', 'state': 'Guam', 'county': 'Unknown', 'lat': '13.4443', 'lon': '144.7937', 'pop': 165768},
+    {'country': 'United States', 'state': 'Puerto Rico', 'county': 'Unknown',
+        'lat': '18.2208', 'lon': '66.5901', 'pop': 3.194*10**6},
+    {'country': 'United States', 'state': 'Virgin Islands',
+        'county': 'Unknown', 'lat': '18.3358', 'lon': '64.8963', 'pop': 106977},
+    {'country': 'United States', 'state': 'Northern Mariana Islands',
+        'county': 'Unknown', 'lat': '15.0979', 'lon': '145.6739', 'pop': 56882}
+]
+updater = updater.append(manual_update, ignore_index=True).set_index(key)
+merged_counties_update = merged_counties.set_index(key)
+
+merged_counties_update.update(updater)
+merged_counties = merged_counties_update.reset_index()
 
 
 # STATE
@@ -294,7 +317,25 @@ merged_states = merged_states[['Date', 'country', 'state', 'county', 'Latitude',
     {'Latitude': 'lat', 'Longitude': 'lon', 'Population(2010)': 'pop'}, axis=1)
 merged_states['granularity'] = 'state'
 merged_states['location'] = merged_states['state'] + ", " + merged_states['country']
+
+# manual updater
+manual_update = [
+    {'country': 'United States', 'state': 'Guam', 'county': '', 'lat': '13.4443', 'lon': '144.7937', 'pop': 165768},
+    {'country': 'United States', 'state': 'Puerto Rico', 'county': '',
+        'lat': '18.2208', 'lon': '66.5901', 'pop': 3.194*10**6},
+    {'country': 'United States', 'state': 'Virgin Islands', 'county': '', 'lat': '18.3358', 'lon': '64.8963', 'pop': 106977},
+    {'country': 'United States', 'state': 'Northern Mariana Islands',
+        'county': '', 'lat': '15.0979', 'lon': '145.6739', 'pop': 56882},
+    {'country': 'United States', 'state': 'American Samoa', 'county': '', 'lat': '14.2710', 'lon': '170.1322', 'pop': 55465}
+]
+
+merged_states_update = merged_states.set_index(key)
+merged_states_update.update(pandas.DataFrame(manual_update).set_index(key))
+merged_states = merged_states_update.reset_index()
+
 MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
+
+sys.exit()
 
 # Remove later
 gb = MASTER_ALL.groupby(
