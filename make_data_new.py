@@ -218,6 +218,8 @@ def run_prediction(sub_df):
     location = sub_df[['country', 'state', 'county', 'granularity']].agg(','.join, axis=1).iloc[0]
     print('Running Location', location)
     prediction_df = predict(sub_df, 14)
+    sub_df['forcast'] = False
+    prediction_df['forcast'] = True
     return pd.concat([sub_df, prediction_df]).ffill().fillna(0)
 
 
@@ -295,13 +297,9 @@ merged_states['location'] = merged_states['state'] + ", " + merged_states['count
 MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
 
 gb = MASTER_ALL.groupby(['country', 'state', 'county', 'granularity'])
-
-if sys.argv[1:][0] == '--skip':
-    MASTER_ALL['forcast'] = False
-else:
-    print("Running PREDICTIONSgi")
-    pool = multiprocessing.Pool()
-    MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
+print("Running PREDICTIONSgi")
+pool = multiprocessing.Pool()
+MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb][0]))
 
 world_df = MASTER_ALL[MASTER_ALL['granularity'] == 'country'].groupby('Date', as_index=False).sum()
 world_df['country'] = 'worldwide'
