@@ -83,6 +83,30 @@ states_lookups = {
 }
 
 
+def upload_file(file_name, bucket, object_name=None):
+    """Upload a file to an S3 bucket
+
+    :param file_name: File to upload
+    :param bucket: Bucket to upload to
+    :param object_name: S3 object name. If not specified then file_name is used
+    :return: True if file was uploaded, else False
+    """
+
+    # If S3 object_name was not specified, use file_name
+    if object_name is None:
+        object_name = file_name
+
+    # Upload the file
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.upload_file(
+            file_name, bucket, object_name,  ExtraArgs={'ACL': 'public-read'})
+    except ClientError as e:
+        logging.error(e)
+        return False
+    return True
+
+
 def predict(sub_df, days):
     sub_df['forcast'] = False
     base_date = sub_df.sort_values('Date')['Date'].iloc[-1]
@@ -273,7 +297,7 @@ MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
 gb = MASTER_ALL.groupby(['country', 'state', 'county', 'granularity'])
 
 if sys.argv[1:][0] == '--skip':
-    MASTER_ALL['forcast'] == False
+    MASTER_ALL['forcast'] = False
 else:
     print("Running PREDICTIONSgi")
     pool = multiprocessing.Pool()
@@ -318,12 +342,14 @@ MASTER_ALL['CColor'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins,
                               labels=yellows).astype(str).replace({'nan': 'white'})
 MASTER_ALL['DColor'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins,
                               labels=reds).astype(str).replace({'nan': 'white'})
-DATE_MAPPER = pd.DataFrame(MASTER_ALL.index.get_level_values('Date').unique())
-
-KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
-    MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
-KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
-
 print('writing')
-MASTER_ALL.to_pickle('MASTER_ALL_tmp.pkl', compression='gzip')
-MASTER_PID.to_pickle('MASTER_PID_tmp.pkl', compression='gzip')
+MASTER_ALL.to_pickle('Data/MASTER_ALL_NEW.pkl', compression='gzip')
+MASTER_PID.to_pickle('Data/MASTER_PID_NEW.pkl', compression='gzip')
+
+print('Syncing Data')
+ea = ExtraArgs = {'ACL': 'public-read'}
+gs = [i for i in (glob.glob('Data/*.pkl') + glob.glob('Data/*.csv.gz')) if 'Archive' not in i]
+for file in gs:
+    upload_file(file, 'jordansdatabucket', os.path.join(
+        'covid19data', os.path.basename(file)))
+    print("Uploaded " + os.path.basename(file))
