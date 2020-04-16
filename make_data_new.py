@@ -198,6 +198,7 @@ def run_prediction(sub_df):
 
 
 # COUNTRY
+print('getting country')
 jhu_time = parse_timeline_date_api_json(COVID19Py.COVID19(data_source="jhu").getAll(timelines=True), 'JHU')
 
 JHU_DF_AGG_COUNTRY = jhu_time.sort_values('confirmed')[::-1].groupby(['Date', 'country']).agg(
@@ -221,8 +222,10 @@ merge_country['county'] = ''
 merge_country = merge_country[['Date', 'country', 'state', 'county', 'lat', 'lon',
                                'pop_est', 'confirmed', 'deaths', 'country_code']].rename({'pop_est': 'pop'}, axis=1)
 merge_country['granularity'] = 'country'
+merge_country['location'] = merge_country['country']
 
 # COUNTY
+print('getting county')
 # Get some county info from Jack Parmer
 county_info = pd.read_csv('https://raw.githubusercontent.com/jackparmer/mapbox-counties/master/lat_lon_counties.csv',
                           index_col=0, parse_dates=True, thousands=',')
@@ -242,9 +245,12 @@ merged_counties['country'] = 'United States'
 merged_counties = merged_counties[['Date', 'country', 'state', 'county', 'Latitude', 'Longitude', 'Population(2010)', 'confirmed', 'deaths', 'FIPS']].rename(
     {'Latitude': 'lat', 'Longitude': 'lon', 'Population(2010)': 'pop'}, axis=1)
 merged_counties['granularity'] = 'county'
+merged_counties['location'] = merged_counties['county'] + ", " + merged_counties['state']
+
 
 # STATE
 # Here is the NY state info
+print('getting states')
 # Get state info from county by grouping by
 state_info = county_info.groupby('State').agg({'Latitude': 'mean', 'Longitude': 'mean', 'Population(2010)': 'sum',
                                                'LandAreami2': 'sum', 'WaterAreami2': 'sum', 'TotalAreami2': 'sum'}).reset_index()
@@ -261,12 +267,63 @@ merged_states['country'] = 'United States'
 merged_states = merged_states[['Date', 'country', 'state', 'county', 'Latitude', 'Longitude', 'Population(2010)', 'confirmed', 'deaths', 'FIPS']].rename(
     {'Latitude': 'lat', 'Longitude': 'lon', 'Population(2010)': 'pop'}, axis=1)
 merged_states['granularity'] = 'state'
-
+merged_states['location'] = merged_states['state'] + ", " + merged_states['country']
 MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
 
 gb = MASTER_ALL.groupby(['country', 'state', 'county', 'granularity'])
 
-print("Running PREDICTIONS")
-pool = multiprocessing.Pool()
-MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
-MASTER_ALL.to_pickle('test_new.pkl', compression='gzip')
+if sys.argv[1:][0] == '--skip':
+    MASTER_ALL['forcast'] == False
+else:
+    print("Running PREDICTIONSgi")
+    pool = multiprocessing.Pool()
+    MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
+
+world_df = MASTER_ALL[MASTER_ALL['granularity'] == 'country'].groupby('Date', as_index=False).sum()
+world_df['country'] = 'worldwide'
+world_df['granularity'] = 'country'
+world_df['location'] = 'Worldwide'
+MASTER_ALL = MASTER_ALL.append(world_df)
+
+# Add confirmed text
+MASTER_ALL['Text_Confirmed'] = MASTER_ALL['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + MASTER_ALL['location'] + "<br> Total Cases: " + MASTER_ALL['confirmed'].apply(
+    lambda x: "{:,}".format(int(x)))
+MASTER_ALL['Text_Deaths'] = MASTER_ALL['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + MASTER_ALL['location'] + "<br> Total Deaths: " + MASTER_ALL['deaths'].apply(
+    lambda x: "{:,}".format(int(x)))
+
+# Make MASTER PID
+key = ['country', 'state', 'county', 'granularity']
+MASTER_PID = MASTER_ALL.loc[MASTER_ALL['forcast'] == False].groupby(['country', 'state', 'county', 'granularity']).tail(
+    1).reset_index(drop=True).reset_index().rename({'index': 'PID'}, axis=1)
+MASTER_ALL = MASTER_ALL.merge(MASTER_PID[['PID', 'country', 'state', 'county', 'granularity']], on=[
+                              'country', 'state', 'county', 'granularity'])
+
+# Housekeeping
+MASTER_ALL.loc[MASTER_ALL['confirmed'] < 0, 'confirmed'] = 0.0
+MASTER_ALL.loc[MASTER_ALL['deaths'] < 0, 'deaths'] = 0.0
+
+# Add sizing and color
+max_size = 1500
+
+bins, ret_bins = pd.qcut(MASTER_ALL[(MASTER_ALL['confirmed'] >= 1) & (MASTER_ALL['country'] != 'worldwide')]['confirmed'], q=[
+    0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
+yellows = ["#606056", "#6e6e56", "#7b7c55", "#898a54", "#979953",
+           "#a5a850", "#b4b74d", "#c3c649", "#d2d643", "#e2e53c"]
+reds = ["#5a4f4f", "#704d4d", "#854b4a", "#994746", "#ac4340",
+        "#be3c3a", "#cf3531", "#e02a27", "#f01c19", "#ff0000"]
+labels = np.geomspace(1, max_size, num=len(ret_bins)-1)
+MASTER_ALL['CSize'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
+MASTER_ALL['DSize'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
+MASTER_ALL['CColor'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins,
+                              labels=yellows).astype(str).replace({'nan': 'white'})
+MASTER_ALL['DColor'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins,
+                              labels=reds).astype(str).replace({'nan': 'white'})
+DATE_MAPPER = pd.DataFrame(MASTER_ALL.index.get_level_values('Date').unique())
+
+KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
+    MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
+KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
+
+print('writing')
+MASTER_ALL.to_pickle('MASTER_ALL_tmp.pkl', compression='gzip')
+MASTER_PID.to_pickle('MASTER_PID_tmp.pkl', compression='gzip')
