@@ -56,7 +56,7 @@ def plot_map(dataframe, metrics, zoom, center):
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
-                customdata=plotting_df['pid'],
+                customdata=plotting_df['PID'],
                 text=plotting_df['Text_Confirmed'],
                 hoverinfo='text',
                 name=name,
@@ -84,7 +84,7 @@ def plot_map(dataframe, metrics, zoom, center):
             data = go.Scattermapbox(
                 lon=plotting_df['lon'],
                 lat=plotting_df['lat'],
-                customdata=plotting_df['pid'],
+                customdata=plotting_df['PID'],
                 text=plotting_df['Text_Deaths'],
                 hoverinfo='text',
                 name=name,
