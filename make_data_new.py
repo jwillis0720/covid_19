@@ -257,6 +257,11 @@ county_info = pd.read_csv('https://raw.githubusercontent.com/jackparmer/mapbox-c
                           index_col=0, parse_dates=True, thousands=',')
 county_info.columns = [i.strip() for i in county_info.columns]
 county_info['WaterAreami2'] = county_info['WaterAreami2'].str.replace(',', '').str.replace('-', '0.0').astype(float)
+# Get state info from county by grouping by
+state_info = county_info.groupby('State').agg({'Latitude': 'mean', 'Longitude': 'mean', 'Population(2010)': 'sum',
+                                               'LandAreami2': 'sum', 'WaterAreami2': 'sum', 'TotalAreami2': 'sum'}).reset_index()
+state_info['State'] = state_info['State'].apply(lambda x: states_lookups[x])
+
 
 # Here is the NY conent with FIPS but nothing else
 ny_times_counties = pd.read_csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv', parse_dates=['date']).rename(
@@ -301,11 +306,6 @@ merged_counties = merged_counties_update.reset_index()
 # STATE
 # Here is the NY state info
 print('getting states')
-# Get state info from county by grouping by
-state_info = county_info.groupby('State').agg({'Latitude': 'mean', 'Longitude': 'mean', 'Population(2010)': 'sum',
-                                               'LandAreami2': 'sum', 'WaterAreami2': 'sum', 'TotalAreami2': 'sum'}).reset_index()
-state_info['State'] = state_info['State'].apply(lambda x: states_lookups[x])
-
 ny_times_states = pd.read_csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv', parse_dates=['date']).rename(
     {'date': 'Date', 'cases': 'confirmed', 'fips': 'FIPS'}, axis=1).fillna(0)
 ny_times_states = backfill_new_counties(ny_times_states, ['state'])
@@ -336,8 +336,6 @@ merged_states_update.update(pandas.DataFrame(manual_update).set_index(key))
 merged_states = merged_states_update.reset_index()
 
 MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
-
-sys.exit()
 
 # Remove later
 gb = MASTER_ALL.groupby(
