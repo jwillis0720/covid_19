@@ -299,7 +299,7 @@ MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
 gb = MASTER_ALL.groupby(['country', 'state', 'county', 'granularity'])
 print("Running PREDICTIONSgi")
 pool = multiprocessing.Pool()
-MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb][0]))
+MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 
 world_df = MASTER_ALL[MASTER_ALL['granularity'] == 'country'].groupby('Date', as_index=False).sum()
 world_df['country'] = 'worldwide'
