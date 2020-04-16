@@ -301,6 +301,8 @@ print("Running PREDICTIONSgi")
 pool = multiprocessing.Pool()
 MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 
+# Where is forcast going?
+MASTER_ALL.to_pickle('test_df.pkl', compression='gzip')
 world_df = MASTER_ALL[MASTER_ALL['granularity'] == 'country'].groupby('Date', as_index=False).sum()
 world_df['country'] = 'worldwide'
 world_df['granularity'] = 'country'
