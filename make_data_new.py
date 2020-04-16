@@ -297,15 +297,15 @@ merged_states['location'] = merged_states['state'] + ", " + merged_states['count
 MASTER_ALL = pd.concat([merge_country, merged_states, merged_counties])
 
 # Remove later
-gb = MASTER_ALL[MASTER_ALL['granularity'].isin(['country', 'state'])].groupby(
+gb = MASTER_ALL.groupby(
     ['country', 'state', 'county', 'granularity'])
-print("Running PREDICTIONSgi")
+print("Running PREDICTIONS")
 pool = multiprocessing.Pool()
 MASTER_ALL = pd.concat(pool.map(run_prediction, [i[1] for i in gb]))
 
 # Where is forcast going?
-MASTER_ALL.to_pickle('test_df.pkl', compression='gzip')
-world_df = MASTER_ALL[MASTER_ALL['granularity'] == 'country'].groupby('Date', as_index=False).sum()
+# MASTER_ALL.to_pickle('test_df.pkl', compression='gzip')
+world_df = MASTER_ALL[MASTER_ALL['granularity'] == 'country'].groupby(['Date', 'forcast'], as_index=False).sum()
 world_df['country'] = 'worldwide'
 world_df['granularity'] = 'country'
 world_df['location'] = 'Worldwide'
