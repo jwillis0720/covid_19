@@ -5,8 +5,14 @@ from dash.dependencies import Input, Output, State
 import dash_html_components as html
 import dash_core_components as dcc
 import callbacks
+import warnings
+import pandas as pd
 # /
 # to generate the tinyurl:
+
+# Cancel copy warnings of pandas
+warnings.filterwarnings(
+    "ignore", category=pd.core.common.SettingWithCopyWarning)
 
 
 def get_meta():
@@ -33,14 +39,14 @@ def get_meta():
 
     return meta_tags
 
+
 # external CSS stylesheets
 external_stylesheets = [
-  'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css']
+    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css']
 
 
-
-app = dash.Dash(__name__, meta_tags=get_meta(),external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, meta_tags=get_meta(), external_stylesheets=external_stylesheets)
 app.title = "COVID-19 Infection Dashboard"
 
 app.config['suppress_callback_exceptions'] = True

@@ -36,116 +36,22 @@ def serve_data(ret=False, serve_local=False):
     if serve_local:
         MASTER_ALL = pd.read_pickle('Data/MASTER_ALL.pkl', compression='gzip')
         MASTER_PID = pd.read_pickle('Data/MASTER_PID.pkl', compression='gzip')
+
+    else:
+        print('Grabbing from S3')
+        MASTER_ALL = pd.read_pickle(
+            'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_ALL.pkl', compression='gzip')
+        MASTER_PID = pd.read_pickle(
+            'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_PID.pkl', compression='gzip')
         DATE_MAPPER = pd.DataFrame(MASTER_ALL.index.get_level_values('Date').unique())
         KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
             MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
         KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
 
-        if ret:
-            return MASTER_ALL, MASTER_PID, DATE_MAPPER
-        else:
-            return
-
-    # COUNTRY
-    JHU_DF_AGG_COUNTRY = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/JHU_DF_AGG_COUNTRY.csv.gz', index_col=0, parse_dates=['Date'])
-    JHU_DF_AGG_COUNTRY['granularity'] = 'country'
-    JHU_DF_AGG_COUNTRY['Text_Confirmed'] = JHU_DF_AGG_COUNTRY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_COUNTRY['country'] + "<br> Total Cases: " + JHU_DF_AGG_COUNTRY['confirmed'].apply(
-        lambda x: "{:,}".format(int(x)))
-    JHU_DF_AGG_COUNTRY['Text_Deaths'] = JHU_DF_AGG_COUNTRY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_COUNTRY['country'] + "<br> Total Deaths: " + JHU_DF_AGG_COUNTRY['deaths'].apply(
-        lambda x: "{:,}".format(int(x)))
-
-    # Province
-    JHU_DF_AGG_PROVINCE = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/JHU_DF_AGG_PROVINCE.csv.gz', index_col=0, parse_dates=['Date'])
-    JHU_DF_AGG_PROVINCE['granularity'] = 'province'
-    JHU_DF_AGG_PROVINCE['Text_Confirmed'] = JHU_DF_AGG_PROVINCE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_PROVINCE['province'] + ", " + JHU_DF_AGG_PROVINCE['country'] + "<br> Total Cases: " + JHU_DF_AGG_PROVINCE['confirmed'].apply(
-        lambda x: "{:,}".format(int(x)))
-    JHU_DF_AGG_PROVINCE['Text_Deaths'] = JHU_DF_AGG_PROVINCE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + JHU_DF_AGG_PROVINCE['province'] + ", " + JHU_DF_AGG_PROVINCE['country'] + "<br> Total Deaths: " + JHU_DF_AGG_PROVINCE['deaths'].apply(
-        lambda x: "{:,}".format(int(x)))
-
-    # State
-    CSBS_DF_AGG_STATE = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/CSBS_DF_AGG_STATE.csv.gz', index_col=0, parse_dates=['Date'])
-    # CSBS_DF_AGG_STATE.rename({'state':'province'},axis=1 ,inplace=True)
-    CSBS_DF_AGG_STATE['granularity'] = 'state'
-    CSBS_DF_AGG_STATE['Text_Confirmed'] = CSBS_DF_AGG_STATE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_STATE['state'] + ", " + CSBS_DF_AGG_STATE['country'] + "<br> Total Cases: " + CSBS_DF_AGG_STATE['confirmed'].apply(
-        lambda x: "{:,}".format(int(x)))
-    CSBS_DF_AGG_STATE['Text_Deaths'] = CSBS_DF_AGG_STATE['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_STATE['state'] + ", " + CSBS_DF_AGG_STATE['country'] + "<br> Total Deaths: " + CSBS_DF_AGG_STATE['deaths'].apply(
-        lambda x: "{:,}".format(int(x)))
-
-    # County
-    CSBS_DF_AGG_COUNTY = pd.read_csv(
-        'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/CSBS_DF_AGG_COUNTY.csv.gz', index_col=0, parse_dates=['Date'])
-    CSBS_DF_AGG_COUNTY['granularity'] = 'county'
-    CSBS_DF_AGG_COUNTY['Text_Confirmed'] = CSBS_DF_AGG_COUNTY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_COUNTY['county'] + ", " + CSBS_DF_AGG_COUNTY['province'] + "<br> Total Cases: " + CSBS_DF_AGG_COUNTY['confirmed'].apply(
-        lambda x: "{:,}".format(int(x)))
-    CSBS_DF_AGG_COUNTY['Text_Deaths'] = CSBS_DF_AGG_COUNTY['forcast'].apply(lambda x: "" if not x else "**Predicted**<br>") + CSBS_DF_AGG_COUNTY['county'] + ", " + CSBS_DF_AGG_COUNTY['province'] + "<br> Total Deaths: " + CSBS_DF_AGG_COUNTY['deaths'].apply(
-        lambda x: "{:,}".format(int(x)))
-
-    # Master df has all our entries with
-    master_df = pd.concat([JHU_DF_AGG_COUNTRY, JHU_DF_AGG_PROVINCE, CSBS_DF_AGG_STATE, CSBS_DF_AGG_COUNTY])
-
-    columns = ['Date', 'country', 'province', 'state', 'county', 'granularity']
-    master_df = master_df[columns+[i for i in master_df.columns if i not in columns]
-                          ].reset_index(drop=True).fillna('N/A')
-
-    worldwide_df = master_df[master_df['granularity'] == 'country'].groupby(['Date', 'forcast']).sum().reset_index()
-    worldwide_df['country'] = 'worldwide'
-    worldwide_df['Text_Confirmed'] = 'Worldwide <br>'
-    master_df = master_df.append(worldwide_df).reset_index(drop=True)
-    # For latest date, the dataframes we merged each have a different last reported date (CSBS is faster than JHU), so we have to groupby and ask the minmal date from each gruop
-    latest_date = master_df[master_df['forcast'] == False].groupby('granularity').tail(1)['Date'].min()
-
-    # Master_latest has all our entries in it and thus should be used by everything.
-    master_latest = master_df[master_df['Date'] == latest_date].reset_index(drop=True)
-
-    pid = ['country', 'province', 'state', 'county', 'granularity']
-    assert(len(master_latest) == len(master_df[master_df['Date'] == latest_date].groupby(pid)))
-
-    # Now join the master df with the pID number from the latest
-    master_pid = master_latest.reset_index().set_index(pid).rename({'index': 'pid'}, axis=1)
-    master_df = master_df.set_index(pid).join(master_pid['pid']).reset_index().set_index(['pid', 'Date']).sort_index()
-
-    # Finally, set the pid back as the index
-    master_latest = master_pid.reset_index().set_index('pid')
-
-    # Master Latest has all the entries at the latest non forcast date. The index is the pID
-    # Master DF has all the entries with all dates. The index is the pID and Date
-    MASTER_PID = master_latest
-    MASTER_ALL = master_df
-
-    # Those predictions which are less than 0
-    MASTER_ALL.loc[MASTER_ALL['confirmed'] < 0, 'confirmed'] = 0.0
-    MASTER_ALL.loc[MASTER_ALL['deaths'] < 0, 'deaths'] = 0.0
-
-    max_size = 1500
-
-    bins, ret_bins = pd.qcut(MASTER_ALL[(MASTER_ALL['confirmed'] >= 1) & (MASTER_ALL['country'] != 'worldwide')]['confirmed'], q=[
-        0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
-    yellows = ["#606056", "#6e6e56", "#7b7c55", "#898a54", "#979953",
-               "#a5a850", "#b4b74d", "#c3c649", "#d2d643", "#e2e53c"]
-    reds = ["#5a4f4f", "#704d4d", "#854b4a", "#994746", "#ac4340",
-            "#be3c3a", "#cf3531", "#e02a27", "#f01c19", "#ff0000"]
-    labels = np.geomspace(1, max_size, num=len(ret_bins)-1)
-    MASTER_ALL['CSize'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    MASTER_ALL['DSize'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins, labels=labels).astype(float).fillna(0)
-    MASTER_ALL['CColor'] = pd.cut(MASTER_ALL['confirmed'], bins=ret_bins,
-                                  labels=yellows).astype(str).replace({'nan': 'white'})
-    MASTER_ALL['DColor'] = pd.cut(MASTER_ALL['deaths'], bins=ret_bins,
-                                  labels=reds).astype(str).replace({'nan': 'white'})
-    DATE_MAPPER = pd.DataFrame(MASTER_ALL.index.get_level_values('Date').unique())
-
-    KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
-        MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0).str.replace('US', 'United States'))))
-    KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
-
-    if serve_local:
-        MASTER_ALL.to_pickle('Data/MASTER_ALL.pkl', compression='gzip')
-        MASTER_PID.to_pickle('Data/MASTER_PID.pkl', compression='gzip')
-
     if ret:
-        return MASTER_ALL, MASTER_PID, DATE_MAPPER
+        return MASTER_ALL, MASTER_PID, DATE_MAPPER, KEY_VALUE
+    else:
+        return
 
 
 def get_default_dropdown():
