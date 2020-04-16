@@ -8,6 +8,7 @@ import plots
 import dash_table
 from datetime import date, timedelta
 import ast
+import datetime
 import numpy as np
 from dash.dependencies import Input, Output, State
 from pprint import pprint
@@ -43,11 +44,17 @@ def serve_data(ret=False, serve_local=False):
             'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_ALL_NEW.pkl', compression='gzip')
         MASTER_PID = pd.read_pickle(
             'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_PID_NEW.pkl', compression='gzip')
-        DATE_MAPPER = pd.DataFrame(MASTER_ALL['Date'].unique())
+        DATE_MAPPER = pd.DataFrame(MASTER_ALL['Date'].unique(), columns=['Date'])
         KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
-            MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0))))#.str.replace('US', 'United States'))))
+            MASTER_PID['Text_Confirmed'].str.split('<br>').str.get(0))))  # .str.replace('US', 'United States'))))
         KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
+        #MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
 
+        # This should be temporary
+        MASTER_ALL['forcast'] = False
+        MASTER_ALL.loc[MASTER_ALL['Date'] > pd.to_datetime(
+            datetime.date.today() - datetime.timedelta(days=1)), 'forcast'] = True
+        MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
     if ret:
         return MASTER_ALL, MASTER_PID, DATE_MAPPER, KEY_VALUE
     else:
@@ -244,11 +251,10 @@ def register_callbacks(app):
          State("map", "relayoutData")]
     )
     def render_map(date_value, locations_values, metrics_values, figure, relative_layout):
-        # return get_dummy_map()
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
-
+        print(official_date)
         plotting_df = MASTER_ALL.reset_index()[MASTER_ALL.reset_index()['Date'] == official_date]
         plotting_df = plotting_df[plotting_df['country'] != 'worldwide']
 
@@ -306,7 +312,7 @@ def register_callbacks(app):
             # print(value)
             sort_me = ['Date', 'Location']
             sub_df = MASTER_ALL.reset_index()
-            sub_df = sub_df[sub_df['pid'] == value]
+            sub_df = sub_df[sub_df['PID'] == value]
             sub_df = sub_df.set_index('Date')
             confirmed = sub_df.loc[last_date, 'confirmed']
             deaths = sub_df.loc[last_date, 'deaths']

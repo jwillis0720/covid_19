@@ -129,7 +129,6 @@ def plot_map(dataframe, metrics, zoom, center):
 
 
 def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
-
     data_traces = []
     MASTER_DF = MASTER_DF.reset_index()
     forcast_date = MASTER_DF.groupby('forcast').tail(1)['Date'].iloc[0]
@@ -150,7 +149,7 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
         color_rgba = get_rgb_with_opacity(color_, opacity=0.2)
-        sub_df = MASTER_DF[MASTER_DF['pid'] == item]
+        sub_df = MASTER_DF[MASTER_DF['PID'] == item]
         sub_df = sub_df.set_index('Date')
         name = KEY_VALUE.loc[item, 'name']
         if metric == 'confirmed':
@@ -330,8 +329,8 @@ def per_day_confirmed(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
     forcast_date = MASTER_DF.reset_index().groupby('forcast').tail(1)['Date'].iloc[0]
     start_date = MASTER_DF.reset_index()['Date'].iloc[0]
     end_date = MASTER_DF.reset_index()['Date'].iloc[-1]
-    sorted_values = list(MASTER_DF[(MASTER_DF['pid'].isin(values)) & (
-        MASTER_DF['Date'] == end_date)].sort_values('confirmed')[::-1]['pid'])
+    sorted_values = list(MASTER_DF[(MASTER_DF['PID'].isin(values)) & (
+        MASTER_DF['Date'] == end_date)].sort_values('confirmed')[::-1]['PID'])
 
     x_axis_range = 'auto'
     y_axis_range = 'auto'
@@ -354,7 +353,7 @@ def per_day_confirmed(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
     for enum_, item in enumerate(sorted_values):
         color_ = colors[enum_]
         color_rgba = get_rgb_with_opacity(color_, opacity=0.2)
-        sub_df = MASTER_DF[MASTER_DF['pid'] == item].reset_index()
+        sub_df = MASTER_DF[MASTER_DF['PID'] == item].reset_index()
         sub_df = sub_df.set_index('Date')[['confirmed', 'deaths']].diff().fillna(0)
         name = KEY_VALUE.loc[item, 'name']
         if metric == 'confirmed':
@@ -480,7 +479,7 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
 
     for enum_, item in enumerate(values):
         name = KEY_VALUE.loc[item, 'name']
-        full_report = MASTER_DF[MASTER_DF['pid'] == item].set_index(['Date', 'forcast'])[['confirmed', 'deaths']]
+        full_report = MASTER_DF[MASTER_DF['PID'] == item].set_index(['Date', 'forcast'])[['confirmed', 'deaths']]
         per_day = full_report.diff()
         plottable = full_report.join(
             per_day, lsuffix='_cum', rsuffix='_diff')
@@ -696,7 +695,7 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
         y_axis_range = ['auto', 'auto']
     for enum_, item in enumerate(values):
         color_ = colors[enum_]
-        sub_df = MASTER_DF[MASTER_DF['pid'] == item]
+        sub_df = MASTER_DF[MASTER_DF['PID'] == item]
         sub_df = sub_df.set_index('Date')
         xs = sub_df[sub_df['forcast'] == False].index
         xs_predict = sub_df[sub_df['forcast'] == True].index
