@@ -283,14 +283,14 @@ def get_table_tabs_container(params):
             dcc.Tab(label='Confirmed Cases',
                     className='custom-tab',
                     selected_className='custom-tab--selected',
-                    value='confirmed_cases_tab'),
-            dcc.Tab(label='Cases Per Day',
+                    value='conf-tab'),
+            dcc.Tab(label='Confirmed Deaths',
                     className='custom-tab',
                     selected_className='custom-tab--selected',
-                    value='daths_tab'),
+                    value='deaths_tab'),
 
         ],
-        value='confimed_cases_tab'
+        value='conf-tab'
     )
 
 
@@ -355,7 +355,7 @@ def layout_app(params):
             dcc.Graph(id='content-readout')]),
         html.Div(id='table-container', className='container', children=[
             get_table_tabs_container(params),
-            html.Div(id='table')])
+            html.Div(id='table-div')])
     ])
 
 
@@ -383,7 +383,8 @@ component_ids = [
     ('log-check', 'value'),
     ('deaths-confirmed', 'value'),
     ('prediction', 'value'),
-    ('relative_rate_check', 'value')
+    ('relative_rate_check', 'value'),
+    ('tabs-table-values', 'value')
 ]
 
 # Turn the list of 4 (id, param) tuples into a list of

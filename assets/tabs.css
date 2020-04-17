@@ -1,0 +1,75 @@
+.custom-tab {
+  width: 40%;
+  padding: 10px !important;
+  margin: 10px 0 5px 0 !important;
+  border-radius: 20px;
+  font-size: 100% !important;
+  color: white !important;
+  background-color: #4F5D75 !important;
+  border: 2px solid white !important;
+}
+
+.custom-tab--selected {
+  border-color: #EF8354 !important;
+  border-width: 3px !important;
+  color: #EF8354 !important;
+  font-weight: bolder !important;
+}
+
+#tabs-container {
+  margin-bottom: 5px;
+}
+
+#tabs-container #tabs-values {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  -ms-flex-pack: distribute;
+      justify-content: space-around;
+}
+
+#table-container #table-div {
+  background-color: #4f5d75;
+  border: 3px solid #ef8354;
+  padding: 5px;
+  overflow: scroll;
+}
+
+#table-container .tabs-container {
+  width: 50%;
+  font-size: 100%;
+  display: inline;
+}
+
+#table-container .custom-tab {
+  border-bottom-right-radius: 0;
+  width: 100%;
+  font-size: 100%;
+  border-bottom-left-radius: 0;
+  margin-bottom: 0px !important;
+  border-bottom: none !important;
+  margin-right: 10px !important;
+  z-index: 2;
+}
+
+#table-container .custom-tab--selected {
+  margin-bottom: -3px !important;
+}
+
+@media only screen and (min-width: 768px) {
+  .custom-tab {
+    font-size: 80% !important;
+    width: 23% !important;
+  }
+}
+
+@media only screen and (min-width: 1200px) {
+  .custom-tab {
+    font-size: 60% !important;
+    width: 23% !important;
+  }
+}
+/*# sourceMappingURL=tabs.css.map */

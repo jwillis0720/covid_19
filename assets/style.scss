@@ -9,7 +9,7 @@ $FONT: 'Fira Sans', sans-serif;
     primary: #2D3142,
     secondary:  #4F5D75,
     tertiary: #4A6572,
-    text: #BFC0C0,
+    text: rgb(255, 255, 255),
     accent: #EF8354
 );
 
@@ -351,6 +351,9 @@ body {
         #location-dropdown{
             margin-bottom: 5px;
         }
+        #dropdown_container{
+            font-size: 100% !important;
+        }
 
         .Select-control{
             background-color: color(text);
@@ -370,35 +373,6 @@ body {
             border-right-color: color(primary);
         }
 
-        #tabs-container{
-            // display: flex;
-            // flex-direction: row;
-            // flex-wrap: wrap;
-            margin-bottom: 5px;
-
-   
-            #tabs-values{
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            .custom-tab{
-               width:40%;
-               padding: 10px;
-               margin: 10px 0 5px 0;
-               border-radius: 20px;
-               color:color(text);
-               background-color: color(secondary);
-               border: 2px solid color(text);
-            }
-
-            .custom-tab--selected{
-                border-color: color(accent);
-                border-width: 3px;
-                color: color(accent);
-                font-weight: bolder;
-            }
-
-        }
 
 
 
@@ -438,7 +412,7 @@ body {
     .plotlyjsicon{  
         display: none;
     }
-}
+
 
 .modal {
     display: block; /*Hidden by default */
@@ -577,31 +551,7 @@ body {
         }
         #right-container{
 
-            #tabs-container{
-                #tabs-values{
-                    .custom-tab{
-                        width:23%;
-                        padding: 10px;
-                        margin: 10px 0 5px 0;
-                        border-radius: 20px;
-                        color:color(text);
-                        background-color: color(secondary);
-                        border: 2px solid color(text);
-                    }
-                     .custom-tab--selected{
-                            border-color: color(accent);
-                            border-width: 3px;
-                            color: color(accent);
-                            font-weight: bolder;
-                        }
 
-
-
-                    }
-
-
-    
-            }
 
             h4{
                 font-size: 120%;
@@ -952,9 +902,9 @@ body {
             //  }
         }
 
-        #tabs-container{
-            font-size:50%
-        }
+        // #tabs-container{
+        //     font-size:50%
+        // }
 
     
         #sub-options{

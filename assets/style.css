@@ -94,7 +94,7 @@
 body {
   background-color: #4F5D75;
   margin: 0;
-  color: #BFC0C0;
+  color: white;
   font-size: 16px;
   font-family: "Fira Sans", sans-serif;
   height: 100vh;
@@ -143,7 +143,7 @@ body {
 }
 
 #header #description h2 a {
-  color: #BFC0C0;
+  color: white;
   font-family: "Fira Sans", cursive;
   text-underline-offset: 2px;
 }
@@ -152,10 +152,10 @@ body {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;
   display: inline-flex;
-  border: 2px solid #BFC0C0;
+  border: 2px solid white;
   padding: 5px;
   border-radius: 4px;
-  color: #BFC0C0;
+  color: white;
   background-color: #2D3142;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -357,8 +357,12 @@ body {
   margin-bottom: 5px;
 }
 
+#app-container #right-container #dropdown_container {
+  font-size: 100% !important;
+}
+
 #app-container #right-container .Select-control {
-  background-color: #BFC0C0;
+  background-color: white;
   z-index: 3;
 }
 
@@ -368,46 +372,14 @@ body {
   vertical-align: middle;
   font-size: 100%;
   border-radius: 10px;
-  border: 2px solid #BFC0C0;
+  border: 2px solid white;
 }
 
 #app-container #right-container .Select--multi .Select-value-icon {
   border-right-color: #2D3142;
 }
 
-#app-container #right-container #tabs-container {
-  margin-bottom: 5px;
-}
-
-#app-container #right-container #tabs-container #tabs-values {
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
-      -ms-flex-direction: row;
-          flex-direction: row;
-  -ms-flex-wrap: wrap;
-      flex-wrap: wrap;
-  -ms-flex-pack: distribute;
-      justify-content: space-around;
-}
-
-#app-container #right-container #tabs-container #tabs-values .custom-tab {
-  width: 40%;
-  padding: 10px;
-  margin: 10px 0 5px 0;
-  border-radius: 20px;
-  color: #BFC0C0;
-  background-color: #4F5D75;
-  border: 2px solid #BFC0C0;
-}
-
-#app-container #right-container #tabs-container #tabs-values .custom-tab--selected {
-  border-color: #EF8354;
-  border-width: 3px;
-  color: #EF8354;
-  font-weight: bolder;
-}
-
-#app-container #right-container #sub-options {
+#app-container #sub-options {
   display: -ms-grid;
   display: grid;
   -ms-grid-columns: 1fr 1.5fr 1fr;
@@ -421,31 +393,31 @@ body {
           transform: translateY(25px);
 }
 
-#app-container #right-container #log-check {
+#app-container #log-check {
   -ms-grid-column-align: center;
       justify-self: center;
   padding-left: 5px;
   text-align: center;
 }
 
-#app-container #right-container #log-check label {
+#app-container #log-check label {
   padding-right: 5px;
 }
 
-#app-container #right-container #deaths-confirmed {
+#app-container #deaths-confirmed {
   -ms-grid-column-align: center;
       justify-self: center;
 }
 
-#app-container #right-container #deaths-confirmed label {
+#app-container #deaths-confirmed label {
   padding-right: 1px;
 }
 
-#app-container #table {
+#table {
   overflow-x: scroll;
 }
 
-#app-container .plotlyjsicon {
+.plotlyjsicon {
   display: none;
 }
 
@@ -560,21 +532,6 @@ body {
     margin: 10px;
     margin-bottom: 0;
   }
-  #app-container #right-container #tabs-container #tabs-values .custom-tab {
-    width: 23%;
-    padding: 10px;
-    margin: 10px 0 5px 0;
-    border-radius: 20px;
-    color: #BFC0C0;
-    background-color: #4F5D75;
-    border: 2px solid #BFC0C0;
-  }
-  #app-container #right-container #tabs-container #tabs-values .custom-tab--selected {
-    border-color: #EF8354;
-    border-width: 3px;
-    color: #EF8354;
-    font-weight: bolder;
-  }
   #app-container #right-container h4 {
     font-size: 120%;
   }
@@ -595,10 +552,10 @@ body {
     display: -webkit-inline-box;
     display: -ms-inline-flexbox;
     display: inline-flex;
-    border: 2px solid #BFC0C0;
+    border: 2px solid white;
     padding: 5px;
     border-radius: 4px;
-    color: #BFC0C0;
+    color: white;
     background-color: #2D3142;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -900,11 +857,8 @@ body {
   }
   #app-container #right-container #location-dropdown .Select-control {
     font-size: 80%;
-    border: 2px solid #BFC0C0;
+    border: 2px solid white;
     padding: 5px 0;
-  }
-  #app-container #right-container #tabs-container {
-    font-size: 50%;
   }
   #app-container #right-container #sub-options {
     font-size: 60%;

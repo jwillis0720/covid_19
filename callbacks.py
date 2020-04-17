@@ -48,7 +48,7 @@ def serve_data(ret=False, serve_local=False):
         KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
             MASTER_PID['location'].str.replace('US', 'United States'))))
         KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
-        #MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
+        # MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
         # eventually
         if 'per_capita_confirmed' not in MASTER_ALL.columns:
             MASTER_ALL['per_capita_confirmed'] = MASTER_ALL['confirmed']/MASTER_ALL['pop']
@@ -324,13 +324,12 @@ def register_callbacks(app):
         elif tabs == 'gr':
             return plots.per_gr(values, MASTER_ALL, KEY_VALUE, log, metric, predict, gs)
 
-    @app.callback(Output('table', 'children'),
+    @app.callback(Output('table-div', 'children'),
                   [Input('dropdown_container', 'value'),
                    Input('tabs-table-values', 'value')])
     def render_table(values, tab):
-        print(tab)
-        return ""
         data_entries = []
+        # print(tab, tab.strip() == 'deaths_tab')
         last_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[0]
         forcast_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[-1]
         for value in values:
@@ -339,36 +338,45 @@ def register_callbacks(app):
             sub_df = MASTER_ALL.reset_index()
             sub_df = sub_df[sub_df['PID'] == value]
             sub_df = sub_df.set_index('Date')
-            confirmed = sub_df.loc[last_date, 'confirmed']
-            deaths = sub_df.loc[last_date, 'deaths']
-            confirmed_24 = sub_df['confirmed'].diff().loc[last_date]
-            deaths_24 = sub_df['deaths'].diff().loc[last_date]
-            realtive_risk = int(1/sub_df.loc[last_date, 'per_capita_confirmed'])
-            realtive_deaths = int(1/sub_df.loc[last_date, 'per_capita_deaths'])
             entry = {'Date': last_date.strftime('%D'),
-                     'Location': sub_df['Text_Confirmed'].str.split('<br>').str.get(0).iloc[0],
-                     'Total Confirmed': int(confirmed),
-                     'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
-                     'Total Deaths': "+{:,}".format(int(deaths)),
-                     'Deaths 24h': "+{:,}".format(int(deaths_24)),
-                     'Relative Confirmed Cases': "1 in {:,}".format(realtive_risk),
-                     'Relative Deaths': "1 in {:,}".format(realtive_deaths),
-                     }
+                     'Location': sub_df['Text_Confirmed'].str.split('<br>').str.get(0).iloc[0]}
+            if tab != 'deaths_tab':
+                metric = 'confirmed'
+            else:
+                metric = 'deaths'
+
+            confirmed = sub_df.loc[last_date, metric]
+            confirmed_24 = sub_df[metric].diff().loc[last_date]
+            confirmed_tomorrow = sub_df[metric].diff().loc[last_date+timedelta(days=1)]
+            confirmed_seven_days = sub_df[metric].diff().loc[last_date:last_date+timedelta(days=7)].sum()
+            growth_rate = sub_df[metric].pct_change().loc[last_date]
+            growth_rate_seven = sub_df[metric].pct_change().loc[last_date+timedelta(days=7)]
+            realtive_risk = int(1/sub_df.loc[last_date, 'per_capita_{}'.format(metric)])
+            entry['Confirmed'] = int(confirmed)
+            entry['New'] = "+{:,}".format(int(confirmed_24))
+            entry['+1 Day'] = "+{:,}".format(int(confirmed_tomorrow))
+            entry['+7 Days'] = "+{:,}".format(int(confirmed_seven_days))
+            entry['Relative'] = "1 in {:,}".format(realtive_risk)
+            entry['Growth Rate'] = "{}%".format(round(growth_rate*100, 2))
+            entry['+7 Days GR'] = "{}%".format(round(round(growth_rate_seven*100,
+                                                           2) - round(growth_rate*100, 2), 2))
 
             data_entries.append(entry)
         df = pd.DataFrame(data_entries)
         df = df[sort_me + [i for i in df.columns if i not in sort_me]]
         df = df.fillna('-')
-        df = df.sort_values('Total Confirmed')[::-1]
-        df['Total Confirmed'] = df.apply(lambda x: "{:,}".format(x['Total Confirmed']), axis=1)
-        return dash_table.DataTable(id='table',
+        df = df.sort_values('Confirmed')[::-1]
+        df['Confirmed'] = df.apply(lambda x: "{:,}".format(x['Confirmed']), axis=1)
+        return dash_table.DataTable(id='dash-table',
                                     columns=[{'name': i, 'id': i}
                                              for i in df.columns],
                                     style_header={
-                                        'backgroundColor': 'rgb(30, 30, 30)',
+                                        'backgroundColor': "#2D3142",
                                         'color': 'white'},
                                     style_cell={
-                                        'color': 'black'},
+                                        'backgroundColor': "#4F5D75",
+                                        'color': 'white',
+                                        'font-family': 'Fira Sans'},
                                     style_as_list_view=True,
                                     data=df.to_dict('records'))
 

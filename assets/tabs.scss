@@ -1,0 +1,89 @@
+$COLORS:(
+    primary: #2D3142,
+    secondary:  #4F5D75,
+    tertiary: #4A6572,
+    text: rgb(255, 255, 255),
+    accent: #EF8354
+);
+
+@function color($color-name){
+    @return map-get($COLORS, $color-name)
+}
+
+
+.custom-tab{
+    width:40% ;
+    padding: 10px !important;
+    margin: 10px 0 5px 0 !important;
+    border-radius: 20px;
+    font-size: 100% !important;
+    color:color(text) !important;
+    background-color: color(secondary) !important;
+    border: 2px solid color(text) !important ;
+ }
+
+
+ .custom-tab--selected{
+    border-color: color(accent) !important ;
+    border-width: 3px !important;
+    color: color(accent) !important;
+    font-weight: bolder !important;
+}
+
+#tabs-container{
+    margin-bottom: 5px;
+    #tabs-values{
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+}
+
+#table-container{
+
+    #table-div{
+        background-color: #4f5d75;
+        border: 3px solid #ef8354;
+        padding: 5px;
+        overflow: scroll;
+    }
+    .tabs-container{
+        width: 50%;
+        font-size: 100%;
+        display: inline;
+    }
+
+    .custom-tab{
+        border-bottom-right-radius: 0;
+        width: 100%;
+        font-size: 100% ;
+        border-bottom-left-radius: 0;
+        margin-bottom: 0px !important;
+        border-bottom: none !important;
+        margin-right: 10px !important;
+        z-index: 2;
+     }
+
+     .custom-tab--selected{
+        margin-bottom: -3px !important;
+ 
+     }
+}
+
+@media only screen and (min-width: 768px){
+   
+        .custom-tab{
+            font-size: 80% !important;
+            width:23% !important;
+
+        }
+ }
+
+ @media only screen and (min-width: 1200px){
+    .custom-tab{
+        font-size: 60% !important;
+        width:23% !important;
+
+    }
+ }
+
