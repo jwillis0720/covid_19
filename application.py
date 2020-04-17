@@ -276,6 +276,24 @@ def get_tabs_container(params):
         value='total_cases_graph')
 
 
+def get_table_tabs_container(params):
+    return apply_value_from_querystring(params)(dcc.Tabs)(
+        id='tabs-table-values', parent_className='tabs-container', className='custom-tabs',
+        children=[
+            dcc.Tab(label='Confirmed Cases',
+                    className='custom-tab',
+                    selected_className='custom-tab--selected',
+                    value='confirmed_cases_tab'),
+            dcc.Tab(label='Cases Per Day',
+                    className='custom-tab',
+                    selected_className='custom-tab--selected',
+                    value='daths_tab'),
+
+        ],
+        value='confimed_cases_tab'
+    )
+
+
 def layout_app(params):
     return html.Div(id='app-container', className='app-container', children=[
         html.Div(id='left-container', className='left-container', children=[
@@ -335,7 +353,9 @@ def layout_app(params):
                     value=['prediction']
                 )]),
             dcc.Graph(id='content-readout')]),
-        html.Div(id='table-container', className='container')
+        html.Div(id='table-container', className='container', children=[
+            get_table_tabs_container(params),
+            html.Div(id='table')])
     ])
 
 

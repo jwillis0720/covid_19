@@ -70,6 +70,8 @@ def serve_data(ret=False, serve_local=False):
                                                      labels=yellows[2:]).astype(str).replace({'nan': 'white'})
             MASTER_ALL['per_capita_DColor'] = pd.cut(MASTER_ALL['per_capita_deaths'], bins=ret_bins,
                                                      labels=reds[2:]).astype(str).replace({'nan': 'white'})
+        else:
+            print('we have the columns bro')
 
         MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
     if ret:
@@ -322,9 +324,12 @@ def register_callbacks(app):
         elif tabs == 'gr':
             return plots.per_gr(values, MASTER_ALL, KEY_VALUE, log, metric, predict, gs)
 
-    @app.callback(Output('table-container', 'children'),
-                  [Input('dropdown_container', 'value')])
-    def render_table(values):
+    @app.callback(Output('table', 'children'),
+                  [Input('dropdown_container', 'value'),
+                   Input('tabs-table-values', 'value')])
+    def render_table(values, tab):
+        print(tab)
+        return ""
         data_entries = []
         last_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[0]
         forcast_date = MASTER_ALL.reset_index().groupby('forcast').tail(1)['Date'].iloc[-1]
@@ -338,12 +343,18 @@ def register_callbacks(app):
             deaths = sub_df.loc[last_date, 'deaths']
             confirmed_24 = sub_df['confirmed'].diff().loc[last_date]
             deaths_24 = sub_df['deaths'].diff().loc[last_date]
+            realtive_risk = int(1/sub_df.loc[last_date, 'per_capita_confirmed'])
+            realtive_deaths = int(1/sub_df.loc[last_date, 'per_capita_deaths'])
             entry = {'Date': last_date.strftime('%D'),
                      'Location': sub_df['Text_Confirmed'].str.split('<br>').str.get(0).iloc[0],
                      'Total Confirmed': int(confirmed),
                      'Confirmed 24h': "+{:,}".format(int(confirmed_24)),
                      'Total Deaths': "+{:,}".format(int(deaths)),
-                     'Deaths 24h': "+{:,}".format(int(deaths_24))}
+                     'Deaths 24h': "+{:,}".format(int(deaths_24)),
+                     'Relative Confirmed Cases': "1 in {:,}".format(realtive_risk),
+                     'Relative Deaths': "1 in {:,}".format(realtive_deaths),
+                     }
+
             data_entries.append(entry)
         df = pd.DataFrame(data_entries)
         df = df[sort_me + [i for i in df.columns if i not in sort_me]]

@@ -4,6 +4,10 @@
   display: none;
 }
 
+.mapboxgl-control-container {
+  display: none;
+}
+
 /* The snackbar - position it at the bottom and in the middle of the screen */
 #snackbar {
   visibility: hidden;
@@ -283,6 +287,10 @@ body {
   border: 3px solid #EF8354 !important;
 }
 
+#app-container #map-container {
+  position: relative;
+}
+
 #app-container #map-container #map-dials {
   margin-top: 10px;
   display: -ms-grid;
@@ -324,6 +332,15 @@ body {
   display: none;
 }
 
+#app-container #map-container #relative_rate_check {
+  position: absolute;
+  right: 2%;
+  bottom: 4%;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 5px;
+}
+
 #app-container #right-container {
   padding: 10px;
   text-align: center;
@@ -348,22 +365,46 @@ body {
 #app-container #right-container .Select-value {
   color: #EF8354;
   background-color: #4F5D75;
-  border-color: #2D3142;
+  vertical-align: middle;
+  font-size: 100%;
+  border-radius: 10px;
+  border: 2px solid #BFC0C0;
+}
+
+#app-container #right-container .Select--multi .Select-value-icon {
+  border-right-color: #2D3142;
 }
 
 #app-container #right-container #tabs-container {
   margin-bottom: 5px;
 }
 
-#app-container #right-container .tab--selected {
-  border-color: #EF8354;
-  border-top-width: 2px;
-  font: "Fira Sans", cursive;
-  font-weight: bolder;
+#app-container #right-container #tabs-container #tabs-values {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  -ms-flex-pack: distribute;
+      justify-content: space-around;
 }
 
-#app-container #right-container .tab-custom-tab {
-  background-color: #BFC0C0;
+#app-container #right-container #tabs-container #tabs-values .custom-tab {
+  width: 40%;
+  padding: 10px;
+  margin: 10px 0 5px 0;
+  border-radius: 20px;
+  color: #BFC0C0;
+  background-color: #4F5D75;
+  border: 2px solid #BFC0C0;
+}
+
+#app-container #right-container #tabs-container #tabs-values .custom-tab--selected {
+  border-color: #EF8354;
+  border-width: 3px;
+  color: #EF8354;
+  font-weight: bolder;
 }
 
 #app-container #right-container #sub-options {
@@ -519,16 +560,27 @@ body {
     margin: 10px;
     margin-bottom: 0;
   }
+  #app-container #right-container #tabs-container #tabs-values .custom-tab {
+    width: 23%;
+    padding: 10px;
+    margin: 10px 0 5px 0;
+    border-radius: 20px;
+    color: #BFC0C0;
+    background-color: #4F5D75;
+    border: 2px solid #BFC0C0;
+  }
+  #app-container #right-container #tabs-container #tabs-values .custom-tab--selected {
+    border-color: #EF8354;
+    border-width: 3px;
+    color: #EF8354;
+    font-weight: bolder;
+  }
   #app-container #right-container h4 {
     font-size: 120%;
   }
   #app-container #right-container #location-dropdown {
-    padding: 0 15px;
     font-size: 150%;
-    text-align: left;
-  }
-  #app-container #right-container #tabs-container {
-    padding: 0 15px;
+    text-align: center;
   }
   #app-container #right-container #sub-options {
     font-size: 125%;
@@ -560,6 +612,9 @@ body {
   }
   #app-container #map-container #map .legend {
     display: block;
+  }
+  #app-container #location-dropdown {
+    padding: 0 10px;
   }
   #tiny-url {
     display: inline;
@@ -671,21 +726,12 @@ body {
     margin: 20px;
   }
   #app-container #right-container .Select-control {
-    background-color: #BFC0C0;
+    background-color: #2D3142;
   }
   #app-container #right-container .Select-value {
     color: #EF8354;
     background-color: #4F5D75;
     border-color: #2D3142;
-  }
-  #app-container #right-container #tabs-container {
-    margin: 20px;
-  }
-  #app-container #right-container .tab--selected {
-    border-top-width: 10px;
-  }
-  #app-container #right-container .custom-tab {
-    font-size: 80%;
   }
 }
 
@@ -848,20 +894,17 @@ body {
     font-size: 80%;
   }
   #app-container #right-container #location-dropdown {
-    margin-top: 5px;
-    margin-bottom: 5px;
-    font-size: 80%;
+    font-size: 100%;
+    margin: 0;
+    padding: 8px;
   }
-  #app-container #right-container #dropdown_container {
-    font-size: 60%;
+  #app-container #right-container #location-dropdown .Select-control {
+    font-size: 80%;
+    border: 2px solid #BFC0C0;
+    padding: 5px 0;
   }
   #app-container #right-container #tabs-container {
-    margin-top: 10px;
-    margin-bottom: 30px;
-    font-size: 65%;
-  }
-  #app-container #right-container #tabs-container .custom-tab {
-    padding: 5px;
+    font-size: 50%;
   }
   #app-container #right-container #sub-options {
     font-size: 60%;
