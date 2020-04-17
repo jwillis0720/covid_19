@@ -17,6 +17,7 @@ $FONT: 'Fira Sans', sans-serif;
     @return map-get($COLORS, $color-name)
 }
 
+
 @function longshadow($color_a,$color_b,$stepnum, $opacity: 1){
 	$gradient_steps: null;
 	@for $i from 1 through $stepnum {
@@ -47,6 +48,9 @@ $FONT: 'Fira Sans', sans-serif;
 }
 
 
+input#dropdown_container{
+    color: white;
+}
 
 /* The snackbar - position it at the bottom and in the middle of the screen */
 #snackbar {

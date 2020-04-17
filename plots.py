@@ -363,7 +363,7 @@ def per_day_confirmed(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
     start_date = MASTER_DF.reset_index()['Date'].iloc[0]
     end_date = MASTER_DF.reset_index()['Date'].iloc[-1]
     sorted_values = list(MASTER_DF[(MASTER_DF['PID'].isin(values)) & (
-        MASTER_DF['Date'] == end_date)].sort_values('confirmed')[::-1]['PID'])
+        MASTER_DF['Date'] == forcast_date)].sort_values('confirmed')[::-1]['PID'])
 
     x_axis_range = 'auto'
     y_axis_range = 'auto'

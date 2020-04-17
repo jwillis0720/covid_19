@@ -8,6 +8,10 @@
   display: none;
 }
 
+input#dropdown_container {
+  color: white;
+}
+
 /* The snackbar - position it at the bottom and in the middle of the screen */
 #snackbar {
   visibility: hidden;
