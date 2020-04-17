@@ -50,28 +50,6 @@ def serve_data(ret=False, serve_local=False):
         KEY_VALUE = pd.DataFrame(list(KEY_VALUE.values()), index=KEY_VALUE.keys(), columns=['name'])
         # MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
         # eventually
-        if 'per_capita_confirmed' not in MASTER_ALL.columns:
-            MASTER_ALL['per_capita_confirmed'] = MASTER_ALL['confirmed']/MASTER_ALL['pop']
-            MASTER_ALL['per_capita_deaths'] = MASTER_ALL['deaths']/MASTER_ALL['pop']
-            max_size = 1500
-
-            bins, ret_bins = pd.qcut(MASTER_ALL[(MASTER_ALL['per_capita_confirmed'] >= 0) & (MASTER_ALL['country'] != 'worldwide')]['per_capita_confirmed'], q=[
-                0, .5, 0.6, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95, 0.999, 1], duplicates='drop', retbins=True)
-            yellows = ["#606056", "#6e6e56", "#7b7c55", "#898a54", "#979953",
-                       "#a5a850", "#b4b74d", "#c3c649", "#d2d643", "#e2e53c"]
-            reds = ["#5a4f4f", "#704d4d", "#854b4a", "#994746", "#ac4340",
-                    "#be3c3a", "#cf3531", "#e02a27", "#f01c19", "#ff0000"]
-            labels = np.geomspace(1, max_size, num=len(ret_bins)-1)
-            MASTER_ALL['per_capita_CSize'] = pd.cut(MASTER_ALL['per_capita_confirmed'],
-                                                    bins=ret_bins, labels=labels).astype(float).fillna(0)
-            MASTER_ALL['per_capita_DSize'] = pd.cut(MASTER_ALL['per_capita_deaths'],
-                                                    bins=ret_bins, labels=labels).astype(float).fillna(0)
-            MASTER_ALL['per_capita_CColor'] = pd.cut(MASTER_ALL['per_capita_confirmed'], bins=ret_bins,
-                                                     labels=yellows[2:]).astype(str).replace({'nan': 'white'})
-            MASTER_ALL['per_capita_DColor'] = pd.cut(MASTER_ALL['per_capita_deaths'], bins=ret_bins,
-                                                     labels=reds[2:]).astype(str).replace({'nan': 'white'})
-        else:
-            print('we have the columns bro')
 
         MASTER_ALL = MASTER_ALL.set_index(['Date', 'forcast'])
     if ret:
@@ -272,11 +250,11 @@ def register_callbacks(app):
     )
     def render_map(date_value, locations_values, metrics_values, relative_check, figure, relative_layout):
 
-        print(relative_check)
+        # print(relative_check)
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
-        print(official_date)
+        # print(official_date)
         plotting_df = MASTER_ALL.reset_index()[MASTER_ALL.reset_index()['Date'] == official_date]
         plotting_df = plotting_df[plotting_df['country'] != 'worldwide']
 

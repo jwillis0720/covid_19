@@ -240,15 +240,14 @@ def get_map_dials(params):
                                                                       'value': 'county'}],
                                                             value=['country']),
         html.H3(id="map-title"),
-        apply_value_from_querystring(params)(dcc.Checklist)(id='check-metrics',
-                                                            labelClassName='map-list',
-                                                            options=[
+        apply_value_from_querystring(params)(dcc.RadioItems)(id='check-metrics',
+                                                             labelClassName='map-list',
+                                                             options=[
                                                                 {'label': 'Confirmed',
                                                                  'value': 'confirmed'},
                                                                 {'label': 'Deaths',
                                                                  'value': 'deaths'}],
-                                                            value=[
-                                                                'confirmed', 'deaths'])]
+                                                             value='confirmed')]
 
 
 def get_tabs_container(params):
@@ -328,7 +327,7 @@ def layout_app(params):
                              value=callbacks.get_default_dropdown(),
                              multi=True,
                              style={'position': 'relative',
-                                    'zIndex': '3', 'font-size': '75%'},
+                                    'zIndex': '3'},
                              placeholder='Select a location..'
                          )
                      ]),

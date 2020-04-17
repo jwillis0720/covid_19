@@ -44,93 +44,112 @@ def plot_map(dataframe, metrics, zoom, center, relative_check):
     if 'confirmed' in metrics and not dataframe.empty:
         # First Do Confirmed
         dataframe = dataframe[dataframe['CSize'] > 0]
+        plotting_df = dataframe
         if relative_check:
-            gb_confirmed = dataframe.groupby('per_capita_CSize')
-
+            sizes = plotting_df['per_capita_confirmed'].to_numpy()
+            name = 'Relative Cases'
+            text = plotting_df['Text_Confirmed'].str.split(':').str.get(
+                0).str.replace('Total Cases', 'Relative Cases') + ": 1 in " + (1/plotting_df['per_capita_confirmed']).replace(
+                    np.inf, 0).astype(int).apply(lambda x: "{:,}".format(x))
+            colors = list(plotting_df['per_capita_confirmed'])
+            size_max = max(plotting_df[plotting_df['per_capita_confirmed'] < 0.1]['per_capita_confirmed'])
+            size_max = 0.01
+            np.place(sizes, sizes > 0.01, [0.01])
+            cmax = np.percentile(sizes, 99)
+            cmid = np.percentile(sizes, 50)
+            cmin = np.percentile(sizes, 25)
+            sizeref = 2. * size_max / (40 ** 2)
         else:
-            gb_confirmed = dataframe.groupby('CSize')
+            sizes = plotting_df['confirmed']
+            name = "Confirmed Cases"
+            text = plotting_df['Text_Confirmed']
+            colors = plotting_df['confirmed']
+            size_max = max(plotting_df['confirmed'])
+            cmax = np.percentile(sizes, 99)
+            cmid = np.percentile(sizes, 50)
+            cmin = np.percentile(sizes, 25)
+            sizeref = 2. * size_max / (100 ** 2)
 
-        # Do this so we can sort them if need be
-        for group in gb_confirmed:
-            plotting_df = group[1]
-            # print(group[0])
-            if relative_check:
-                sizes = plotting_df['per_capita_CSize']
-                name = "1 in {} to {}".format(
-                    "{:,}".format(int(1/plotting_df['per_capita_confirmed'].max())),
-                    "{:,}".format(int(1/plotting_df['per_capita_confirmed'].min())))
-                text = plotting_df['Text_Confirmed'].str.split(':').str.get(
-                    0).str.replace('Total Cases', 'Relative Cases') + ": 1 in " + (1/plotting_df['per_capita_confirmed']).replace(
-                        np.inf, 0).astype(int).apply(lambda x: "{:,}".format(x))
-                colors = plotting_df['per_capita_CColor']
-            else:
-                sizes = plotting_df['CSize']
-                name = "{}-{}".format(get_closest_inerval(int(plotting_df['confirmed'].min()), 'min'),
-                                      get_closest_inerval(int(plotting_df['confirmed'].max()), 'max'))
-                text = plotting_df['Text_Confirmed']
-                colors = plotting_df['CColor']
-            data = go.Scattermapbox(
-                lon=plotting_df['lon'],
-                lat=plotting_df['lat'],
-                customdata=plotting_df['PID'],
-                text=text,
-                hoverinfo='text',
-                name=name,
-                mode='markers',
-                marker=dict(
-                    opacity=0.85,
-                    sizemin=3,
-                    size=sizes,
-                    color=colors,
-                    sizemode='area'
-                )
-            )
-            data_traces.append(data)
+        colorscale = 'YlOrBr'
+        sizemin = 2
+
+        data = go.Scattermapbox(
+            lon=plotting_df['lon'],
+            lat=plotting_df['lat'],
+            customdata=plotting_df['PID'],
+            text=text,
+            hoverinfo='text',
+            name=name,
+            mode='markers',
+            marker=dict(
+                opacity=0.95,
+                sizemin=sizemin,
+                sizeref=sizeref,
+                reversescale=False,
+                colorscale=colorscale,
+                size=sizes,
+                color=colors,
+                cmax=cmax,
+                cmin=cmin,
+                cmid=cmid,
+                sizemode='area'
+            ),
+        )
+        data_traces.append(data)
     if 'deaths' in metrics and not dataframe.empty:
-        # Second Do Confirmed
-        dataframe = dataframe[dataframe['deaths'] > 1]
+         # First Do Confirmed
+        dataframe = dataframe[dataframe['deaths'] > 0]
+        plotting_df = dataframe
         if relative_check:
-            gb_deaths = dataframe.groupby('per_capita_DSize')
-
+            sizes = plotting_df['per_capita_deaths'].to_numpy()
+            name = 'Relative Deaths'
+            text = plotting_df['Text_Deaths'].str.split(':').str.get(
+                0).str.replace('Total Deaths', 'Relative Deaths') + ": 1 in " + (1/plotting_df['per_capita_deaths']).replace(
+                    np.inf, 0).astype(int).apply(lambda x: "{:,}".format(x))
+            colors = list(plotting_df['per_capita_deaths'])
+            np.place(sizes, sizes > 0.003, [0.003])
+            size_max = max(sizes)
+            cmax = np.percentile(sizes, 99)
+            cmid = np.percentile(sizes, 30)
+            cmin = np.percentile(sizes, 10)
+            sizeref = 2. * size_max / (40 ** 2)
         else:
-            gb_deaths = dataframe.groupby('DSize')
+            sizes = plotting_df['deaths']
+            name = "Confirmed Deaths"
+            text = plotting_df['Text_Deaths']
+            colors = plotting_df['deaths']
+            size_max = max(plotting_df['deaths'])
+            cmax = np.percentile(sizes, 99)
+            cmid = np.percentile(sizes, 20)
+            cmin = np.percentile(sizes, 10)
+            sizeref = 2. * size_max / (100 ** 2)
 
-        # Do this so we can sort them if need be
-        for group in gb_deaths:
-            plotting_df = group[1]
-            if relative_check:
-                sizes = plotting_df['per_capita_DSize']
-                name = "1 in {} to {}".format(
-                    "{:,}".format(int(1/plotting_df['per_capita_deaths'].max())),
-                    "{:,}".format(int(1/plotting_df['per_capita_deaths'].min())))
-                text = plotting_df['Text_Deaths'].str.split(':').str.get(
-                    0).str.replace('Total Deaths', 'Relative Deaths') + ": 1 in " + (1/plotting_df['per_capita_deaths']).replace(
-                        np.inf, 0).astype(int).apply(lambda x: "{:,}".format(x))
-                colors = plotting_df['per_capita_DColor']
-            else:
-                sizes = plotting_df['DSize']
-                name = "{}-{}".format(get_closest_inerval(int(plotting_df['deaths'].min()), 'min'),
-                                      get_closest_inerval(int(plotting_df['deaths'].max()), 'max'))
-                text = plotting_df['Text_Deaths']
-                colors = plotting_df['DColor']
+        colorscale = 'Reds'
+        sizemin = 2
 
-            data = go.Scattermapbox(
-                lon=plotting_df['lon'],
-                lat=plotting_df['lat'],
-                customdata=plotting_df['PID'],
-                text=text,
-                hoverinfo='text',
-                name=name,
-                mode='markers',
-                marker=dict(
-                    opacity=0.85,
-                    sizemin=3,
-                    size=sizes,
-                    color=colors,
-                    sizemode='area'
-                )
-            )
-            data_traces.append(data)
+        data = go.Scattermapbox(
+            lon=plotting_df['lon'],
+            lat=plotting_df['lat'],
+            customdata=plotting_df['PID'],
+            text=text,
+            hoverinfo='text',
+            name=name,
+            mode='markers',
+            marker=dict(
+                opacity=0.95,
+                sizemin=sizemin,
+                sizeref=sizeref,
+                reversescale=False,
+                colorscale=colorscale,
+                size=sizes,
+                color=colors,
+                cmax=cmax,
+                cmin=cmin,
+                cmid=cmid,
+                sizemode='area'
+            ),
+        )
+        data_traces.append(data)
     layout = dict(
         autosize=True,
         showlegend=True,
@@ -146,6 +165,7 @@ def plot_map(dataframe, metrics, zoom, center, relative_check):
         legend=dict(
             x=0.00,
             y=0.00,
+            itemsizing='constant',
             orientation='v',
             traceorder="normal",
             font=dict(
