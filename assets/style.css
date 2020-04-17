@@ -295,6 +295,10 @@ body {
   position: relative;
 }
 
+#app-container #map-container .hoverlayer {
+  font-size: 145%;
+}
+
 #app-container #map-container #map-dials {
   margin-top: 10px;
   display: -ms-grid;

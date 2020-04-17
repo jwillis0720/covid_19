@@ -287,6 +287,9 @@ body {
     }
 
     #map-container{
+        .hoverlayer{
+            font-size: 145%;
+        }
         #map-dials{
             margin-top: 10px;
             display:grid;

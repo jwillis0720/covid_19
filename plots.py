@@ -164,7 +164,7 @@ def plot_map(dataframe, metrics, zoom, center, relative_check):
         dragmode="pan",
         legend=dict(
             x=0.00,
-            y=0.00,
+            y=1.00,
             itemsizing='constant',
             orientation='v',
             traceorder="normal",
