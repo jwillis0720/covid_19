@@ -53,7 +53,7 @@ def plot_map(dataframe, metrics, zoom, center, relative_check):
         # Do this so we can sort them if need be
         for group in gb_confirmed:
             plotting_df = group[1]
-            print(group[0])
+            # print(group[0])
             if relative_check:
                 sizes = plotting_df['per_capita_CSize']
                 name = "1 in {} to {}".format(
