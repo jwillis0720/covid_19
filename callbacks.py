@@ -180,6 +180,30 @@ def get_growth_rate():
                 html.Span(round(abs(change_to_tomorrow), 2))])]
 
 
+def get_relative_card():
+    sub_df = MASTER_ALL.reset_index().set_index(['forcast'])
+    sub_df = sub_df[sub_df['country'] == 'worldwide']
+    sub_diff = sub_df[['per_capita_confirmed', 'per_capita_deaths']].diff()
+    latest_capita = sub_df.loc[False].iloc[-1]['per_capita_confirmed']
+    yesterday = sub_df.loc[False].iloc[-2]['per_capita_confirmed']
+    seven_days = sub_df.loc[True].iloc[6]['per_capita_confirmed']
+    latest_capita = "1 in {} ".format(int(1/latest_capita))
+    yesterday = "1 in {} ".format(int(1/yesterday))
+    seven_days = "1 in {} ".format(int(1/seven_days))
+    # forcast_seven_days = sub_diff.loc[True].iloc[0]  # .sum()
+    # total_cases = "{:,}".format(int(total_confirmed['confirmed']))
+    # change_in_cases = "{:,} ".format(int(twenty_four_confirmed['confirmed']))
+    # forcast_seven = "{:,}".format(int(forcast_seven_days['confirmed']))
+    return [html.H3('Per Capita'),
+            html.P(id='total-cases', children=latest_capita),
+            html.Div(className='change-card', children=[
+                html.Span(children=[
+                    up_triangle]),
+                html.Span(yesterday),
+                html.Span(html.I(className="wi wi-wind wi-towards-nne")),
+                html.Span(seven_days)])]
+
+
 def get_dropdown_options():
     sorted_index = list(MASTER_PID.sort_values('confirmed')[:: -1].index)
     sorted_txt = list(MASTER_PID.sort_values('confirmed')[:: -1]['Text_Confirmed'].str.split('<br>').str.get(0))

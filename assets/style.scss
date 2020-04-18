@@ -192,7 +192,7 @@ body {
             box-shadow: 0 10px 8px 0 black;
             align-items: center;
             padding: 2.5px;                    
-            min-width: 155px;
+            min-width: 202px;
             margin-top: 5px;
             padding: 10px;
             text-align: center;
@@ -231,7 +231,9 @@ body {
       #growth-card{
         background-color:#28a745;
       }
-
+      #relative-card-confirm{
+          background-color: #007bff
+      }
     }      
 }
 
@@ -497,7 +499,7 @@ body {
                 font-size: 200%;
             }
             h2{
-                font-size:100%
+                font-size:80%
             }
             .button {
                 border-radius: 4px;
@@ -661,7 +663,6 @@ body {
         
         #description {
             h2{
-                font-size:100%;
             }
         }
 
@@ -669,7 +670,7 @@ body {
             justify-content: space-evenly;
             align-items: center;
             .card{
-                min-width: 198px;
+                min-width: 248px;
                 box-shadow: 0 10px 8px 0 black;
                 border-radius: 4px;
                 perspective: 1000;
@@ -771,7 +772,7 @@ body {
     }
     #header{
         display: grid;
-        grid-template-columns: 0.5fr 1fr;
+        grid-template-columns: 0.25fr 1fr;
         padding: 0;
         padding-top: 0;
         #description{

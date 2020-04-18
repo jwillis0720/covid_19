@@ -200,7 +200,10 @@ def get_counter_cards():
                      children=callbacks.get_mortality_rate()),
             html.Div(id='growth-card',
                      className='card',
-                     children=callbacks.get_growth_rate())]
+                     children=callbacks.get_growth_rate()),
+            html.Div(id='relative-card-confirm',
+                     className='card',
+                     children=callbacks.get_relative_card())]
 
 
 def layout_header(params):
