@@ -13,7 +13,8 @@ colors.remove(colors[5])
 # lets repeat it enough time sjust incase
 colors = colors * 10
 
-
+PLOT_PAPER_COLOR = "rgba(45, 49, 66, 0)"
+PLOT_BACKGROUND_COLOR = "rgba(45, 49, 66, 0)"
 AXIS_FONT_SIZE = 18
 AXIS_TITLE_FONT_SIZE = 18
 LEGEND_FONT_SIZE = 18
@@ -227,7 +228,7 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
                     fill='toself',
                     hoverinfo='none',
                     showlegend=False,
-                    line_color='rgba(255,255,255,0)'
+                    line_color='rgba(255,255,255,0.2)'
                 ))
 
             # Then add the prediction lineA
@@ -325,18 +326,20 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
                 xref="x",
                 yref='paper',
                 x0=forcast_date+timedelta(days=1),
-                y0=0,
+                y0=0.05,
                 x1=end_date+timedelta(days=1),
                 y1=1,
                 line=dict(
                     color='white', width=0),
-                fillcolor='rgba(255,255,255,0.05)'
+                fillcolor='rgba(255,255,255,.15)'
             ))
 
     layout = dict(
         margin=dict(t=70, r=40, l=80, b=80),
         shapes=shapes,
         yaxis=dict(
+            gridcolor='white',
+            gridwidth=2,
             title=dict(
                 text=y_axis_title,
                 standoff=2,
@@ -347,9 +350,10 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
             tickfont=dict(
                 family=FONT_FAMILY,
                 size=AXIS_FONT_SIZE),
-            showgrid=True,
+            showgrid=False,
             color='white',
-            side='left',
+            showline=True,
+            linecolor='white',
             range=y_axis_range
         ),
         xaxis=dict(
@@ -358,7 +362,10 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
                 size=AXIS_FONT_SIZE,
                 family=FONT_FAMILY,
             ),
-            range=x_axis_range
+            range=x_axis_range,
+            gridcolor='white',
+            gridwidth=2,
+            showgrid=False,
         ),
         autosize=True,
         showlegend=True,
@@ -366,8 +373,8 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
         legend=dict(x=0, y=1, font=dict(
             color='white',
             size=LEGEND_FONT_SIZE)),
-        paper_bgcolor='#1f2630',
-        plot_bgcolor='rgb(52,51,50)')
+        paper_bgcolor=PLOT_PAPER_COLOR,
+        plot_bgcolor=PLOT_BACKGROUND_COLOR)
     if log:
         layout['yaxis']['type'] = 'log'
     return {'data': data_traces, 'layout': layout}

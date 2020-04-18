@@ -96,12 +96,15 @@ input#dropdown_container {
 }
 
 body {
+  background-image: url("corona.jpeg");
   background-color: #4F5D75;
+  background-position: center;
   margin: 0;
   color: white;
   font-size: 16px;
   font-family: "Fira Sans", sans-serif;
   height: 100vh;
+  position: relative;
 }
 
 * {
@@ -124,9 +127,13 @@ body {
 .container {
   margin: 5px;
   padding: 5px 10px 10px 10px;
-  background-color: #2D3142;
+  background-color: rgba(45, 49, 66, 0.8);
   border-radius: 15px;
   border: 2px solid rgba(0, 0, 0, 0.125);
+}
+
+#root {
+  z-index: 2;
 }
 
 #header #description {
@@ -160,7 +167,7 @@ body {
   padding: 5px;
   border-radius: 4px;
   color: white;
-  background-color: #2D3142;
+  background-color: rgba(45, 49, 66, 0.8);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   -webkit-box-align: center;
@@ -389,7 +396,7 @@ body {
 }
 
 #app-container #right-container .Select--multi .Select-value-icon {
-  border-right-color: #2D3142;
+  border-right-color: rgba(45, 49, 66, 0.8);
 }
 
 #app-container #sub-options {
@@ -569,7 +576,7 @@ body {
     padding: 5px;
     border-radius: 4px;
     color: white;
-    background-color: #2D3142;
+    background-color: rgba(45, 49, 66, 0.8);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     -webkit-box-align: center;
@@ -605,10 +612,10 @@ body {
             transform: border-color 0.5s linear;
   }
   #tiny-url:hover {
-    color: #2D3142;
+    color: rgba(45, 49, 66, 0.8);
     cursor: pointer;
     background-color: #EF8354;
-    border-color: #2D3142;
+    border-color: rgba(45, 49, 66, 0.8);
   }
 }
 
@@ -693,12 +700,12 @@ body {
     margin: 20px;
   }
   #app-container #right-container .Select-control {
-    background-color: #2D3142;
+    background-color: rgba(45, 49, 66, 0.8);
   }
   #app-container #right-container .Select-value {
     color: #EF8354;
     background-color: #4F5D75;
-    border-color: #2D3142;
+    border-color: rgba(45, 49, 66, 0.8);
   }
 }
 
@@ -708,6 +715,7 @@ body {
   }
   #root-container {
     height: 100vh;
+    background-color: #0000008a;
   }
   #header {
     display: -ms-grid;

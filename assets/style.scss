@@ -6,7 +6,7 @@ $FONT: 'Fira Sans', sans-serif;
 // $FONT: "Montserrat", sans-serif;
 
  $COLORS:(
-    primary: #2D3142,
+    primary: rgba(45, 49, 66, 0.8),
     secondary:  #4F5D75,
     tertiary: #4A6572,
     text: rgb(255, 255, 255),
@@ -100,13 +100,18 @@ input#dropdown_container{
   }
 
 body {
+    background-image: url('corona.jpeg');
     background-color: color(secondary);
+    background-position: center;
     margin: 0;
     color: color(text );
     font-size: 16px;
     font-family: $FONT;
     height: 100vh;
+    position: relative;
 }
+
+
 
 *{
     box-sizing: border-box;
@@ -137,7 +142,9 @@ body {
 }
 
 
-
+#root{
+    z-index: 2;
+}
 
 
 #header{
@@ -769,6 +776,7 @@ body {
     }
     #root-container{
         height: 100vh;
+        background-color: #0000008a
     }
     #header{
         display: grid;
