@@ -188,21 +188,21 @@ def markdown_popup():
 
 def get_counter_cards():
     return [html.Div(id='cases-card',
-                     className='card',
+                     className='card tooltip',
                      children=callbacks.get_total_cases()),
 
             html.Div(id='deaths-card',
-                     className='card',
+                     className='card tooltip',
                      children=callbacks.get_total_deaths()),
 
             html.Div(id='mortality-card',
-                     className='card',
+                     className='card tooltip',
                      children=callbacks.get_mortality_rate()),
             html.Div(id='growth-card',
-                     className='card',
+                     className='card tooltip',
                      children=callbacks.get_growth_rate()),
             html.Div(id='relative-card-confirm',
-                     className='card',
+                     className='card tooltip',
                      children=callbacks.get_relative_card())]
 
 

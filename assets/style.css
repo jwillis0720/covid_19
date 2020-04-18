@@ -99,6 +99,7 @@ body {
   background-image: url("corona.jpeg");
   background-color: #4F5D75;
   background-position: center;
+  background-size: auto;
   margin: 0;
   color: white;
   font-size: 16px;
@@ -196,6 +197,7 @@ body {
   -ms-flex-wrap: wrap;
       flex-wrap: wrap;
   margin: 10px 0px;
+  /* Show the tooltip text when you mouse over the tooltip container */
 }
 
 #header #counters-container .card {
@@ -234,11 +236,45 @@ body {
   font-size: 100%;
 }
 
+#header #counters-container .tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+#header #counters-container .tooltip .tooltiptext {
+  visibility: hidden;
+  text-align: center;
+  border-radius: 6px;
+  border: 2px solid black;
+  padding: 5px 0;
+  top: 5%;
+  left: 2%;
+  right: 2%;
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 3;
+  font-size: 75%;
+  text-align: center;
+}
+
+#header #counters-container .tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
 #header #counters-container #cases-card {
+  background-color: #ffc107;
+  color: black;
+}
+
+#header #counters-container #cases-card .tooltiptext {
   background-color: #ffc107;
 }
 
 #header #counters-container #deaths-card {
+  background-color: #dc3545;
+}
+
+#header #counters-container #deaths-card .tooltiptext {
   background-color: #dc3545;
 }
 
@@ -247,11 +283,25 @@ body {
   color: black;
 }
 
+#header #counters-container #mortality-card .tooltiptext {
+  background-color: #f8f9fa;
+  color: black;
+}
+
 #header #counters-container #growth-card {
   background-color: #28a745;
 }
 
+#header #counters-container #growth-card .tooltiptext {
+  background-color: #28a745;
+  color: white;
+}
+
 #header #counters-container #relative-card-confirm {
+  background-color: #007bff;
+}
+
+#header #counters-container #relative-card-confirm .tooltiptext {
   background-color: #007bff;
 }
 
@@ -714,7 +764,8 @@ body {
     font-size: 200%;
   }
   #root-container {
-    height: 100vh;
+    height: auto;
+    width: auto;
     background-color: #0000008a;
   }
   #header {

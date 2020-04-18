@@ -97,7 +97,11 @@ def get_total_cases():
                     up_triangle]),
                 html.Span(change_in_cases),
                 html.Span(html.I(className="wi wi-wind wi-towards-nne")),
-                html.Span(forcast_seven)])]
+                html.Span(forcast_seven),
+                html.Span(className='tooltiptext', children=[
+                    """Worldwide total case count. \n{} is the increase of cases in the past 24 hours.""".format(
+                        up_triangle), '\n', html.I(className='wi wi-wind wi-towards-nne'), """ is the predicted cases in the next 24 hours"""
+                ])])]
 
 
 def get_total_deaths():
@@ -117,7 +121,13 @@ def get_total_deaths():
                     up_triangle]),
                 html.Span(change_in_cases),
                 html.Span(html.I(className="wi wi-wind wi-towards-nne")),
-                html.Span(forcast_seven)])]
+                html.Span(forcast_seven),
+                html.Span(className='tooltiptext', children=[
+                    """Worldwide total deaths count. \n{} is the increase of deaths in the past 24 hours.""".format(
+                        up_triangle), html.Br(),
+                    html.I(className='wi wi-wind wi-towards-nne'),
+                    " is the predicted deaths in the next 24 hours"
+                ])])]
 
 
 def get_mortality_rate():
@@ -130,12 +140,16 @@ def get_mortality_rate():
     seven_day = round(mortality_rate_today-sub_df.loc[True].iloc[0]['mr'], 2)
     if change_in_mortality_rate > 0:
         symbol = up_triangle
+        indicator = 'increase'
     else:
         symbol = down_tirangle
+        indicator = 'deacrease'
     if seven_day < 0:
         class_name = "wi wi-wind wi-towards-nne"
+        second_indicator = 'increase'
     else:
         class_name = "wi wi-wind wi-towards-sse"
+        second_indicator = 'decrease'
     change_in_mortality_rate = abs(change_in_mortality_rate)
     seven_day = abs(seven_day)
     # print(mortality_rate_today, sub_df.loc[True].iloc[-1]['mr'], sub_df.loc[False].iloc[0]['mr'])
@@ -147,7 +161,13 @@ def get_mortality_rate():
                      symbol]),
                 html.Span("{} ".format(change_in_mortality_rate)),
                 html.Span(html.I(className=class_name)),
-                html.Span(seven_day)])]
+                html.Span(seven_day),
+                html.Span(className='tooltiptext', children=[
+                    """Worldwide mortality rate. Total deaths divided by total cases. \n{} is the {} mortality rate  in the past 24 hours.""".format(
+                        symbol, indicator), html.Br(),
+                    html.I(className='wi wi-wind {}'.format(class_name)),
+                    " is the predicted {} mortality rate in the next 24 hours".format(second_indicator)
+                ])])]
 
 
 def get_growth_rate():
@@ -162,9 +182,11 @@ def get_growth_rate():
     if change_in_gf > 0:
         symbol = up_triangle
         c_name = 'up-triangle'
+        indicator = 'increase'
     else:
         symbol = down_tirangle
         c_name = 'down-triangle'
+        indicator = 'decrease'
     if change_to_tomorrow > 0:
         class_name = "wi wi-wind wi-towards-nne"
     else:
@@ -177,7 +199,13 @@ def get_growth_rate():
                      symbol]),
                 html.Span("{} ".format(round(abs(change_in_gf), 2))),
                 html.Span(html.I(className=class_name)),
-                html.Span(round(abs(change_to_tomorrow), 2))])]
+                html.Span(round(abs(change_to_tomorrow), 2)),
+                html.Span(className='tooltiptext', children=[
+                    """Worldwide growth factor. Percentage growth of confirmed cases. \n{} is the {} growth rate  in the past 24 hours.""".format(
+                        symbol, indicator), html.Br(),
+                    html.I(className='wi wi-wind {}'.format(class_name)),
+                    " is the predicted {} growth rate in the next 24 hours".format(indicator)
+                ])])]
 
 
 def get_relative_card():
@@ -186,7 +214,7 @@ def get_relative_card():
     sub_diff = sub_df[['per_capita_confirmed', 'per_capita_deaths']].diff()
     latest_capita = sub_df.loc[False].iloc[-1]['per_capita_confirmed']
     yesterday = sub_df.loc[False].iloc[-2]['per_capita_confirmed']
-    seven_days = sub_df.loc[True].iloc[6]['per_capita_confirmed']
+    seven_days = sub_df.loc[True].iloc[0]['per_capita_confirmed']
     latest_capita = "1 in {} ".format(int(1/latest_capita))
     yesterday = "1 in {} ".format(int(1/yesterday))
     seven_days = "1 in {} ".format(int(1/seven_days))
@@ -201,7 +229,13 @@ def get_relative_card():
                     up_triangle]),
                 html.Span(yesterday),
                 html.Span(html.I(className="wi wi-wind wi-towards-nne")),
-                html.Span(seven_days)])]
+                html.Span(seven_days),
+                html.Span(className='tooltiptext', children=[
+                    """Worldwide cases per global population. \n{} is the increase in per capita cases in the past 24 hours.""".format(
+                        up_triangle), html.Br(),
+                    html.I(className='wi wi-wind wi-towards-nne'),
+                    " is the predicted increase in per capita cases in the next 24 hours"
+                ])])]
 
 
 def get_dropdown_options():
