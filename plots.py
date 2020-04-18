@@ -511,8 +511,8 @@ def per_day_confirmed(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
             font=dict(color='white',
                       family=FONT_FAMILY,
                       size=LEGEND_FONT_SIZE)),
-        paper_bgcolor='#1f2630',
-        plot_bgcolor='rgb(52,51,50)',
+        paper_bgcolor=PLOT_PAPER_COLOR,
+        plot_bgcolor=PLOT_BACKGROUND_COLOR,
         barmode='grouped',
         bargap=0.1)
     if log:
@@ -691,6 +691,7 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
 
     fig.update_layout(
         yaxis=dict(
+            showgrid=False,
             title=dict(
                 text='New Cases Previous {} Days'.format(backtrack),
                 standoff=2,
@@ -701,7 +702,6 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
             tickfont=dict(
                 family=FONT_FAMILY,
                 size=AXIS_FONT_SIZE),
-            showgrid=True,
             color='white',
             side='left',
             range=y_axis_range,
@@ -725,14 +725,14 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
         ),
         autosize=True,
         showlegend=True,
-        paper_bgcolor='#1f2630',
-        plot_bgcolor='rgb(52,51,50)',
+        paper_bgcolor=PLOT_PAPER_COLOR,
+        plot_bgcolor=PLOT_BACKGROUND_COLOR,
         legend=dict(x=0.01,
-                      y=0.99,
-                      font=dict(
-                          color='white',
-                          family=FONT_FAMILY,
-                          size=LEGEND_FONT_SIZE)))
+                    y=0.99,
+                    font=dict(
+                        color='white',
+                        family=FONT_FAMILY,
+                        size=LEGEND_FONT_SIZE)))
     return fig
 
 
@@ -830,7 +830,7 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
                 xref="x",
                 yref='paper',
                 x0=xs_predict[0],
-                y0=0,
+                y0=.05,
                 x1=xs_predict[-1],
                 y1=1,
                 line=dict(
@@ -841,6 +841,7 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
         margin=dict(t=70, r=40, l=80, b=80),
         shapes=shapes,
         yaxis=dict(
+            showgrid=False,
             title=dict(
                 text=y_axis_title,
                 standoff=2,
@@ -851,7 +852,6 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
             tickfont=dict(
                 family=FONT_FAMILY,
                 size=AXIS_FONT_SIZE),
-            showgrid=True,
             color='white',
             side='left',
             range=y_axis_range,
@@ -863,7 +863,8 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
                 size=AXIS_FONT_SIZE,
                 family=FONT_FAMILY,
             ),
-            range=x_axis_range
+            range=x_axis_range,
+            showgrid=False
         ),
         showlegend=True,
         legend=dict(x=0.01,
@@ -872,9 +873,9 @@ def per_gr(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
                         color='white',
                         family=FONT_FAMILY,
                         size=LEGEND_FONT_SIZE)),
-        paper_bgcolor='#1f2630',
+        paper_bgcolor=PLOT_PAPER_COLOR,
         hovermode='closest',
-        plot_bgcolor='rgb(52,51,50)')
+        plot_bgcolor=PLOT_BACKGROUND_COLOR)
     if log:
         layout['yaxis']['type'] = 'log'
 
