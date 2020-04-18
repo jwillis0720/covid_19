@@ -13,8 +13,8 @@ colors.remove(colors[5])
 # lets repeat it enough time sjust incase
 colors = colors * 10
 
-PLOT_PAPER_COLOR = "rgba(45, 49, 66, 0)"
-PLOT_BACKGROUND_COLOR = "rgba(45, 49, 66, 0)"
+PLOT_PAPER_COLOR = "rgba(0,0,0,0)"
+PLOT_BACKGROUND_COLOR = "rgba(0,0,0,0)"
 AXIS_FONT_SIZE = 18
 AXIS_TITLE_FONT_SIZE = 18
 LEGEND_FONT_SIZE = 18
@@ -339,6 +339,7 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
         shapes=shapes,
         yaxis=dict(
             gridcolor='white',
+            zerolinecolor='white',
             gridwidth=2,
             title=dict(
                 text=y_axis_title,
@@ -352,11 +353,12 @@ def total_confirmed_graph(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs
                 size=AXIS_FONT_SIZE),
             showgrid=False,
             color='white',
-            showline=True,
+            showline=False,
             linecolor='white',
             range=y_axis_range
         ),
         xaxis=dict(
+            zeroline=False,
             color='white',
             tickfont=dict(
                 size=AXIS_FONT_SIZE,
@@ -491,12 +493,13 @@ def per_day_confirmed(values, MASTER_DF, KEY_VALUE, log, metric, predict, gs):
             tickfont=dict(
                 family=FONT_FAMILY,
                 size=AXIS_FONT_SIZE),
-            showgrid=True,
+            showgrid=False,
             color='white',
             side='left',
             y_axis_title=y_axis_range,
         ),
         xaxis=dict(
+            showgrid=False,
             color='white',
             tickfont=dict(
                 size=AXIS_FONT_SIZE,
@@ -691,7 +694,9 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
 
     fig.update_layout(
         yaxis=dict(
+            zeroline=True,
             showgrid=False,
+            showline=False,
             title=dict(
                 text='New Cases Previous {} Days'.format(backtrack),
                 standoff=2,
@@ -708,6 +713,7 @@ def plot_exponential(values, MASTER_DF, KEY_VALUE, log, predict, gs):
         ),
         margin=dict(t=70, r=40, l=80, b=80),
         xaxis=dict(
+            zeroline=False,
             title=dict(
                 text='Total Cases',
                 standoff=2,
