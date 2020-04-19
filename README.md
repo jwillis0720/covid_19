@@ -4,7 +4,7 @@
 
 ![GIF demo](assets/ScreenShot.png)
 
-`COVID-19 Bored` is a written with a high level python framework called [Dash](https://dash.plotly.com/introduction) which abstracts React.js components to serve plotly graphs. It's amazing. 
+`COVID-19 Bored` is a written with a high level python framework called [Dash](https://dash.plotly.com/introduction) which abstracts React.js components to serve plotly graphs. It's amazing. I serve the entire Dash app to an Elastic Beanstalk container using AWS. Since Dash is served with Flask, it's [easy](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-flask.html)
 
 **Data**
 
