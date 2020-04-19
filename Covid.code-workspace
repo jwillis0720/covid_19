@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../covid19-API"
 		}
 	],
 	"settings": {
