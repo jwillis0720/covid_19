@@ -47,7 +47,7 @@ external_stylesheets = [
 
 
 app = dash.Dash(__name__, meta_tags=get_meta(), external_stylesheets=external_stylesheets)
-app.title = "COVID-19 Infection Dashboard"
+app.title = "COVID-19 Bored"
 
 app.config['suppress_callback_exceptions'] = True
 app.index_string = open('assets/customIndex.html').read()
@@ -216,7 +216,7 @@ def layout_header(params):
                 children=[
                     html.Div(className='title-div', children=[
                         html.H1(children=[
-                            "COVID-19 Board"])]
+                            "COVID-19 Bored"])]
                     ),
                     html.Div(className='bottom-div', children=[
                         html.H2(html.A('Jordan R. Willis PhD',
