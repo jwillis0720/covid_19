@@ -21,7 +21,7 @@ def get_meta():
          "content": "width=device-width, initial-scale=1.0"},
         {"name": "author",
          "content": "Jordan R. Willis PhD"},
-
+        { 'name':"google-site-verification",'content':"vEErPS3AZ_ZswYYV84KWjY5BAcnw_V_xvI8Hb4n_Mu0"},
         {"name": "description",
          "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
         {"name": "keywords",
