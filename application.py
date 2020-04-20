@@ -7,66 +7,42 @@ import dash_core_components as dcc
 import callbacks
 import warnings
 import pandas as pd
-# /
-# to generate the tinyurl:
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--debug', action='store_true',
+                    help="""
+                    Serve dummy graphs instead of the nice ones. 
+                    This is good for debuging your layout so you don't serve the complicated 
+                    graphs everytime you relaod""")
+args = parser.parse_args()
 
 # Cancel copy warnings of pandas
 warnings.filterwarnings(
     "ignore", category=pd.core.common.SettingWithCopyWarning)
 
-
-def get_meta():
-    meta_tags = [
-        {"name": "viewport",
-         "content": "width=device-width, initial-scale=1.0"},
-        {"name": "author",
-         "content": "Jordan R. Willis PhD"},
-
-        {"name": "description",
-         "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
-        {"name": "keywords",
-         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
-        {'property': 'og:image',
-         "content": "https://i.imgur.com/IOSVSbI.png"},
-        {'property': 'og:title',
-         "content": "Coronavirus 2019 - A tracking application"
-         },
-        {'property': 'og:description',
-         "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. It is updated with various scraping APIS. Timescale Resolution."
-         }
-
-    ]
-
-    return meta_tags
-
-
-# external CSS stylesheets
-external_stylesheets = [
-    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css']
-
-
-app = dash.Dash(__name__, meta_tags=get_meta(), external_stylesheets=external_stylesheets)
-app.title = "COVID-19 Bored"
-
-app.config['suppress_callback_exceptions'] = True
-app.index_string = open('assets/customIndex.html').read()
-
-# Serve layout in a function so we can update it dynamically
-# Must go after the app is initialized
-
-
-def serve_layout():
-    callbacks.serve_data(serve_local=False)
-    return html.Div([
-        dcc.Location(id='url', refresh=False),
-        html.Div(id='page-layout')])
-
-
-app.layout = serve_layout
-
-
 # URL STATE FUNCTIONS
+# List of component (id, parameter) tuples. Can be be any parameter
+# not just (., 'value'), and the value van be either a single value or a list:
+# These are things that the URL will keep track of, and thus there value can be saved as a "state"
+component_ids = [
+    ('date_slider', 'value'),
+    ('check-locations', 'value'),
+    ('check-metrics', 'value'),
+    ('dropdown_container', 'value'),
+    ('tabs-values', 'value'),
+    ('log-check', 'value'),
+    ('deaths-confirmed', 'value'),
+    ('prediction', 'value'),
+    ('relative_rate_check', 'value'),
+    ('tabs-table-values', 'value')
+]
+
+# Turn the list of 4 (id, param) tuples into a list of
+# one component id tuple (len=4) and one parameter tuple (len=4):
+component_ids_zipped = list(zip(*component_ids))
+
+
 def encode_state(component_ids_zipped, values):
     """
     return a urlencoded string that encodes the current state of the app
@@ -150,9 +126,39 @@ def apply_value_from_querystring(params):
         return apply_value
     return wrapper
 
-# LAYOUT SPECIFIC FUNCTIONS
+
+def get_meta():
+    meta_tags = [
+        {"name": "viewport",
+         "content": "width=device-width, initial-scale=1.0"},
+        {"name": "author",
+         "content": "Jordan R. Willis PhD"},
+        {"name": "description",
+         "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. Timescale Resolution."},
+        {"name": "keywords",
+         "content": "COVID19,COVID-19,caronavirus,tracking,dash"},
+        {'property': 'og:image',
+         "content": "https://i.imgur.com/IOSVSbI.png"},
+        {'property': 'og:title',
+         "content": "Coronavirus 2019 - A tracking application"},
+        {'property': 'og:description',
+         "content": "Hi! My name is Jordan. Here is my COVID-19 tracking application built in Dash and served by Flask and AWS. It is updated with various scraping APIS. Timescale Resolution."}
+    ]
+    return meta_tags
+
+# Serve layout in a function so we can update it dynamically
+# Must go after the app is initialized
 
 
+def serve_layout():
+    callbacks.serve_data(serve_local=False)
+    return html.Div([
+        dcc.Location(id='url', refresh=False),
+        html.Div(id='page-layout')])
+
+
+# Layout specific functions which just simply allow me not to have
+# too much nested code in the layout.
 def markdown_popup():
     '''The style is toggled in a callback between display:block and none'''
     return html.Div(
@@ -209,10 +215,11 @@ def get_counter_cards():
 def layout_header(params):
     header = html.Div(
         id="header",
-        className='container',
+        className='container header-container',
         children=[
             html.Div(
                 id="description",
+                className='description-container',
                 children=[
                     html.Div(className='title-div', children=[
                         html.H1(children=[
@@ -224,7 +231,8 @@ def layout_header(params):
                         html.Button(id="learn-more-button", className='button', n_clicks=0, children=[
                             html.Div(id='slide', children=html.A('Learn More'))])])]),
             html.Div(
-                id='counters-container',
+                id='counters',
+                className='counters-container',
                 children=get_counter_cards(),
             )
         ])
@@ -355,44 +363,39 @@ def layout_app(params):
                     value=['prediction']
                 )]),
             dcc.Graph(id='content-readout')]),
-        html.Div(id='table-container', className='container', children=[
+        html.Div(id='table-container', className='container table-container', children=[
             get_table_tabs_container(params),
             html.Div(id='table-div')])
     ])
 
 
 def build_layout(params):
-    # Every time we serve the layout, we remake the Data:
-    # callbacks.serve_data()
-    return html.Div(id='root-container', children=[
+    return html.Div(id='root-container', className='root-container', children=[
         layout_header(params),
         layout_app(params),
         markdown_popup(),
-        # html.Button(id="tiny-url", className='button', n_clicks=0, children=[
-        # html.Div(id='tiny_url_div', children=html.A('Get Link'))]),
-        # html.Div(id='url-container', style={'display': 'none'})
     ])
 
 
-# List of component (id, parameter) tuples. Can be be any parameter
-# not just (., 'value'), and the value van be either a single value or a list:
-component_ids = [
-    ('date_slider', 'value'),
-    ('check-locations', 'value'),
-    ('check-metrics', 'value'),
-    ('dropdown_container', 'value'),
-    ('tabs-values', 'value'),
-    ('log-check', 'value'),
-    ('deaths-confirmed', 'value'),
-    ('prediction', 'value'),
-    ('relative_rate_check', 'value'),
-    ('tabs-table-values', 'value')
-]
+# Create the Dash App
+# external CSS stylesheets
+external_stylesheets = [
+    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css']
 
-# Turn the list of 4 (id, param) tuples into a list of
-# one component id tuple (len=4) and one parameter tuple (len=4):
-component_ids_zipped = list(zip(*component_ids))
+app = dash.Dash(__name__, meta_tags=get_meta(), external_stylesheets=external_stylesheets)
+app.title = "COVID-19 Bored"
+app.config['suppress_callback_exceptions'] = True
+app.index_string = open('assets/customIndex.html').read()
+app.layout = serve_layout
 
+# Put most of the callbacks in the callbacks module
+callbacks.register_callbacks(app, args.debug)
+
+# Expose the server for Elastic beanstalk
+application = app.server
+
+# Must have these two callback functions here to respond to changes in the URL.
 @app.callback(Output('page-layout', 'children'),
               [Input('url', 'href')])
 def page_load(href):
@@ -416,10 +419,6 @@ def update_url_state(*values):
     and return a properly formed querystring.
     """
     return encode_state(component_ids_zipped, values)
-
-
-callbacks.register_callbacks(app)
-application = app.server
 
 
 if __name__ == '__main__':

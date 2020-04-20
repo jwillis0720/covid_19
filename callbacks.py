@@ -247,20 +247,17 @@ def get_dropdown_options():
     return options
 
 
-def get_dummy_graph(id_):
-    return dcc.Graph(
-        id=id_,
-        figure={
-            'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5],
-                    'type': 'bar', 'name': u'Montréal'},
-            ],
-            'layout': {
-                'title': 'Dash {} Visualization'.format(id_)
-            }
+def get_dummy_graph():
+    return {
+        'data': [
+            {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+            {'x': [1, 2, 3], 'y': [2, 4, 5],
+             'type': 'bar', 'name': u'Montréal'},
+        ],
+        'layout': {
+            'title': 'Dash {} Visualization'.format("rocks")
         }
-    )
+    }
 
 
 def get_dummy_map():
@@ -269,6 +266,7 @@ def get_dummy_map():
     fig = px.scatter_mapbox(us_cities, lat="lat", lon="lon", hover_name="City", hover_data=["State", "Population"],
                             color_discrete_sequence=["fuchsia"], zoom=3, height=300)
     fig.update_layout(mapbox_style="open-street-map")
+    fig.update_layout(autosize=True)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return fig
 
@@ -276,7 +274,7 @@ def get_dummy_map():
 '''Now for the magic of the callback functions which we serve app too'''
 
 
-def register_callbacks(app):
+def register_callbacks(app, debug):
     @app.callback(
         Output("markdown", "style"),
         [Input("learn-more-button", "n_clicks"),
@@ -307,8 +305,8 @@ def register_callbacks(app):
          State("map", "relayoutData")]
     )
     def render_map(date_value, locations_values, metrics_values, relative_check, figure, relative_layout):
-
-        # print(relative_check)
+        if debug:
+            return get_dummy_map()
 
         # Date INT comes from the slider and can only return integers:
         official_date = DATE_MAPPER.iloc[date_value]['Date']
@@ -351,6 +349,9 @@ def register_callbacks(app):
                 gs = graph_state
         else:
             gs = None
+
+        if debug:
+            return get_dummy_graph()
         if tabs == 'total_cases_graph':
             return plots.total_confirmed_graph(values, MASTER_ALL, KEY_VALUE, log, metric, predict, gs)
         elif tabs == 'per_day_cases':

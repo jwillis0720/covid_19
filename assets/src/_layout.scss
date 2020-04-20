@@ -1,0 +1,30 @@
+.header-container{
+    display: flex;
+    flex-direction: column;
+   }
+  
+  @media only screen and (min-width: 1440px){
+    .header-container{
+      display:grid;
+      grid-template-columns: 0.25fr 1fr;
+      grid-template-rows: auto;
+    }
+  
+    .app-container{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+      align-items: stretch;
+    }
+  
+    .left-container{
+      display: grid;
+      grid-template-rows: 0.25fr 1fr;
+      grid-template-columns: auto;
+    }
+    .table-container{
+      grid-column: 1/3;
+    }
+  
+  
+  }

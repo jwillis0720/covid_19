@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,200;0,300;0,400;1,100;1,300;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,900;1,400;1,500&display=swap");
+
+$primary-font-size: 12px;
+$font: 'Fira Sans', cursive, sans-serif, arial;
+$primary: rgb(45, 49, 66);
+$secondary:  #4F5D75;
+$tertiary: #4A6572;
+$text: rgb(255, 255, 255);
+$accent: #EF8354;
+
+* {
+    box-sizing: border-box;
+  }
+ 
+  html{
+    font-size: 12px;
+    font-weight: normal;
+    color: $text;
+  }
+
+
+.container{
+  background-color: $primary;
+  padding: 0.25rem;
+  margin: 0.25rem;
+}
+// Just the general layout of the app
+@import 'src/layout';
+
+
+
+
+
+.description-container{
+  text-align: center;
+}
+
+
+
+.counters-container{
+  display: inline-grid;
+  grid-gap:10px;
+  font-size: 150%;
+  grid-template-columns: repeat(5, 1fr);
+  justify-items: center;
+}
+
+.tooltiptext{
+  visibility: hidden;
+  position: absolute;
+}
+
+.card{
+  // margin: 1rem 0rem;
+  background-color: $accent;
+  width: 100%;
+  // min-width: 10rem;
+  // border-radius: 2px;
+  text-align: center;
+}
+
