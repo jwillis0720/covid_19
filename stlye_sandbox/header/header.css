@@ -1,0 +1,135 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,200;0,300;0,400;1,100;1,300;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,900;1,400;1,500&display=swap");
+* {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  font-weight: normal;
+  color: white;
+  font: "Fira Sans", cursive, sans-serif, arial;
+}
+
+body {
+  margin: 0;
+  background-color: white;
+}
+
+.container {
+  background-color: #2d3142;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  border-radius: 1rem;
+}
+
+.header-container {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+
+@media only screen and (min-width: 1440px) {
+  .header-container {
+    display: -ms-grid;
+    display: grid;
+    -ms-grid-columns: 0.25fr 1fr;
+        grid-template-columns: 0.25fr 1fr;
+    -webkit-box-pack: stretch;
+        -ms-flex-pack: stretch;
+            justify-content: stretch;
+  }
+}
+
+.description-container {
+  text-align: center;
+  display: block;
+}
+
+.counters-container {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: space-evenly;
+      -ms-flex-pack: space-evenly;
+          justify-content: space-evenly;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  margin: 0.5rem 0;
+}
+
+.card {
+  -webkit-box-shadow: 0 10px 8px 0 black;
+          box-shadow: 0 10px 8px 0 black;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  min-width: 214px;
+  padding: 1rem;
+  text-align: center;
+  color: black;
+  border-radius: 2px;
+  margin: 1rem;
+  -webkit-perspective: 1000;
+          perspective: 1000;
+  color: white;
+}
+
+.card h3 {
+  margin-top: 1px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 0px;
+  font-weight: bold;
+}
+
+.card p {
+  margin: 5px 0;
+  font-weight: 255%;
+}
+
+.card .card-sub-writing {
+  padding: 0;
+  margin: 0;
+}
+
+#cases-card {
+  background-color: #ffc107;
+  color: black;
+}
+
+#deaths-card {
+  background-color: #dc3545;
+}
+
+#mortality-card {
+  background-color: #f8f9fa;
+  color: black;
+}
+
+#growth-card {
+  background-color: #28a745;
+}
+
+#relative-card-confirm {
+  background-color: #007bff;
+}
+
+@media only screen and (min-width: 1440px) {
+  .card {
+    font-size: 120%;
+  }
+}
+
+.tooltiptext {
+  visibility: hidden;
+  position: absolute;
+}
+/*# sourceMappingURL=header.css.map */

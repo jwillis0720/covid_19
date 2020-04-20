@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./header.css" , type="text/css">
+    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css'
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css" ,
+        type="text/css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons-wind.min.css" ,
+        type="text/css">
+</head>
+
+<body>
+    <div id="root-container" class="root-container">
+        <div id="header" class="container header-container">
+            <div id="description" class="description-container">
+                <div class="title-div">
+                    <h1>COVID-19 Bored</h1>
+                </div>
+                <div class="bottom-div">
+                    <h2><a href="http://jordanrwillis.com" target="_blank">Jordan R. Willis PhD</a></h2><button
+                        id="learn-more-button" class="button">
+                        <div id="slide"><a>Learn More</a></div>
+                    </button>
+                </div>
+            </div>
+            <div id="counters" class="counters-container">
+                <div id="cases-card" class="card tooltip">
+                    <h3 class='card-header'>Total Cases</h3>
+                    <p id="total-cases" class="card-writing">2,400,823</p>
+                    <div class="card-sub-writing"><span>▲</span><span>83,620 </span><span><i
+                                class="wi wi-wind wi-towards-nne"></i></span><span>83,918</span><span
+                            class="tooltiptext">Worldwide total case count.
+                            ▲ is the increase of cases in the past 24 hours.
+                            <i class="wi wi-wind wi-towards-nne"></i> is the predicted cases in the next 24 hours</span>
+                    </div>
+                </div>
+                <div id="deaths-card" class="card tooltip">
+                    <h3 class='card-header'>Total Deaths</h3>
+                    <p id="total-deaths">165,026</p>
+                    <div class="change-card"><span>▲</span><span>5,534 </span><span><i
+                                class="wi wi-wind wi-towards-nne"></i></span><span>5,790</span><span
+                            class="tooltiptext">Worldwide total deaths count.
+                            ▲ is the increase of deaths in the past 24 hours.<br><i
+                                class="wi wi-wind wi-towards-nne"></i> is the predicted deaths in the next 24
+                            hours</span></div>
+                </div>
+                <div id="mortality-card" class="card tooltip">
+                    <h3 class='card-header'>Mortality Rate</h3>
+                    <p id="mortality-rate">6.87%</p>
+                    <div class="card-sub-writing"><span>▼</span><span>0.01 </span><span><i
+                                class="wi wi-wind wi-towards-sse"></i></span><span>0</span><span
+                            class="tooltiptext">Worldwide mortality rate. Total deaths divided by total cases.
+                            ▼ is the deacrease mortality rate in the past 24 hours.<br><i
+                                class="wi wi-wind wi wi-wind wi-towards-sse"></i> is the predicted decrease mortality
+                            rate in the next 24 hours</span></div>
+                </div>
+                <div id="growth-card" class="card tooltip">
+                    <h3 class='card-header'>Growth Rate</h3>
+                    <p id="growth-rate">3.61%</p>
+                    <div class="card-sub-writing"><span>▲</span><span>0.15 </span><span><i
+                                class="wi wi-wind wi-towards-sse"></i></span><span>0.11</span><span
+                            class="tooltiptext">Worldwide growth factor. Percentage growth of confirmed cases.
+                            ▲ is the increase growth rate in the past 24 hours.<br><i
+                                class="wi wi-wind wi wi-wind wi-towards-sse"></i> is the predicted increase growth rate
+                            in the next 24 hours</span></div>
+                </div>
+                <div id="relative-card-confirm" class="card tooltip">
+                    <h3 class='card-header'>Per Capita</h3>
+                    <p id="total-cases">1 in 2806 </p>
+                    <div class="card-sub-writing"><span>▲</span><span>1 in 2907 </span><span><i
+                                class="wi wi-wind wi-towards-nne"></i></span><span>1 in 2711 </span><span
+                            class="tooltiptext">Worldwide cases per global population.
+                            ▲ is the increase in per capita cases in the past 24 hours.<br><i
+                                class="wi wi-wind wi-towards-nne"></i> is the predicted increase in per capita cases in
+                            the next 24 hours</span></div>
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>

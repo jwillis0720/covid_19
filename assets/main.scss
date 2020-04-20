@@ -18,13 +18,15 @@ $accent: #EF8354;
     font-weight: normal;
     color: $text;
   }
+  body{
+    margin: 0;
+  }
 
 
 .container{
   background-color: $primary;
-  padding: 0.25rem;
-  margin: 0.25rem;
 }
+
 // Just the general layout of the app
 @import 'src/layout';
 
