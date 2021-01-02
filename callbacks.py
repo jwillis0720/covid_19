@@ -41,9 +41,10 @@ def serve_data(ret=False, serve_local=False):
     else:
         print('Grabbing from S3')
         MASTER_ALL = pd.read_pickle(
-            'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_ALL_NEW.pkl', compression='gzip')
+
+            'https://jordanspubliccovidbucket.s3-us-east-2.amazonaws.com/covid19data/MASTER_ALL_NEW.pkl', compression='gzip')
         MASTER_PID = pd.read_pickle(
-            'https://jordansdatabucket.s3-us-west-2.amazonaws.com/covid19data/MASTER_PID_NEW.pkl', compression='gzip')
+            'https://jordanspubliccovidbucket.s3-us-east-2.amazonaws.com/covid19data/MASTER_PID_NEW.pkl', compression='gzip')
         DATE_MAPPER = pd.DataFrame(MASTER_ALL['Date'].unique(), columns=['Date'])
         KEY_VALUE = dict(zip(list(MASTER_PID.index), list(
             MASTER_PID['location'].str.replace('US', 'United States'))))
